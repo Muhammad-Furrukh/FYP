@@ -1,0 +1,516 @@
+Excellent question! Now we're getting into **operand selection and control signal generation**. This is a crucial design detail.
+
+## The Question
+
+**Who generates mux control signals?**
+
+Example scenarios:
+- PC vs register for branch target calculation
+- Immediate vs register operand
+- Different operation types requiring different datapaths
+
+## The Answer: It Depends on the Signal Type
+
+Let me break this down by **where the information comes from**:
+
+### Type 1: **Instruction-Dependent Controls** (From Issue Buffer)
+
+These are determined by the **instruction itself** - the issue buffer should generate them.
+
+**Examples:**
+
+```systemverilog
+// Branch instruction: JAL R1, offset
+Controls needed:
+  - operand_A_sel = PC        (not register)
+  - operand_B_sel = IMMEDIATE (not register)
+  - alu_op = ADD
+  - writeback_sel = PC+4      (return address)
+
+// Regular ALU: ADD R1, R2, R3
+Controls needed:
+  - operand_A_sel = REGISTER  (R2)
+  - operand_B_sel = REGISTER  (R3)
+  - alu_op = ADD
+  - writeback_sel = ALU_RESULT
+```
+
+**These should come FROM the issue buffer TO the functional unit.**
+
+### Type 2: **Dynamic Controls** (From Functional Unit Itself)
+
+These depend on **runtime conditions** - the functional unit should generate them.
+
+**Examples:**
+
+```systemverilog
+// Bypass mux selection
+Controls needed:
+  - If operand available on bypass → select bypass
+  - If operand not on bypass → select register file
+  - Decision made at execute time, not issue time
+
+// Multi-cycle operation state
+Controls needed:
+  - Divider on cycle 3 of 20 → internal state machine
+  - Not known at issue time
+```
+
+**These should be generated INSIDE the functional unit.**
+
+### Type 3: **Global Controls** (From Controller)
+
+These affect **multiple units** - the controller should generate them.
+
+**Examples:**
+
+```systemverilog
+// Pipeline flush
+Controls needed:
+  - Invalidate all pipeline registers
+  - Reset state machines
+  - Affects all units
+
+// Exception handling
+Controls needed:
+  - Switch to trap handler mode
+  - Save context
+  - Affects entire processor
+```
+
+**These come from the central controller.**
+
+## Detailed Example: Branch/Jump Instructions
+
+Let's trace a **JAL (Jump and Link)** instruction through your pipeline:
+
+### Step 1: Decode Stage (Before Issue Buffer)
+
+```
+Instruction: JAL R1, 1000    (jump to PC+1000, save return addr in R1)
+
+Decoder generates:
+  - opcode = JAL
+  - dest_reg = R1
+  - immediate = 1000
+  - src_A_type = PC          ← Important!
+  - src_B_type = IMMEDIATE   ← Important!
+  - alu_op = ADD
+  - writes_pc = 1
+  - writes_reg = 1
+```
+
+These control signals are **embedded in the decoded instruction** sent to issue buffer.
+
+### Step 2: Issue Buffer
+
+```systemverilog
+// Issue buffer output includes control fields
+
+typedef struct {
+    logic valid;
+    logic [4:0] opcode;
+    logic [4:0] dest_reg;
+    logic [31:0] immediate;
+    
+    // Control signals!
+    logic src_A_is_pc;        // 1 for JAL/branches
+    logic src_B_is_immediate; // 1 for JAL, ADDI, etc.
+    logic [3:0] alu_op;
+    logic writes_pc;
+    logic writes_reg;
+    
+    // Actual operand values (if from registers)
+    logic [31:0] reg_A_data;
+    logic [31:0] reg_B_data;
+    
+    // Current PC (for PC-relative operations)
+    logic [31:0] pc;
+    
+} IssueBuffer_Entry;
+```
+
+**Issue buffer sends ALL of this to the ALU**, including control signals.
+
+### Step 3: ALU Input Muxes
+
+```systemverilog
+module ALU (
+    input clk,
+    input rst,
+    
+    // From issue buffer - includes controls
+    input logic valid_in,
+    input logic src_A_is_pc,        // MUX CONTROL
+    input logic src_B_is_immediate, // MUX CONTROL
+    input logic [31:0] reg_A_data,
+    input logic [31:0] reg_B_data,
+    input logic [31:0] pc_value,
+    input logic [31:0] immediate,
+    input logic [3:0] alu_op,
+    
+    // Bypass inputs (for operand forwarding)
+    input logic [31:0] bypass_data_0,
+    input logic bypass_valid_0,
+    input logic [31:0] bypass_data_1,
+    input logic bypass_valid_1,
+    
+    // Outputs
+    output logic [31:0] result,
+    output logic valid_out
+);
+
+// Internal signals
+logic [31:0] operand_A, operand_B;
+
+// ===== MUX 1: Select source A =====
+always_comb begin
+    if (src_A_is_pc) begin
+        operand_A = pc_value;           // For JAL, branches
+    end
+    else if (bypass_valid_0) begin
+        operand_A = bypass_data_0;      // Bypass has priority
+    end
+    else begin
+        operand_A = reg_A_data;         // Normal register read
+    end
+end
+
+// ===== MUX 2: Select source B =====
+always_comb begin
+    if (src_B_is_immediate) begin
+        operand_B = immediate;          // For JAL, ADDI, etc.
+    end
+    else if (bypass_valid_1) begin
+        operand_B = bypass_data_1;      // Bypass has priority
+    end
+    else begin
+        operand_B = reg_B_data;         // Normal register read
+    end
+end
+
+// ===== ALU operation =====
+always_comb begin
+    case (alu_op)
+        ADD: result = operand_A + operand_B;
+        SUB: result = operand_A - operand_B;
+        // ... other operations
+    endcase
+end
+
+endmodule
+```
+
+**Key point:** `src_A_is_pc` and `src_B_is_immediate` come **from the issue buffer**, not generated inside the ALU.
+
+## Control Signal Flow Diagram
+
+```
+┌──────────────────────────────────────────────────┐
+│ Decode Stage                                     │
+│  - Determines instruction type                   │
+│  - Generates initial control signals:            │
+│    * src_A_is_pc                                 │
+│    * src_B_is_immediate                          │
+│    * alu_op                                      │
+│    * writes_pc, writes_reg                       │
+└────────────────┬─────────────────────────────────┘
+                 │
+                 ↓
+┌──────────────────────────────────────────────────┐
+│ Issue Buffer                                      │
+│  - Stores decoded instruction + controls          │
+│  - Waits for operands ready                       │
+│  - Passes EVERYTHING to functional unit:          │
+│    * Control signals (mux selects)                │
+│    * Operand values (register data)               │
+│    * Immediate values                             │
+│    * PC value                                     │
+└────────────────┬─────────────────────────────────┘
+                 │
+                 ↓
+┌──────────────────────────────────────────────────┐
+│ Functional Unit (ALU)                             │
+│  - Receives controls from issue buffer            │
+│  - Uses them to select operands via muxes         │
+│  - Generates LOCAL controls for:                  │
+│    * Bypass mux selection (runtime decision)      │
+│    * Internal state machine                       │
+│    * Multi-cycle operation control                │
+└──────────────────────────────────────────────────┘
+```
+
+## What Issue Buffer Controls
+
+**Issue buffer should generate/pass these mux controls:**
+
+### 1. **Operand Source Selection**
+
+```systemverilog
+// From instruction decode
+src_A_sel:
+  - 2'b00: Register A
+  - 2'b01: PC
+  - 2'b10: Zero (for certain instructions)
+  - 2'b11: Unused
+
+src_B_sel:
+  - 2'b00: Register B
+  - 2'b01: Immediate
+  - 2'b10: Four (for PC+4)
+  - 2'b11: Unused
+```
+
+### 2. **ALU Operation**
+
+```systemverilog
+alu_op:
+  - 4'b0000: ADD
+  - 4'b0001: SUB
+  - 4'b0010: AND
+  - 4'b0011: OR
+  - 4'b0100: XOR
+  - 4'b0101: SLL (shift left logical)
+  - ... etc
+```
+
+### 3. **Result Selection**
+
+```systemverilog
+result_sel:
+  - 2'b00: ALU result
+  - 2'b01: PC + 4 (for JAL/JALR return address)
+  - 2'b10: Memory data (for loads)
+  - 2'b11: CSR value (for CSR instructions)
+```
+
+### 4. **Memory Operation Type** (for LSU)
+
+```systemverilog
+mem_op:
+  - 3'b000: No memory operation
+  - 3'b001: Load byte
+  - 3'b010: Load half
+  - 3'b011: Load word
+  - 3'b100: Store byte
+  - 3'b101: Store half
+  - 3'b110: Store word
+```
+
+## What Functional Unit Controls
+
+**Functional unit generates these controls internally:**
+
+### 1. **Bypass Mux Selection**
+
+```systemverilog
+// Inside ALU - runtime decision
+always_comb begin
+    // Check if operand A available on bypass
+    if (bypass_tag_0 == operand_A_tag && bypass_valid_0) begin
+        bypass_A_sel = 1;  // Use bypass
+    end
+    else begin
+        bypass_A_sel = 0;  // Use register file data
+    end
+end
+```
+
+This is **NOT known at issue time** - depends on what's currently completing.
+
+### 2. **Multi-Cycle Operation State**
+
+```systemverilog
+// Inside DIV unit
+typedef enum {IDLE, CYCLE1, CYCLE2, ... CYCLE20, DONE} div_state_t;
+div_state_t state;
+
+always_ff @(posedge clk) begin
+    case (state)
+        IDLE: if (start) state <= CYCLE1;
+        CYCLE1: state <= CYCLE2;
+        // ... state machine
+        DONE: state <= IDLE;
+    endcase
+end
+
+// Internal control based on state
+assign internal_mux_sel = (state == CYCLE5) ? 2'b01 : 2'b00;
+```
+
+This is **unit-specific internal control**.
+
+### 3. **Exception Detection**
+
+```systemverilog
+// Inside ALU
+always_comb begin
+    if (alu_op == DIV && operand_B == 0) begin
+        exception = 1;        // Divide by zero
+        exception_type = DIV_BY_ZERO;
+    end
+    else begin
+        exception = 0;
+    end
+end
+```
+
+Detected at **execute time**, signals controller.
+
+## Practical Example: Different Instructions
+
+### Example 1: ADD R1, R2, R3
+
+```
+From Issue Buffer to ALU:
+  - src_A_sel = REGISTER
+  - src_B_sel = REGISTER
+  - alu_op = ADD
+  - reg_A_data = value of R2
+  - reg_B_data = value of R3
+  - immediate = X (don't care)
+  - pc_value = X (don't care)
+
+Inside ALU:
+  - Mux A: selects reg_A_data (based on src_A_sel)
+  - Mux B: selects reg_B_data (based on src_B_sel)
+  - But first checks bypass!
+  - ALU: performs ADD
+```
+
+### Example 2: ADDI R1, R2, #100
+
+```
+From Issue Buffer to ALU:
+  - src_A_sel = REGISTER
+  - src_B_sel = IMMEDIATE     ← Different!
+  - alu_op = ADD
+  - reg_A_data = value of R2
+  - reg_B_data = X (don't care)
+  - immediate = 100           ← Used!
+  - pc_value = X (don't care)
+
+Inside ALU:
+  - Mux A: selects reg_A_data
+  - Mux B: selects immediate (based on src_B_sel)
+  - ALU: performs ADD
+```
+
+### Example 3: JAL R1, 1000
+
+```
+From Issue Buffer to ALU:
+  - src_A_sel = PC            ← Different!
+  - src_B_sel = IMMEDIATE     ← Different!
+  - alu_op = ADD
+  - writes_pc = 1             ← Different!
+  - writes_reg = 1
+  - reg_A_data = X (don't care)
+  - reg_B_data = X (don't care)
+  - immediate = 1000          ← Branch offset
+  - pc_value = 0x1000         ← Current PC
+
+Inside ALU:
+  - Mux A: selects pc_value (based on src_A_sel = PC)
+  - Mux B: selects immediate (based on src_B_sel = IMMEDIATE)
+  - ALU: performs ADD → target = PC + 1000
+  - Also outputs PC+4 for return address
+```
+
+### Example 4: BEQ R1, R2, offset
+
+```
+From Issue Buffer to ALU:
+  - src_A_sel = REGISTER
+  - src_B_sel = REGISTER
+  - alu_op = SUB              (compare via subtraction)
+  - is_branch = 1
+  - branch_type = BEQ
+  - branch_offset = offset
+  - pc_value = current PC
+  - reg_A_data = value of R1
+  - reg_B_data = value of R2
+
+Inside ALU:
+  - Mux A: selects reg_A_data
+  - Mux B: selects reg_B_data
+  - ALU: performs SUB (R1 - R2)
+  - Branch logic: if (result == 0) take_branch = 1
+  - If taken: target = PC + offset
+  - Signals controller with branch result
+```
+
+## Who Does What - Summary Table
+
+| Control Signal | Source | Why |
+|----------------|--------|-----|
+| **src_A_is_pc** | Issue Buffer | Known from instruction type |
+| **src_B_is_immediate** | Issue Buffer | Known from instruction type |
+| **alu_op** | Issue Buffer | Known from instruction opcode |
+| **writes_pc** | Issue Buffer | Known from instruction type |
+| **writes_reg** | Issue Buffer | Known from instruction type |
+| **bypass_mux_sel** | Functional Unit | Runtime bypass checking |
+| **internal_state** | Functional Unit | Multi-cycle operation state |
+| **exception_type** | Functional Unit | Detected during execution |
+| **pipeline_flush** | Controller | Global control decision |
+
+## Recommended Structure
+
+```systemverilog
+// Issue buffer entry includes all instruction-dependent controls
+typedef struct packed {
+    // Identification
+    logic valid;
+    logic [31:0] pc;
+    logic [5:0] rob_id;
+    
+    // Operation
+    logic [3:0] alu_op;
+    logic [2:0] mem_op;
+    
+    // Operand sources (MUX CONTROLS from decode)
+    logic src_A_is_pc;
+    logic src_A_is_zero;
+    logic src_B_is_immediate;
+    logic src_B_is_four;  // For PC+4
+    
+    // Operand values
+    logic [31:0] operand_A_data;
+    logic [31:0] operand_B_data;
+    logic [31:0] immediate;
+    
+    // Destination
+    logic [4:0] dest_reg;
+    logic writes_reg;
+    logic writes_pc;
+    
+    // Metadata
+    logic is_branch;
+    logic is_load;
+    logic is_store;
+    
+} issue_buffer_entry_t;
+
+// This entire structure goes to the functional unit
+// FU uses the control fields to drive its internal muxes
+```
+
+## Final Answer
+
+**Yes, issue buffer should control muxes for:**
+- PC vs register selection
+- Immediate vs register selection  
+- Operation type selection
+- Any choice determined by **instruction type**
+
+**No, issue buffer should NOT control:**
+- Bypass mux selection (runtime, inside FU)
+- Multi-cycle state (internal to FU)
+- Exception handling (detected by FU, handled by controller)
+
+**Think of it this way:**
+- **Issue buffer** = "Here's WHAT to do and WHERE to get inputs"
+- **Functional unit** = "I'll figure out HOW to get those inputs efficiently (bypass) and DO the operation"
+- **Controller** = "I handle global events that affect everyone"
+
+The issue buffer provides the **static control signals** (known from instruction decode), while the functional unit handles **dynamic control signals** (determined at runtime).

@@ -1,0 +1,17 @@
+SoomRV
+In case of misspeculation, all post misspeculation instructions are flushed. 
+Every instruction carries a sequence number. This helps see if an instruction came before or after a
+misspeculation.
+In case of misspeculation the rename state is reset to committed state. Then, those instructions which were
+not committed are replayed from the ROB to recover the last correct rename state.
+
+Fetch_Instr:
+FSIZE_E = 4
+FETCH_WORDS = 8
+Hence, total bits fetched = 128 + some meta-data
+
+D_UOp:
+The decoded instruction with meta-data
+
+R_UOp:
+Instruction after renaming

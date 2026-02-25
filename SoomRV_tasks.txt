@@ -1,0 +1,19 @@
+Aleeza - IF + ID:
+IFetch.sv
+IFetchPipeline.sv
+InstrDecoder.sv
+
+Muhammad - Rename and Eliminate
+Rename.sv
+RenameTable.sv
+ROB.sv
+
+Abdul Rehman - Issue
+IssueQueue.sv
+StoreDataIQ.sv
+Scheduler.sv
+
+Saima - Operand Fetch
+RFReadMux.sv
+RegFile.sv
+Load.sv

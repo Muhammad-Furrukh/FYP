@@ -1,0 +1,56 @@
+D_UOp {
+    logic[31:0] imm;
+    logic[11:0] imm12; // only used for jalr
+    logic[4:0] rs1;
+    logic[4:0] rs2;
+    logic immB;
+    logic[4:0] rd;
+    logic[5:0] opcode;
+    FuncUnit fu;
+    FetchID_t fetchID;
+    FetchOff_t fetchOffs;
+    logic compressed;
+    logic valid;
+}
+
+R_UOp {
+    logic[31:0] imm;
+    logic[11:0] imm12; // only used for jalr (on int ports)
+    logic availA;
+    Tag tagA;
+    logic availB;
+    Tag tagB;
+    logic immB;
+    logic availC;
+    Tag tagC; // used for atomics
+    SqN sqN;
+    Tag tagDst;
+    RegNm rd;
+    logic[5:0] opcode;
+    FetchID_t fetchID;
+    FetchOff_t fetchOffs;
+    SqN storeSqN;
+    SqN loadSqN;
+    FuncUnit fu;
+    logic compressed;
+    logic[NUM_PORTS_TOTAL-1:0] validIQ; // valids for individual Issue Queues
+    logic valid;
+}
+
+FlagsUOp {
+    Tag tagDst;
+    SqN sqN;
+    Flags flags;
+    logic doNotCommit;
+    logic valid;
+}
+
+CommitUOp {
+    RegNm rd;
+    Tag tagDst;
+    SqN sqN;
+    logic isBranch;
+    logic branchTaken;
+    logic compressed;
+    logic valid;
+}
