@@ -15,6 +15,7 @@ parameter int unsigned FETCHB_ID_WIDTH  = 4;
 parameter int unsigned ISSUEB_ID_WIDTH  = 3;
 parameter int unsigned STOREB_ID_WIDTH  = 4;
 parameter int unsigned LOADB_ID_WIDTH   = 4;
+parameter int unsigned NUM_CDB_LINES    = 4;
 
 //------------------------------------------------------------------
 // Simple typedefs
@@ -84,94 +85,94 @@ type_def enum logic [2:0] {
 // Unions
 //------------------------------------------------------------------
 typedef union {
-    alu_oper_t      alu_oper;
-    mul_div_oper_t  mul_div_oper;
-    lsu_oper_t      lsu_oper;
+    alu_oper_t          alu_oper;
+    mul_div_oper_t      mul_div_oper;
+    lsu_oper_t          lsu_oper;
 } oper_t;
 
 //------------------------------------------------------------------
 // Structs
 //------------------------------------------------------------------
 typedef struct packed { 
-    logic           valid;
-    pc_t            pc;
-    logic [31:0]    instr;
+    logic               valid;
+    pc_t                pc;
+    logic [31:0]        instr;
 } prefetch_instr_t;
 
 typedef struct packed{ 
-    logic           valid;
-    sqN_t           sqN;
-    pc_t            pc;
-    logic [31:0]    instr;
+    logic               valid;
+    sqN_t               sqN;
+    pc_t                pc;
+    logic [31:0]        instr;
 } fetch_instr_t;
 
 typedef struct packed {
-    logic           valid;
-    sqN_t           sqN;
-    pc_t            pc;
-    f_unit_t        f_unit;
-    oper_t          oper;
-    logic [4:0]     rs1;
-    logic [4:0]     rs2;
-    logic [4:0]     rd;
-    imm_t           imm;
-    logic           is_imm;
-    logic           is_jump;
-    br_type_t       br_type;
+    logic               valid;
+    sqN_t               sqN;
+    pc_t                pc;
+    f_unit_t            f_unit;
+    oper_t              oper;
+    logic [4:0]         rs1;
+    logic [4:0]         rs2;
+    logic [4:0]         rd;
+    imm_t               imm;
+    logic               is_imm;
+    logic               is_jump;
+    br_type_t           br_type;
 } decode_instr_t;
 
 typedef struct packed {
-    logic           valid;
-    sqN_t           sqN;
-    pc_t            pc;
-    f_unit_t        f_unit;
-    oper_t          oper;
-    tag_t           rs1_tag;
-    tag_t           rs2_tag;
-    tag_t           rd_tag;
-    imm_t           imm;
-    logic           is_imm;
-    logic           is_jump;
-    br_type_t       br_type;
+    logic               valid;
+    sqN_t               sqN;
+    pc_t                pc;
+    f_unit_t            f_unit;
+    oper_t              oper;
+    tag_t               rs1_tag;
+    tag_t               rs2_tag;
+    tag_t               rd_tag;
+    imm_t               imm;
+    logic               is_imm;
+    logic               is_jump;
+    br_type_t           br_type;
 } rename_instr_t;
 
 typedef struct packed {
-    logic           valid;
-    sqN_t           sqN;
-    pc_t            pc;
-    f_unit_t        f_unit;
-    oper_t          oper;
-    tag_t           rs1_tag;
-    tag_t           rs2_tag;
-    tag_t           rd_tag;
-    imm_t           imm;
-    logic           is_imm;
-    logic           is_jump;
-    br_type_t       br_type;
+    logic               valid;
+    sqN_t               sqN;
+    pc_t                pc;
+    f_unit_t            f_unit;
+    oper_t              oper;
+    tag_t               rs1_tag;
+    tag_t               rs2_tag;
+    tag_t               rd_tag;
+    imm_t               imm;
+    logic               is_imm;
+    logic               is_jump;
+    br_type_t           br_type;
 } alu_dispatch_instr_t;
 
 typedef struct packed {
-    logic           valid;
-    sqN_t           sqN;
-    pc_t            pc;
-    f_unit_t        f_unit;
-    oper_t          oper;
-    tag_t           rs1_tag;
-    tag_t           rs2_tag;
-    tag_t           rd_tag;
+    logic               valid;
+    sqN_t               sqN;
+    pc_t                pc;
+    f_unit_t            f_unit;
+    oper_t              oper;
+    tag_t               rs1_tag;
+    tag_t               rs2_tag;
+    tag_t               rd_tag;
 } mul_div_dispatch_instr_t;
 
 typedef struct packed {
-    logic           valid;
-    sqN_t           sqN;
-    pc_t            pc;
-    f_unit_t        f_unit;
-    oper_t          oper;
-    tag_t           rs1_tag;
-    tag_t           rs2_tag;
-    tag_t           rd_tag;
-    imm_t           imm;
-    logic           is_imm;
+    logic               valid;
+    sqN_t               sqN;
+    pc_t                pc;
+    f_unit_t            f_unit;
+    oper_t              oper;
+    tag_t               rs1_tag;
+    tag_t               rs2_tag;
+    tag_t               rd_tag;
+    imm_t               imm;
+    logic               is_imm;
 } lsu_dispatch_instr_t;
 
 typedef struct packed {
@@ -200,7 +201,7 @@ typedef struct packed {
     logic [XLEN - 1:0]  result;
 } CDB_line_t;
 
-CDB_line_t CDB [4];
+CDB_line_t CDB [NUM_CDB_LINES];
 
 endpackage : include_pkg
 `endif  
