@@ -7,6 +7,8 @@ package include_pkg;
 // Parameters
 //------------------------------------------------------------------
 parameter int unsigned XLEN             = 32;
+parameter int unsigned FETCH_WIDTH      = 2;
+parameter int unsigned DECODE_WIDTH     = 2;
 parameter int unsigned REG_ADDR_WIDTH   = 6;
 parameter int unsigned DMEM_ADDR_WIDTH  = 10;
 parameter int unsigned IMEM_ADDR_WIDTH  = 8;
@@ -81,6 +83,12 @@ type_def enum logic [2:0] {
     BGEU
 } br_type_t;
 
+typedef enum logic [1:0] {
+    NOT_U,
+    AUIPC,
+    LUI
+} u_type_t;
+
 //------------------------------------------------------------------
 // Unions
 //------------------------------------------------------------------
@@ -119,6 +127,7 @@ typedef struct packed {
     logic               is_imm;
     logic               is_jump;
     br_type_t           br_type;
+    u_type_t            u_type;
 } decode_instr_t;
 
 typedef struct packed {
@@ -134,6 +143,7 @@ typedef struct packed {
     logic               is_imm;
     logic               is_jump;
     br_type_t           br_type;
+    u_type_t            u_type;
 } rename_instr_t;
 
 typedef struct packed {
@@ -149,6 +159,7 @@ typedef struct packed {
     logic               is_imm;
     logic               is_jump;
     br_type_t           br_type;
+    u_type_t            u_type;
 } alu_dispatch_instr_t;
 
 typedef struct packed {

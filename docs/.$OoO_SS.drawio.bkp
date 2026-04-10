@@ -3836,8 +3836,8 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="CBBLAng80Ux_a8W4b3Pd-2" value="res + tag + res_valid" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
-          <mxGeometry x="1110" y="470" width="120" height="20" as="geometry" />
+        <mxCell id="CBBLAng80Ux_a8W4b3Pd-2" value="res + tag + sqN + res_valid" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="1110" y="470" width="150" height="20" as="geometry" />
         </mxCell>
         <mxCell id="7-5s6WGq4hj_kIpNt51x-4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.25;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="7-5s6WGq4hj_kIpNt51x-2" target="9PF6gVFigcxQAj82GOGA-8">
           <mxGeometry relative="1" as="geometry" />
