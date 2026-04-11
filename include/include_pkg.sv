@@ -51,7 +51,7 @@ typedef enum logic [3:0] {
     COPY
 } alu_oper_t;
 
-typedef enum logic [2:0] {
+typedef enum logic [3:0] {
     MUL,
     MULH,
     MULHSU,
@@ -62,7 +62,7 @@ typedef enum logic [2:0] {
     REMU
 } mul_div_oper_t;
 
-typedef enum logic [2:0] {
+typedef enum logic [3:0] {
     LOAD_BYTE,
     LOAD_HALF,
     LOAD_WORD,
@@ -73,7 +73,7 @@ typedef enum logic [2:0] {
     STORE_WORD
 } lsu_oper_t;
 
-type_def enum logic [2:0] {
+typedef enum logic [2:0] {
     NOT_BRANCH,
     BEQ,
     BNE,
@@ -92,7 +92,7 @@ typedef enum logic [1:0] {
 //------------------------------------------------------------------
 // Unions
 //------------------------------------------------------------------
-typedef union {
+typedef union packed {
     alu_oper_t          alu_oper;
     mul_div_oper_t      mul_div_oper;
     lsu_oper_t          lsu_oper;
