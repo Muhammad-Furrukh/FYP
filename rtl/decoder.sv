@@ -26,15 +26,15 @@ module decoder
             case(opcode[i])
                 7'd3: // Load instrs
                     begin
-                        decode_instr[i].f_unit  = LSU;
-                        decode_instr[i].rs1     = fetch_instr[i].instr[19:15];
-                        decode_instr[i].rs2     = 5'b0;
-                        decode_instr[i].rd      = fetch_instr[i].instr[11:7];
-                        decode_instr[i].imm     = immediate[i];
-                        decode_instr[i].is_imm  = 1'b1;
-                        decode_instr[i].is_jump = 1'b0;
-                        decode_instr[i].br_type = NOT_BRANCH;
-                        decode_instr[i].u_type  = NOT_U;
+                        decode_instr[i].f_unit      = LSU;
+                        decode_instr[i].rs1         = fetch_instr[i].instr[19:15];
+                        decode_instr[i].rs2         = 5'b0;
+                        decode_instr[i].rd          = fetch_instr[i].instr[11:7];
+                        decode_instr[i].imm         = immediate[i];
+                        decode_instr[i].is_imm      = 1'b1;
+                        decode_instr[i].jump_type   = NOT_JUMP;
+                        decode_instr[i].br_type     = NOT_BRANCH;
+                        decode_instr[i].u_type      = NOT_U;
 
                         case(fetch_instr[i].instr[14:12])
                             3'd0: decode_instr[i].oper.lsu_oper = LOAD_BYTE;
@@ -47,15 +47,15 @@ module decoder
 
                 7'd19:  // ALU Immediate instrs
                     begin
-                        decode_instr[i].f_unit  = ALU;
-                        decode_instr[i].rs1     = fetch_instr[i].instr[19:15];
-                        decode_instr[i].rs2     = 5'b0;
-                        decode_instr[i].rd      = fetch_instr[i].instr[11:7];
-                        decode_instr[i].imm     = immediate[i];
-                        decode_instr[i].is_imm  = 1'b1;
-                        decode_instr[i].is_jump = 1'b0;
-                        decode_instr[i].br_type = NOT_BRANCH;
-                        decode_instr[i].u_type  = NOT_U;
+                        decode_instr[i].f_unit      = ALU;
+                        decode_instr[i].rs1         = fetch_instr[i].instr[19:15];
+                        decode_instr[i].rs2         = 5'b0;
+                        decode_instr[i].rd          = fetch_instr[i].instr[11:7];
+                        decode_instr[i].imm         = immediate[i];
+                        decode_instr[i].is_imm      = 1'b1;
+                        decode_instr[i].jump_type   = NOT_JUMP;
+                        decode_instr[i].br_type     = NOT_BRANCH;
+                        decode_instr[i].u_type      = NOT_U;
 
                         case(fetch_instr[i].instr[14:12])
                             3'd0: decode_instr[i].oper.alu_oper = ADD;
@@ -77,15 +77,15 @@ module decoder
 
                 7'd35:  // Store instrs
                     begin
-                        decode_instr[i].f_unit  = LSU;
-                        decode_instr[i].rs1     = fetch_instr[i].instr[19:15];
-                        decode_instr[i].rs2     = fetch_instr[i].instr[24:20];
-                        decode_instr[i].rd      = 5'b0;
-                        decode_instr[i].imm     = immediate[i];
-                        decode_instr[i].is_imm  = 1'b1;
-                        decode_instr[i].is_jump = 1'b0;
-                        decode_instr[i].br_type = NOT_BRANCH;
-                        decode_instr[i].u_type  = NOT_U;
+                        decode_instr[i].f_unit      = LSU;
+                        decode_instr[i].rs1         = fetch_instr[i].instr[19:15];
+                        decode_instr[i].rs2         = fetch_instr[i].instr[24:20];
+                        decode_instr[i].rd          = 5'b0;
+                        decode_instr[i].imm         = immediate[i];
+                        decode_instr[i].is_imm      = 1'b1;
+                        decode_instr[i].jump_type   = NOT_JUMP;
+                        decode_instr[i].br_type     = NOT_BRANCH;
+                        decode_instr[i].u_type      = NOT_U;
 
                         case(fetch_instr[i].instr[14:12])
                             3'd0: decode_instr[i].oper.lsu_oper = STORE_BYTE;
@@ -102,7 +102,7 @@ module decoder
                         decode_instr[i].rd              = fetch_instr[i].instr[11:7];
                         decode_instr[i].imm             = immediate[i];
                         decode_instr[i].is_imm          = 1'b1;
-                        decode_instr[i].is_jump         = 1'b0;
+                        decode_instr[i].jump_type       = NOT_JUMP;
                         decode_instr[i].br_type         = NOT_BRANCH;
                         decode_instr[i].u_type          = AUIPC;
                         decode_instr[i].oper.alu_oper   = ADD;
@@ -110,14 +110,14 @@ module decoder
 
                 7'd51:  // ALU R and MUL/DIV instructions
                     begin
-                        decode_instr[i].rs1     = fetch_instr[i].instr[19:15];
-                        decode_instr[i].rs2     = fetch_instr[i].instr[24:20];
-                        decode_instr[i].rd      = fetch_instr[i].instr[11:7];
-                        decode_instr[i].imm     = 32'b0;
-                        decode_instr[i].is_imm  = 1'b0;
-                        decode_instr[i].is_jump = 1'b0;
-                        decode_instr[i].br_type = NOT_BRANCH;
-                        decode_instr[i].u_type  = NOT_U;
+                        decode_instr[i].rs1         = fetch_instr[i].instr[19:15];
+                        decode_instr[i].rs2         = fetch_instr[i].instr[24:20];
+                        decode_instr[i].rd          = fetch_instr[i].instr[11:7];
+                        decode_instr[i].imm         = 32'b0;
+                        decode_instr[i].is_imm      = 1'b0;
+                        decode_instr[i].jump_type   = NOT_JUMP;
+                        decode_instr[i].br_type     = NOT_BRANCH;
+                        decode_instr[i].u_type      = NOT_U;
 
                         if (fetch_instr[i].instr[31:25] == 7'b1) begin
                             decode_instr[i].f_unit = MUL_DIV;
@@ -169,7 +169,7 @@ module decoder
                         decode_instr[i].rd              = fetch_instr[i].instr[11:7];
                         decode_instr[i].imm             = immediate[i];
                         decode_instr[i].is_imm          = 1'b1;
-                        decode_instr[i].is_jump         = 1'b0;
+                        decode_instr[i].jump_type       = NOT_JUMP;
                         decode_instr[i].br_type         = NOT_BRANCH;
                         decode_instr[i].u_type          = LUI;
                         decode_instr[i].oper.alu_oper   = COPY;
@@ -183,7 +183,7 @@ module decoder
                         decode_instr[i].rd              = 5'b0;
                         decode_instr[i].imm             = immediate[i];
                         decode_instr[i].is_imm          = 1'b1;
-                        decode_instr[i].is_jump         = 1'b0;
+                        decode_instr[i].jump_type       = NOT_JUMP;
                         decode_instr[i].oper.alu_oper   = COPY;
                         decode_instr[i].u_type          = NOT_U;
 
@@ -205,7 +205,7 @@ module decoder
                         decode_instr[i].rd              = fetch_instr[i].instr[11:7];
                         decode_instr[i].imm             = immediate[i];
                         decode_instr[i].is_imm          = 1'b1;
-                        decode_instr[i].is_jump         = 1'b1;
+                        decode_instr[i].jump_type       = JALR;
                         decode_instr[i].br_type         = NOT_BRANCH;
                         decode_instr[i].u_type          = NOT_U;
                         decode_instr[i].oper.alu_oper   = ADD;
@@ -219,13 +219,12 @@ module decoder
                         decode_instr[i].rd              = fetch_instr[i].instr[11:7];
                         decode_instr[i].imm             = immediate[i];
                         decode_instr[i].is_imm          = 1'b1;
-                        decode_instr[i].is_jump         = 1'b1;
+                        decode_instr[i].jump_type       = JAL;
                         decode_instr[i].br_type         = NOT_BRANCH;
                         decode_instr[i].u_type          = NOT_U;
                         decode_instr[i].oper.alu_oper   = ADD;
                     end
             endcase
-
 
         end
     end

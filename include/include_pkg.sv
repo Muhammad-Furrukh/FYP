@@ -73,7 +73,7 @@ typedef enum logic [3:0] {
     STORE_WORD
 } lsu_oper_t;
 
-typedef enum logic [2:0] {
+typedef enum logic [3:0] {
     NOT_BRANCH,
     BEQ,
     BNE,
@@ -82,6 +82,12 @@ typedef enum logic [2:0] {
     BLTU,
     BGEU
 } br_type_t;
+
+typedef enum logic [1:0] {
+    NOT_JUMP,
+    JAL,
+    JALR
+} jump_type_t;
 
 typedef enum logic [1:0] {
     NOT_U,
@@ -125,7 +131,7 @@ typedef struct packed {
     logic [4:0]         rd;
     imm_t               imm;
     logic               is_imm;
-    logic               is_jump;
+    jump_type_t         jump_type;
     br_type_t           br_type;
     u_type_t            u_type;
 } decode_instr_t;
@@ -141,7 +147,7 @@ typedef struct packed {
     tag_t               rd_tag;
     imm_t               imm;
     logic               is_imm;
-    logic               is_jump;
+    jump_type_t         jump_type;
     br_type_t           br_type;
     u_type_t            u_type;
 } rename_instr_t;
@@ -157,7 +163,7 @@ typedef struct packed {
     tag_t               rd_tag;
     imm_t               imm;
     logic               is_imm;
-    logic               is_jump;
+    jump_type_t         jump_type;
     br_type_t           br_type;
     u_type_t            u_type;
 } alu_dispatch_instr_t;
