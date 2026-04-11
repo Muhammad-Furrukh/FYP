@@ -9,7 +9,11 @@ module decoder
     logic [6:0]  opcode     [FETCH_WIDTH];
     logic [31:0] immediate  [FETCH_WIDTH];
 
-    IG immediate_gen(.instr(fetch_instr), .immediate(immediate));
+    IG immediate_gen
+    (
+        .instr(fetch_instr), 
+        .immediate(immediate)
+    );
 
     always_comb begin
         for (int i = 0; i < FETCH_WIDTH; i++) begin

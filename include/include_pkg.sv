@@ -26,6 +26,7 @@ typedef logic [ROB_ID_WIDTH:0]          sqN_t;
 typedef logic [IMEM_ADDR_WIDTH - 1:0]   pc_t;
 typedef logic [REG_ADDR_WIDTH - 1:0]    tag_t;
 typedef logic [XLEN - 1:0]              imm_t;
+typedef logic [XLEN - 1:0]              prefetch_instr_t;
 
 //------------------------------------------------------------------
 // Enums
@@ -107,12 +108,6 @@ typedef union packed {
 //------------------------------------------------------------------
 // Structs
 //------------------------------------------------------------------
-typedef struct packed { 
-    logic               valid;
-    pc_t                pc;
-    logic [31:0]        instr;
-} prefetch_instr_t;
-
 typedef struct packed{ 
     logic               valid;
     sqN_t               sqN;
