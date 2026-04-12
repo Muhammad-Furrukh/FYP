@@ -108,11 +108,17 @@ typedef union packed {
 //------------------------------------------------------------------
 // Structs
 //------------------------------------------------------------------
+typedef struct packed {
+    logic               valid;
+    pc_t                pc;
+    prefetch_instr_t    instr;
+} aligner_instr_t;
+
 typedef struct packed{ 
     logic               valid;
     sqN_t               sqN;
     pc_t                pc;
-    logic [31:0]        instr;
+    prefetch_instr_t    instr;
 } fetch_instr_t;
 
 typedef struct packed {

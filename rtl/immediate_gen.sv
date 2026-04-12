@@ -1,7 +1,7 @@
 import include_pkg::*;
 module immediate_gen
 (
-    input   fetch_instr_t fetch_instr [FETCH_WIDTH],
+    input   var fetch_instr_t fetch_instr [FETCH_WIDTH],
     output  logic [31:0]  immediate [FETCH_WIDTH]
 );
 

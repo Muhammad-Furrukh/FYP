@@ -1,9 +1,8 @@
 import include_pkg::*;
 module decoder
 (
-    input  fetch_instr_t     fetch_instr     [FETCH_WIDTH],
-    input  logic             flush,
-    output decode_instr_t    decode_instr    [DECODE_WIDTH]
+    input  var  fetch_instr_t     fetch_instr     [FETCH_WIDTH],
+    output var  decode_instr_t    decode_instr    [DECODE_WIDTH]
 );
 
     logic [6:0]  opcode     [FETCH_WIDTH];
@@ -17,11 +16,7 @@ module decoder
 
     always_comb begin
         for (int i = 0; i < FETCH_WIDTH; i++) begin
-            if (flush)
-                decode_instr[i].valid = 1'b0;
-            else
-                decode_instr[i].valid = fetch_instr[i].valid;
-
+            decode_instr[i].valid = fetch_instr[i].valid;
             decode_instr[i].sqN = fetch_instr[i].sqN;
             decode_instr[i].pc  = fetch_instr[i].pc;
 
