@@ -9,7 +9,7 @@ module prefetch
     input       logic               jump1,
     input       logic               jump2,
     input       logic               consumed,
-    output  var prefetch_instr_t    prefetch_instr [FETCH_WIDTH],
+    output      prefetch_instr_t    prefetch_instr [FETCH_WIDTH],
     output      pc_t                out_pc
 );
 

@@ -12,7 +12,7 @@ module fetch
     output      logic                     jump1,
     output      logic               [1:0] consumed,
     output      pc_t                      jta1,
-    output  var fetch_instr_t             fetch_instr     [FETCH_WIDTH]
+    output      fetch_instr_t             fetch_instr     [FETCH_WIDTH]
 );
 
     logic                           q;

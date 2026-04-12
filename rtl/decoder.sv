@@ -2,7 +2,7 @@ import include_pkg::*;
 module decoder
 (
     input  var  fetch_instr_t     fetch_instr     [FETCH_WIDTH],
-    output var  decode_instr_t    decode_instr    [DECODE_WIDTH]
+    output      decode_instr_t    decode_instr    [DECODE_WIDTH]
 );
 
     logic [6:0]  opcode     [FETCH_WIDTH];

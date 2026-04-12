@@ -6,7 +6,7 @@ module decode
     input                           IN_busy,
     input                           flush,
     input   var     fetch_instr_t   fetch_instr     [FETCH_WIDTH],
-    output  var     decode_instr_t  decode_instr    [DECODE_WIDTH]
+    output          decode_instr_t  decode_instr    [DECODE_WIDTH]
 );
 
     decode_instr_t  decoder_out [DECODE_WIDTH];
