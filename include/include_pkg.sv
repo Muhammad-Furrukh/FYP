@@ -23,7 +23,7 @@ parameter int unsigned NUM_CDB_LINES    = 4;
 // Simple typedefs
 //------------------------------------------------------------------
 typedef logic [ROB_ID_WIDTH:0]          sqN_t;
-typedef logic [IMEM_ADDR_WIDTH - 1:0]   pc_t;
+typedef logic [XLEN - 1:0]              pc_t;
 typedef logic [REG_ADDR_WIDTH - 1:0]    tag_t;
 typedef logic [XLEN - 1:0]              imm_t;
 typedef logic [XLEN - 1:0]              prefetch_instr_t;

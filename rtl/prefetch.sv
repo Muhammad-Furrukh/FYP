@@ -28,7 +28,7 @@ module prefetch
     IMEM IMEM
     (
         .clk(clk),
-        .addr(fetch_base),
+        .addr(fetch_base[IMEM_ADDR_WIDTH -1:0]),
         .data(prefetch_instr)
     );
 
@@ -40,7 +40,7 @@ module prefetch
             default: in_pc = 4 * consumed + out_pc;
         endcase
 
-        fetch_base = out_pc & ( ~( IMEM_ADDR_WIDTH'(7) ) ); // Align to 8-byte boundary
+        fetch_base = out_pc & ( ~( XLEN'(7) ) ); // Align to 8-byte boundary
 
     end
 

@@ -37,7 +37,7 @@ module fetch
     JTA1 ta_gen1
     (
         .pc(pc_array),
-        .valid(valid),
+        .valid(aligner_out),
         .opcode(opcode),
         .imm(imm),
         .IN_busy(OUT_busy),
