@@ -7,12 +7,12 @@ module fetch
     input       logic                     jump2,
     input       logic                     flush,
     input       pc_t                      pc,
-    input   var prefetch_instr_t          prefetch_instr  [FETCH_WIDTH],
+    input   var prefetch_instr_t          IN_instr  [FETCH_WIDTH],
     output      logic                     OUT_busy,
     output      logic                     jump1,
     output      logic               [1:0] consumed,
     output      pc_t                      jta1,
-    output      fetch_instr_t             fetch_instr     [FETCH_WIDTH]
+    output      fetch_instr_t             OUT_instr     [FETCH_WIDTH]
 );
 
     logic                           q;
@@ -25,16 +25,16 @@ module fetch
     logic           [XLEN -1:0]     iw;
 
 
-    IA instr_aligner
+    instr_aligner IA
     (
-        .IN_instr(prefetch_instr),
+        .IN_instr(IN_instr),
         .pc(pc),
         .invalidate(invalidate),
         .OUT_instr(aligner_out),
         .consumed(consumed)
     );
 
-    JTA1 ta_gen1
+    ta_gen1 JTA1
     (
         .pc(pc_array),
         .valid(aligner_out),
@@ -45,7 +45,7 @@ module fetch
         .jta1(jta1)
     );
 
-    FB fetch_buffer
+    fetch_buffer FB
     (
         .clk(clk),
         .rst(rst),
@@ -53,7 +53,7 @@ module fetch
         .IN_busy(IN_busy),
         .flush(flush),
         .OUT_busy(OUT_busy),
-        .OUT_instr(fetch_instr)
+        .OUT_instr(OUT_instr)
     );
 
     always_comb begin

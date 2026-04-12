@@ -1,6 +1,6 @@
 import include_pkg::*;
 
-module ta_gen
+module ta_gen1
 (
     input   var      pc_t           pc      [FETCH_WIDTH],
     input   var      logic          valid   [FETCH_WIDTH],

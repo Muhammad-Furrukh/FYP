@@ -9,7 +9,7 @@ module prefetch
     input       logic               jump1,
     input       logic               jump2,
     input       logic               consumed,
-    output      prefetch_instr_t    prefetch_instr [FETCH_WIDTH],
+    output      prefetch_instr_t    OUT_instr [FETCH_WIDTH],
     output      pc_t                out_pc
 );
 
@@ -29,7 +29,7 @@ module prefetch
     (
         .clk(clk),
         .addr(fetch_base[IMEM_ADDR_WIDTH -1:0]),
-        .data(prefetch_instr)
+        .data(OUT_instr)
     );
 
     always_comb begin
