@@ -9,6 +9,9 @@ package include_pkg;
 parameter int unsigned XLEN             = 32;
 parameter int unsigned FETCH_WIDTH      = 2;
 parameter int unsigned DECODE_WIDTH     = 2;
+parameter int unsigned RENAME_WIDTH     = 2;
+parameter int unsigned ISSUE_WIDTH      = 4;
+parameter int unsigned COMMIT_WIDTH     = 2;
 parameter int unsigned REG_ADDR_WIDTH   = 6;
 parameter int unsigned DMEM_ADDR_WIDTH  = 10;
 parameter int unsigned IMEM_ADDR_WIDTH  = 8;
@@ -220,6 +223,13 @@ typedef struct packed {
 } CDB_line_t;
 
 CDB_line_t CDB [NUM_CDB_LINES];
+
+typedef struct packed {
+    logic               valid;
+    sqN_t               sqN;
+    logic  [4:0]        archTag;
+    tag_t               comTag;
+} commit_packet_t;
 
 endpackage : include_pkg
 `endif  
