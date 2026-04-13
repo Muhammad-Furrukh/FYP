@@ -231,5 +231,12 @@ typedef struct packed {
     tag_t               comTag;
 } commit_packet_t;
 
+typedef struct packed {
+    logic               valid;
+    sqN_t               sqN;
+    logic  [4:0]        archTag;
+    tag_t               rd_tag;
+} dispatch_rob_t;
+
 endpackage : include_pkg
 `endif  
