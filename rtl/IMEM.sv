@@ -2,9 +2,9 @@ import include_pkg::*;
 
 module IMEM
 (
-    input  logic            clk,
-    input  pc_t             addr, // 8-byte aligned address             
-    output prefetch_instr_t data [FETCH_WIDTH]
+    input  logic                                    clk,
+    input  logic            [IMEM_ADDR_WIDTH - 1:0] addr, // 8-byte aligned address             
+    output prefetch_instr_t                         data [FETCH_WIDTH]
 );
 
     // Memory organized as 32-bit words 
@@ -20,12 +20,12 @@ module IMEM
         $readmemh("imem.hex", mem);
     end
     
-    int   unsigned    block_idx;
-    int   unsigned    base_word;
-    int   unsigned    word_index;
+    logic [IMEM_ADDR_WIDTH] block_idx;
+    logic [IMEM_ADDR_WIDTH] base_word;
+    logic [IMEM_ADDR_WIDTH] word_index;
 
     always_ff @(posedge clk) begin
-        block_idx = addr >> 3; 
+        block_idx = (addr >> 3); 
         base_word = block_idx * FETCH_WIDTH;  
 
         for (int i = 0; i < FETCH_WIDTH; i++) begin

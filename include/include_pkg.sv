@@ -12,18 +12,18 @@ parameter int unsigned DECODE_WIDTH     = 2;
 parameter int unsigned REG_ADDR_WIDTH   = 6;
 parameter int unsigned DMEM_ADDR_WIDTH  = 10;
 parameter int unsigned IMEM_ADDR_WIDTH  = 8;
-parameter int unsigned ROB_ID_WIDTH     = 6;
-parameter int unsigned FETCHB_ID_WIDTH  = 4;
-parameter int unsigned ISSUEB_ID_WIDTH  = 3;
-parameter int unsigned STOREB_ID_WIDTH  = 4;
-parameter int unsigned LOADB_ID_WIDTH   = 4;
+parameter int unsigned ROB_SIZE         = 64;
+parameter int unsigned FETCHB_SIZE      = 16;
+parameter int unsigned ISSUEB_SIZE      = 8;
+parameter int unsigned STOREB_SIZE      = 16;
+parameter int unsigned LOADB_SIZE       = 16;
 parameter int unsigned NUM_CDB_LINES    = 4;
 
 //------------------------------------------------------------------
 // Simple typedefs
 //------------------------------------------------------------------
-typedef logic [ROB_ID_WIDTH:0]          sqN_t;
-typedef logic [IMEM_ADDR_WIDTH - 1:0]   pc_t;
+typedef logic [$clog2(ROB_SIZE):0]      sqN_t;
+typedef logic [XLEN - 1:0]              pc_t;
 typedef logic [REG_ADDR_WIDTH - 1:0]    tag_t;
 typedef logic [XLEN - 1:0]              imm_t;
 typedef logic [XLEN - 1:0]              prefetch_instr_t;

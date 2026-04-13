@@ -9,7 +9,7 @@ module prefetch
     input       logic               jump1,
     input       logic               jump2,
     input       logic               consumed,
-    output  var prefetch_instr_t    prefetch_instr [FETCH_WIDTH],
+    output      prefetch_instr_t    OUT_instr [FETCH_WIDTH],
     output      pc_t                out_pc
 );
 
@@ -28,8 +28,8 @@ module prefetch
     IMEM IMEM
     (
         .clk(clk),
-        .addr(fetch_base),
-        .data(prefetch_instr)
+        .addr(fetch_base[IMEM_ADDR_WIDTH -1:0]),
+        .data(OUT_instr)
     );
 
     always_comb begin
@@ -40,7 +40,7 @@ module prefetch
             default: in_pc = 4 * consumed + out_pc;
         endcase
 
-        fetch_base = out_pc & ( ~( IMEM_ADDR_WIDTH'(7) ) ); // Align to 8-byte boundary
+        fetch_base = out_pc & ( ~( XLEN'(7) ) ); // Align to 8-byte boundary
 
     end
 

@@ -1,8 +1,8 @@
 import include_pkg::*;
 module immediate_gen
 (
-    input   var fetch_instr_t fetch_instr [FETCH_WIDTH],
-    output  logic [31:0]  immediate [FETCH_WIDTH]
+    input   var fetch_instr_t           IN_instr [FETCH_WIDTH],
+    output      logic           [31:0]  immediate [FETCH_WIDTH]
 );
 
     logic [2:0]     funct3;
@@ -14,11 +14,11 @@ module immediate_gen
 
     always_comb begin
         for (int i = 0; i < FETCH_WIDTH; i++) begin
-            if (!fetch_instr[i].valid) begin
+            if (!IN_instr[i].valid) begin
                 immediate[i] = 32'b0;
             end
             else begin
-                iw = fetch_instr[i].instr;
+                iw = IN_instr[i].instr;
                 opcode = iw[6:0];
 
                 case (opcode)
