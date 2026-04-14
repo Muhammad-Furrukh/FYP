@@ -20,7 +20,6 @@ module dispatch
     output      logic                    OUT_free                [REG_ADDR_WIDTH - 1:0],
     output      logic                    d_unit_busy,
     output      logic                    check_busy,
-    output      dispatch_rob_t           dispatch_rob            [RENAME_WIDTH],
     output      alu_dispatch_instr_t     OUT_alu_instr           [2],
     output      mul_div_dispatch_instr_t OUT_mul_div_instr,
     output      lsu_dispatch_instr_t     OUT_lsu_instr
@@ -37,8 +36,7 @@ module dispatch
         .OUT_busy(d_unit_busy),
         .OUT_alu_instr(alu_dispatch_out ),
         .OUT_mul_div_instr(mul_div_dispatch_out),
-        .OUT_lsu_instr(lsu_dispatch_out),
-        .dispatch_rob(dispatch_rob)
+        .OUT_lsu_instr(lsu_dispatch_out)
     );
 
     branch_checkpoint BC 
