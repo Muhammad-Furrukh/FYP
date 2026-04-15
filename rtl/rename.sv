@@ -7,7 +7,6 @@ module rename
     input       logic             ROB_busy,
     input       logic             dispatch_busy,
     input       logic             flush,
-    input       logic             chk_restore,
     input	logic		  chkpt_busy,
     input  var  commit_packet_t   commit_packet  [COMMIT_WIDTH],
     input  var  decode_instr_t    IN_instr       [DECODE_WIDTH],
@@ -130,7 +129,7 @@ module rename
     //    this group that wrote the same architectural reg.
     //    No separate bypass network needed.
     //
-    //    Seeded from IN_specTag on chk_restore,
+    //    Seeded from IN_specTag on flush,
     //    otherwise from rename_table.specTag.
     // ════════════════════════════════════════════════════
 
@@ -138,7 +137,7 @@ module rename
 
     always_comb begin
         for (int r = 0; r < 32; r++)
-            local_rat[0][r] = chk_restore ? IN_specTag[r]
+            local_rat[0][r] = flush ? IN_specTag[r]
                                           : rename_table[r].specTag;
 
         for (int i = 0; i < DECODE_WIDTH; i++) begin
@@ -161,7 +160,7 @@ module rename
     always_comb begin
         for (int i = 0; i < DECODE_WIDTH; i++) begin
             OUT_instr[i]           = '0;
-            OUT_instr[i].valid     = IN_instr[i].valid && !stall && !chk_restore;
+            OUT_instr[i].valid     = IN_instr[i].valid && !stall && !flush;
             OUT_instr[i].sqN       = IN_instr[i].sqN;
             OUT_instr[i].pc        = IN_instr[i].pc;
             OUT_instr[i].f_unit    = IN_instr[i].f_unit;
@@ -211,7 +210,7 @@ module rename
     //
     //    Priority (highest → lowest):
     //      rst         — full reset to identity state
-    //      chk_restore — restore specTag + free bitmap;
+    //      flush — restore specTag + free bitmap;
     //                    commTag/freeComm untouched
     //      flush       — roll specTag back to commTag;
     //                    tag_buffer drained by commit
@@ -231,7 +230,7 @@ module rename
             for (int i = 0; i < ROB_SIZE; i++)
                 tag_buffer[i] <= '{freeComm: 1'b1, ready: 1'b1, free: 1'b1};
 
-        end else if (chk_restore) begin
+        end else if (flush) begin
             // Restore free bitmap; leave freeComm/ready intact
             // so commit and CDB progress since the snapshot isn't lost.
             for (int b = 0; b < ROB_SIZE; b++) begin
@@ -266,7 +265,7 @@ module rename
             end
             // flush: tag_buffer left alone; speculative tags
             // drain naturally as the ROB commits or via
-            // chk_restore if a checkpoint exists.
+            // flush if a checkpoint exists.
         end
     end
 
@@ -278,7 +277,7 @@ module rename
                 rename_table[r].commTag <= REG_ADDR_WIDTH'(r);
             end
 
-        end else if (chk_restore) begin
+        end else if (flush) begin
             // Restore specTag only; commTag tracks architectural
             // truth and is unaffected by a mispredict.
             for (int r = 0; r < 32; r++)
@@ -292,11 +291,7 @@ module rename
                         <= commit_packet[i].comTag;
 
         end else begin
-            if (flush)
-                // No checkpoint: roll spec state back to arch state
-                for (int r = 0; r < 32; r++)
-                    rename_table[r].specTag <= rename_table[r].commTag;
-            else if (!stall)
+            if (!stall)
                 // Normal: advance specTag to end-of-group RAT state
                 for (int r = 0; r < 32; r++)
                     rename_table[r].specTag <= local_rat[DECODE_WIDTH][r];
