@@ -7,21 +7,26 @@ module rename
     input       logic             ROB_busy,
     input       logic             dispatch_busy,
     input       logic             flush,
+    input       logic             chk_restore,
+    input	logic		  chkpt_busy,
     input  var  commit_packet_t   commit_packet  [COMMIT_WIDTH],
-    input  var  tag_t             read_tag       [ISSUE_WIDTH][2],
     input  var  decode_instr_t    IN_instr       [DECODE_WIDTH],
     input  var  tag_t             IN_specTag     [32],
-    input    	logic             IN_free        [DECODE_WIDTH][ROB_SIZE],
+    input       logic             IN_free        [ROB_SIZE],
     input  var  tag_t             CDB_tag        [ISSUE_WIDTH],
-    input  	logic             CDB_valid      [ISSUE_WIDTH],
+    input       logic             CDB_valid      [ISSUE_WIDTH],
+    input  var  tag_t             read_tag       [ISSUE_WIDTH][2],
     output      rename_instr_t    OUT_instr      [DECODE_WIDTH],
     output      logic             reg_ready      [ISSUE_WIDTH][2],
     output      logic             checkpoint,
     output      tag_t             OUT_specTag    [DECODE_WIDTH][32],
-    output      logic             OUT_free       [DECODE_WIDTH][ROB_SIZE] 
+    output      logic             OUT_free       [DECODE_WIDTH][ROB_SIZE]
 );
 
-    // ── Structs ──────────────────────────────────────────
+    // ════════════════════════════════════════════════════
+    // 0. Types
+    // ════════════════════════════════════════════════════
+
     typedef struct packed {
         logic freeComm;
         logic ready;
@@ -33,21 +38,43 @@ module rename
         logic [REG_ADDR_WIDTH-1:0] specTag;
     } tags_t;
 
-    // ── State ────────────────────────────────────────────
-    var tag_stat_t  tag_buffer   [ROB_SIZE];
-    var tags_t      rename_table [32];
 
-    // ── FTB from tag_buffer ──────────────────────────────
+    // ════════════════════════════════════════════════════
+    // 1. State
+    // ════════════════════════════════════════════════════
+
+    var tag_stat_t  tag_buffer   [ROB_SIZE];    // physical tag status
+    var tags_t      rename_table [32];          // architectural → physical map
+
+
+    // ════════════════════════════════════════════════════
+    // 2. Free Tag Bitmap (FTB)
+    //    Combinationally reflect tag_buffer.free so the
+    //    allocator always sees the current cycle's state.
+    // ════════════════════════════════════════════════════
+
     logic [ROB_SIZE-1:0] ftb;
+
     always_comb
         for (int i = 0; i < ROB_SIZE; i++)
             ftb[i] = tag_buffer[i].free;
 
-    // ── Cascaded priority encoder ────────────────────────
-    logic [ROB_SIZE-1:0]              	masked  [DECODE_WIDTH];
-    logic [ROB_SIZE-1:0]              	onehot  [DECODE_WIDTH];
-    logic [REG_ADDR_WIDTH-1:0] 		chosen  [DECODE_WIDTH];
-    logic [DECODE_WIDTH-1:0]   		req_valid;
+
+    // ════════════════════════════════════════════════════
+    // 3. Tag Allocation — cascaded priority encoders
+    //
+    //    masked[0]   = raw FTB
+    //    masked[i+1] = masked[i] with chosen[i] cleared
+    //
+    //    Each stage picks the lowest free bit from its
+    //    masked view, guaranteeing K unique tags in one
+    //    cycle with no extra arbitration.
+    // ════════════════════════════════════════════════════
+
+    logic [DECODE_WIDTH-1:0]   req_valid;   // which slots need a new tag
+    logic [ROB_SIZE-1:0]       masked  [DECODE_WIDTH+1];
+    logic [ROB_SIZE-1:0]       onehot  [DECODE_WIDTH];
+    logic [REG_ADDR_WIDTH-1:0] chosen  [DECODE_WIDTH];
 
     always_comb
         for (int i = 0; i < DECODE_WIDTH; i++)
@@ -56,167 +83,230 @@ module rename
     assign masked[0] = ftb;
 
     for (genvar i = 0; i < DECODE_WIDTH; i++) begin : g_alloc
-        assign onehot[i] = req_valid[i]
-                           ? (masked[i] & (~masked[i] + 1'b1))
-                           : '0;
+        // Isolate lowest free bit (x & -x idiom)
+        assign onehot[i] = req_valid[i] ? (masked[i] & (~masked[i] + 1'b1))
+                                        : '0;
+
+        // One-hot → binary
         always_comb begin
             chosen[i] = '0;
             for (int b = 0; b < ROB_SIZE; b++)
                 if (onehot[i][b]) chosen[i] = REG_ADDR_WIDTH'(b);
         end
+
+        // Suppress chosen tag for next stage
         assign masked[i+1] = masked[i] & ~onehot[i];
     end
 
-    // ── Stall ────────────────────────────────────────────
-    logic [$clog2(M+1)-1:0]            free_count;
+
+    // ════════════════════════════════════════════════════
+    // 4. Stall
+    //    Stall if the ROB/dispatch is busy, or if there
+    //    aren't enough free tags/chekpoints for all requesting slots.
+    // ════════════════════════════════════════════════════
+
+    logic [$clog2(ROB_SIZE+1)-1:0]     free_count;
     logic [$clog2(DECODE_WIDTH+1)-1:0] req_count;
 
     always_comb begin
         free_count = '0;
-        for (int b = 0; b < ROB_SIZE; b++)
-            free_count += ftb[b];
-        req_count = '0;
-        for (int i = 0; i < DECODE_WIDTH; i++)
-            req_count += req_valid[i];
+        for (int b = 0; b < ROB_SIZE; b++)  free_count += ftb[b];
+        req_count  = '0;
+        for (int i = 0; i < DECODE_WIDTH; i++) req_count += req_valid[i];
     end
 
     logic stall;
-    assign stall = ROB_busy || dispatch_busy || (free_count < ROB_SIZE'(req_count));
+    assign stall = ROB_busy || dispatch_busy || (free_count < ROB_SIZE'(req_count)) || chkpt_busy;
 
-    // ── reg_ready from tag_buffer ────────────────────────
+
+    // ════════════════════════════════════════════════════
+    // 5. Local RAT — intra-group forwarding
+    //
+    //    local_rat[i] = specTag state visible to instr i,
+    //    i.e. after instructions 0..i-1 have renamed.
+    //
+    //    Reading local_rat[i][rs] therefore automatically
+    //    forwards the tag from any earlier instruction in
+    //    this group that wrote the same architectural reg.
+    //    No separate bypass network needed.
+    //
+    //    Seeded from IN_specTag on chk_restore,
+    //    otherwise from rename_table.specTag.
+    // ════════════════════════════════════════════════════
+
+    logic [REG_ADDR_WIDTH-1:0] local_rat [DECODE_WIDTH+1][32];
+
+    always_comb begin
+        for (int r = 0; r < 32; r++)
+            local_rat[0][r] = chk_restore ? IN_specTag[r]
+                                          : rename_table[r].specTag;
+
+        for (int i = 0; i < DECODE_WIDTH; i++) begin
+            for (int r = 0; r < 32; r++)
+                local_rat[i+1][r] = local_rat[i][r];          // carry forward
+
+            if (IN_instr[i].valid && (IN_instr[i].rd != 5'd0) && !stall)
+                local_rat[i+1][IN_instr[i].rd] = chosen[i];   // write new tag
+        end
+    end
+
+
+    // ════════════════════════════════════════════════════
+    // 6. Outputs
+    // ════════════════════════════════════════════════════
+
+    // ── 6a. Renamed instructions ─────────────────────────
+    // rs tags come from local_rat[i] — capturing intra-group
+    // forwarding. rd tag is chosen[i] from the allocator.
+    always_comb begin
+        for (int i = 0; i < DECODE_WIDTH; i++) begin
+            OUT_instr[i]           = '0;
+            OUT_instr[i].valid     = IN_instr[i].valid && !stall && !chk_restore;
+            OUT_instr[i].sqN       = IN_instr[i].sqN;
+            OUT_instr[i].pc        = IN_instr[i].pc;
+            OUT_instr[i].f_unit    = IN_instr[i].f_unit;
+            OUT_instr[i].oper      = IN_instr[i].oper;
+            OUT_instr[i].rs1_tag   = local_rat[i][IN_instr[i].rs1];
+            OUT_instr[i].rs2_tag   = local_rat[i][IN_instr[i].rs2];
+            OUT_instr[i].rd_tag    = chosen[i];
+            OUT_instr[i].imm       = IN_instr[i].imm;
+            OUT_instr[i].is_imm    = IN_instr[i].is_imm;
+            OUT_instr[i].jump_type = IN_instr[i].jump_type;
+            OUT_instr[i].br_type   = IN_instr[i].br_type;
+            OUT_instr[i].u_type    = IN_instr[i].u_type;
+        end
+    end
+
+    // ── 6b. Register ready (for wakeup / issue) ──────────
     for (genvar i = 0; i < ISSUE_WIDTH; i++) begin
         assign reg_ready[i][0] = tag_buffer[read_tag[i][0]].ready;
         assign reg_ready[i][1] = tag_buffer[read_tag[i][1]].ready;
     end
 
-    // ── commTag free pointer ─────────────────────────────
-    logic [REG_ADDR_WIDTH-1:0] free_CommTag [COMMIT_WIDTH];
-    for (genvar i = 0; i < COMMIT_WIDTH; i++)
-        assign free_CommTag[i] = rename_table[commit_packet[i].rd].commTag;
-
-    // ── tag_buffer update ────────────────────────────────
-    always_ff @(posedge clk) begin
-        if (rst) begin
-            for (int i = 0; i < ROB_SIZE; i++)
-                tag_buffer[i] <= '{freeComm: 1'b1, ready: 1'b1, free: 1'b1};
-        end else begin
-            if (!flush) begin
-                // CDB: mark completed tags ready
-                for (int i = 0; i < ISSUE_WIDTH; i++)
-                    if (CDB_valid[i])
-                        tag_buffer[CDB_tag[i]].ready <= 1'b1;
-
-                // Commit: free old commTag, mark new commTag as !freeComm
-                for (int i = 0; i < COMMIT_WIDTH; i++) begin
-                    if (commit_packet[i].valid && commit_packet[i].rd != 5'd0) begin
-                        tag_buffer[commit_packet[i].tag].freeComm   <= 1'b0;
-                        tag_buffer[free_CommTag[i]].freeComm        <= 1'b1;
-                        tag_buffer[free_CommTag[i]].free            <= 1'b1;
-                    end
-                end
-
-                // Allocate: claim chosen tags
-                if (!stall) begin
-                    for (int i = 0; i < DECODE_WIDTH; i++) begin
-                        if (req_valid[i]) begin
-                            tag_buffer[chosen[i]].ready <= 1'b0;
-                            tag_buffer[chosen[i]].free  <= 1'b0;
-                        end
-                    end
-                end
-            end
-        end
-    end
-
-    // ── Local RAT: cascading intra-group forwarding ──────
+    // ── 6c. Branch checkpoints ────────────────────────────
+    // OUT_specTag[i] / OUT_free[i] snapshot the RAT and FTB
+    // *just before* instruction i renames, so that a restore
+    // rolls back exactly to the state at the branch.
     //
-    // local_rat starts as the committed rename_table state.
-    // As we walk i = 0..DECODE_WIDTH-1, each instruction that
-    // writes rd updates local_rat[rd] = chosen[i].
-    // When instruction j reads rs, it reads local_rat[rs] —
-    // which already reflects any prior write in this group.
-    // This is what gives you the K → K-1 forwarding for free.
-    //
-    logic [REG_ADDR_WIDTH-1:0] local_rat      	[DECODE_WIDTH][32];
-
-    always_comb begin
-        // Seed from committed rename table specTag
-        for (int r = 0; r < 32; r++) begin
-            local_rat[0][r]       = rename_table[r].specTag;
-        end
-
-        // Walk instructions in order, updating local_rat after each
-        for (int i = 0; i < DECODE_WIDTH; i++) begin
-            // Default: carry forward from previous stage
-            for (int r = 0; r < 32; r++) begin
-                local_rat[i+1][r]       = local_rat[i][r];
-            end
-            // If this instruction writes rd, update that entry
-            if (IN_instr[i].valid && (IN_instr[i].rd != 5'd0) && !stall) begin
-                local_rat[i+1][IN_instr[i].rd]       = chosen[i];
-            end
-        end
-    end
-
-    // ── Checkpoint: snapshot specTag + free on branches ──
-    //
-    // OUT_specTag[i] and OUT_free[i] hold the snapshot *as seen
-    // by instruction i* — i.e. after instructions 0..i-1 have
-    // updated the RAT, using local_rat[i].
-    // This means a branch at slot i checkpoints the correct
-    // post-predecessor state.
-    //
+    //   OUT_specTag[i] = local_rat[i]  (RAT before instr i)
+    //   OUT_free[i]    = masked[i]     (FTB before instr i)
     always_comb begin
         checkpoint = 1'b0;
         for (int i = 0; i < DECODE_WIDTH; i++) begin
             for (int r = 0; r < 32; r++)
-                OUT_specTag[i][r] = local_rat[i][r]; // pre-self state
+                OUT_specTag[i][r] = local_rat[i][r];
             for (int b = 0; b < ROB_SIZE; b++)
-                // free snapshot: current ftb minus tags allocated by instrs 0..i-1
-                OUT_free[i][b] = masked[i][b];       // masked[i] = ftb with 0..i-1 cleared
+                OUT_free[i][b]    = masked[i][b];
 
             if (IN_instr[i].valid &&
-                (IN_instr[i].jump_type || IN_instr[i].br_type))
+                (IN_instr[i].jump_type != NOT_JUMP ||
+                 IN_instr[i].br_type   != NOT_BRANCH))
                 checkpoint = 1'b1;
         end
     end
 
-    // ── Rename table update (sequential) ─────────────────
+
+    // ════════════════════════════════════════════════════
+    // 7. Sequential updates
+    //
+    //    Priority (highest → lowest):
+    //      rst         — full reset to identity state
+    //      chk_restore — restore specTag + free bitmap;
+    //                    commTag/freeComm untouched
+    //      flush       — roll specTag back to commTag;
+    //                    tag_buffer drained by commit
+    //      normal      — CDB ready, commit free, allocate
+    // ════════════════════════════════════════════════════
+
+    // Combinational: old commTag to free on commit
+    // (rename_table[archTag].commTag is the tag that held
+    //  the architectural value before this instruction wrote it)
+    logic [REG_ADDR_WIDTH-1:0] free_CommTag [COMMIT_WIDTH];
+    for (genvar i = 0; i < COMMIT_WIDTH; i++)
+        assign free_CommTag[i] = rename_table[commit_packet[i].archTag].commTag;
+
+    // ── 7a. tag_buffer ────────────────────────────────────
+    always_ff @(posedge clk) begin
+        if (rst) begin
+            for (int i = 0; i < ROB_SIZE; i++)
+                tag_buffer[i] <= '{freeComm: 1'b1, ready: 1'b1, free: 1'b1};
+
+        end else if (chk_restore) begin
+            // Restore free bitmap; leave freeComm/ready intact
+            // so commit and CDB progress since the snapshot isn't lost.
+            for (int b = 0; b < ROB_SIZE; b++) begin
+                tag_buffer[b].free <= IN_free[b];
+                if (IN_free[b]) tag_buffer[b].ready <= 1'b0;
+            end
+
+        end else begin
+            if (!flush) begin
+                // CDB: broadcast results → mark tags ready
+                for (int i = 0; i < ISSUE_WIDTH; i++)
+                    if (CDB_valid[i])
+                        tag_buffer[CDB_tag[i]].ready <= 1'b1;
+
+                // Commit: free the old commTag, clear freeComm on new commTag
+                for (int i = 0; i < COMMIT_WIDTH; i++) begin
+                    if (commit_packet[i].valid &&
+                        commit_packet[i].archTag != 5'd0) begin
+                        tag_buffer[commit_packet[i].comTag].freeComm <= 1'b0;
+                        tag_buffer[free_CommTag[i]].freeComm         <= 1'b1;
+                        tag_buffer[free_CommTag[i]].free             <= 1'b1;
+                    end
+                end
+
+                // Allocate: claim the tags chosen this cycle
+                if (!stall)
+                    for (int i = 0; i < DECODE_WIDTH; i++)
+                        if (req_valid[i]) begin
+                            tag_buffer[chosen[i]].ready <= 1'b0;
+                            tag_buffer[chosen[i]].free  <= 1'b0;
+                        end
+            end
+            // flush: tag_buffer left alone; speculative tags
+            // drain naturally as the ROB commits or via
+            // chk_restore if a checkpoint exists.
+        end
+    end
+
+    // ── 7b. rename_table ──────────────────────────────────
     always_ff @(posedge clk) begin
         if (rst) begin
             for (int r = 0; r < 32; r++) begin
                 rename_table[r].specTag <= REG_ADDR_WIDTH'(r);
                 rename_table[r].commTag <= REG_ADDR_WIDTH'(r);
             end
+
+        end else if (chk_restore) begin
+            // Restore specTag only; commTag tracks architectural
+            // truth and is unaffected by a mispredict.
+            for (int r = 0; r < 32; r++)
+                rename_table[r].specTag <= IN_specTag[r];
+
+            // Commit still advances commTag this cycle
+            for (int i = 0; i < COMMIT_WIDTH; i++)
+                if (commit_packet[i].valid &&
+                    commit_packet[i].archTag != 5'd0)
+                    rename_table[commit_packet[i].archTag].commTag
+                        <= commit_packet[i].comTag;
+
         end else begin
-            if (flush) begin
-                // Roll specTag back to commTag for every register
+            if (flush)
+                // No checkpoint: roll spec state back to arch state
                 for (int r = 0; r < 32; r++)
                     rename_table[r].specTag <= rename_table[r].commTag;
-            end else if (!stall) begin
-                // Advance specTag using the final local_rat state
+            else if (!stall)
+                // Normal: advance specTag to end-of-group RAT state
                 for (int r = 0; r < 32; r++)
                     rename_table[r].specTag <= local_rat[DECODE_WIDTH][r];
-            end
 
-            // Commit: advance commTag (independent of stall/flush)
-            for (int i = 0; i < COMMIT_WIDTH; i++) begin
-                if (commit_packet[i].valid && commit_packet[i].rd != 5'd0)
-                    rename_table[commit_packet[i].rd].commTag <= commit_packet[i].tag;
-            end
-        end
-    end
-
-    // ── Output instructions ───────────────────────────────
-    always_comb begin
-        for (int i = 0; i < DECODE_WIDTH; i++) begin
-            OUT_instr[i]         = '0;
-            OUT_instr[i].valid   = IN_instr[i].valid && !stall;
-            OUT_instr[i].rd_tag  = chosen[i];
-            // rs tags: read from local_rat[i] — captures intra-group forwarding
-            OUT_instr[i].rs1_tag   = local_rat[i][IN_instr[i].rs1];
-            OUT_instr[i].rs2_tag   = local_rat[i][IN_instr[i].rs2];
-            OUT_instr[i].instr     = IN_instr[i];
+            // Commit always advances commTag
+            for (int i = 0; i < COMMIT_WIDTH; i++)
+                if (commit_packet[i].valid &&
+                    commit_packet[i].archTag != 5'd0)
+                    rename_table[commit_packet[i].archTag].commTag
+                        <= commit_packet[i].comTag;
         end
     end
 
