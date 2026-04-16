@@ -236,7 +236,7 @@ typedef struct packed {
     sqN_t               sqN;
     logic  [4:0]        archTag;
     tag_t               rd_tag;
-} dispatch_rob_t;
+} rename_rob_t;
 
 endpackage : include_pkg
 `endif  

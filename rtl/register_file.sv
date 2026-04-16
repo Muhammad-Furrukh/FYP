@@ -2,7 +2,7 @@ import include_pkg::*;
 
 module register_file(
     input logic                       clk,
-    input logic                       rst_n,
+    input logic                       rst,
     input logic  [REG_ADDR_WIDTH-1:0] rs1_addr    [ISSUE_WIDTH],
     input logic  [REG_ADDR_WIDTH-1:0] rs2_addr    [ISSUE_WIDTH],
     input logic  [REG_ADDR_WIDTH-1:0] rd_addr     [NUM_CDB_LINES], // CDB_tag
