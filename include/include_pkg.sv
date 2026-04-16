@@ -160,7 +160,6 @@ typedef struct packed {
     logic               valid;
     sqN_t               sqN;
     pc_t                pc;
-    f_unit_t            f_unit;
     oper_t              oper;
     tag_t               rs1_tag;
     tag_t               rs2_tag;
@@ -175,8 +174,6 @@ typedef struct packed {
 typedef struct packed {
     logic               valid;
     sqN_t               sqN;
-    pc_t                pc;
-    f_unit_t            f_unit;
     oper_t              oper;
     tag_t               rs1_tag;
     tag_t               rs2_tag;
@@ -186,8 +183,6 @@ typedef struct packed {
 typedef struct packed {
     logic               valid;
     sqN_t               sqN;
-    pc_t                pc;
-    f_unit_t            f_unit;
     oper_t              oper;
     tag_t               rs1_tag;
     tag_t               rs2_tag;

@@ -217,7 +217,7 @@ module rename
             for (int r = 0; r < 32; r++)
                 OUT_specTag[i][r] = rename_table[r].specTag;
             for (int b = 0; b < NUM_REG; b++)
-                OUT_free[i][b]    = tag_buffer[b].free;
+                OUT_free[i][b]    = masked[i][b];
             chkpt_sqN[i]   = IN_instr[i].sqN;
 
             if (flush || stall)
