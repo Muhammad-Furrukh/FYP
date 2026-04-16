@@ -86,18 +86,19 @@ module rename
 
     assign masked[0] = ftb;
 
+    // Priority encoder as a function — fully combinational, no latch risk
+    function automatic logic [REG_ADDR_WIDTH-1:0] onehot_to_bin(
+        input logic [NUM_REG-1:0] oh
+    );
+        onehot_to_bin = '0;
+        for (int b = NUM_REG-1; b >= 0; b--)
+            if (oh[b]) onehot_to_bin = REG_ADDR_WIDTH'(b);
+    endfunction
+
+
     for (genvar i = 0; i < DECODE_WIDTH; i++) begin : g_alloc
-        // Isolate lowest free bit (x & -x idiom)
         assign onehot[i] = req_valid[i] ? (masked[i] & (~masked[i] + 1'b1)) : '0;
-
-        // One-hot → binary (highest priority = lowest index)
-        always_comb begin
-            chosen[i] = '0;
-            for (int b = NUM_REG-1; b >= 0; b--)
-                if (onehot[i][b]) chosen[i] = REG_ADDR_WIDTH'(b);
-        end
-
-        // Suppress chosen tag for next stage
+        assign chosen[i] = onehot_to_bin(onehot[i]);  // pure assign, no always_comb
         assign masked[i+1] = masked[i] & ~onehot[i];
     end
 

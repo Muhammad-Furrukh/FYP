@@ -421,7 +421,7 @@
         <mxCell id="hVz2Koirkbf_-3uycq4o-80" value="(result + tag + sqN + CDB_valid)&amp;nbsp;&lt;div&gt;x 4&lt;/div&gt;" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="2804" y="1436" width="186" height="24.75" as="geometry" />
         </mxCell>
-        <mxCell id="hVz2Koirkbf_-3uycq4o-81" value="(br_taken + is_jump + is_imm + sqN) x 2" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" parent="1" vertex="1">
+        <mxCell id="hVz2Koirkbf_-3uycq4o-81" value="(br_type + jump_type + sqN) x 2" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="2134" y="1411.5" width="100" height="46.5" as="geometry" />
         </mxCell>
         <mxCell id="hVz2Koirkbf_-3uycq4o-82" value="" style="endArrow=none;dashed=1;html=1;rounded=0;" parent="1" edge="1">
@@ -1079,7 +1079,7 @@
         <mxCell id="hVz2Koirkbf_-3uycq4o-217" value="JTA2" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
           <mxGeometry x="2311" y="1477.63" width="60" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="hVz2Koirkbf_-3uycq4o-218" value="(br_type + br_taken + is_imm + is_jump + sqN + pc + rs1_res + imm) x 2" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
+        <mxCell id="hVz2Koirkbf_-3uycq4o-218" value="(br_taken + jump_type + sqN + pc + rs1_res + imm) x 2" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="2121" y="1512.63" width="180" height="47.37" as="geometry" />
         </mxCell>
         <mxCell id="hVz2Koirkbf_-3uycq4o-219" value="JTA2 + jump2" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
@@ -1382,6 +1382,9 @@
               <mxPoint x="1505" y="1330" />
             </Array>
           </mxGeometry>
+        </mxCell>
+        <mxCell id="AWpNx9Rkljvrn0CoWNlH-10" value="check_ready x 8" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="1510" y="1310" width="98" height="14" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>

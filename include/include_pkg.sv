@@ -6,21 +6,26 @@ package include_pkg;
 //------------------------------------------------------------------
 // Parameters
 //------------------------------------------------------------------
-parameter int unsigned XLEN             = 32;
-parameter int unsigned FETCH_WIDTH      = 2;
-parameter int unsigned DECODE_WIDTH     = 2;
-parameter int unsigned RENAME_WIDTH     = 2;
-parameter int unsigned ISSUE_WIDTH      = 4;
-parameter int unsigned COMMIT_WIDTH     = 2;
-parameter int unsigned REG_ADDR_WIDTH   = 6;
-parameter int unsigned DMEM_ADDR_WIDTH  = 10;
-parameter int unsigned IMEM_ADDR_WIDTH  = 8;
-parameter int unsigned ROB_SIZE         = 64;
-parameter int unsigned FETCHB_SIZE      = 16;
-parameter int unsigned ISSUEB_SIZE      = 8;
-parameter int unsigned STOREB_SIZE      = 16;
-parameter int unsigned LOADB_SIZE       = 16;
-parameter int unsigned NUM_CDB_LINES    = 4;
+parameter int unsigned XLEN              = 32;
+parameter int unsigned FETCH_WIDTH       = 2;
+parameter int unsigned DECODE_WIDTH      = 2;
+parameter int unsigned RENAME_WIDTH      = 2;
+parameter int unsigned ISSUE_WIDTH       = 4;
+parameter int unsigned COMMIT_WIDTH      = 2;
+parameter int unsigned REG_ADDR_WIDTH    = 6;
+parameter int unsigned DMEM_ADDR_WIDTH   = 10;
+parameter int unsigned IMEM_ADDR_WIDTH   = 8;
+parameter int unsigned ROB_SIZE          = 64;
+parameter int unsigned FETCHB_SIZE       = 16;
+parameter int unsigned ISSUEB_SIZE       = 8;
+parameter int unsigned STOREB_SIZE       = 16;
+parameter int unsigned LOADB_SIZE        = 16;
+parameter int unsigned NUM_ALU_FU        = 2;
+parameter int unsigned NUM_MUL_DIV_FU    = 1;
+parameter int unsigned NUM_AGU_FU        = 1;
+parameter int unsigned NUM_LD_BUFFER_WR_PORTS = 1;
+parameter int unsigned NUM_CDB_LINES     = NUM_ALU_FU + NUM_MUL_DIV_FU + 
+                                            NUM_LD_BUFFER_WR_PORTS;
 
 //------------------------------------------------------------------
 // Simple typedefs
