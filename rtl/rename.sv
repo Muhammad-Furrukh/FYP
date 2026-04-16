@@ -235,7 +235,7 @@ module rename
             // so commit and CDB progress since the snapshot isn't lost.
             for (int b = 0; b < ROB_SIZE; b++) begin
                 tag_buffer[b].free <= IN_free[b];
-                if (IN_free[b]) tag_buffer[b].ready <= 1'b0;
+                // if (IN_free[b]) tag_buffer[b].ready <= 1'b0;
             end
 
         end else begin
