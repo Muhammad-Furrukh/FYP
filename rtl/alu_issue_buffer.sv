@@ -232,6 +232,7 @@ module alu_issue_buffer #(
                     new_tail = new_tail - 1;
 
             end
+            //4 . DISPATCH
             if (IN_alu_instr.valid && !OUT_busy) begin
                 alu_dispatch_instr_t temp;
                 temp.valid      = 1'b1;
