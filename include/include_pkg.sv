@@ -72,14 +72,14 @@ typedef enum logic [3:0] {
 } mul_div_oper_t;
 
 typedef enum logic [3:0] {
-    LOAD_BYTE,
-    LOAD_HALF,
-    LOAD_WORD,
-    LOAD_BYTEU,
-    LOAD_HALFU,
-    STORE_BYTE,
-    STORE_HALF,
-    STORE_WORD
+    LSU_LB,
+    LSU_LH,
+    LSU_LW,
+    LSU_LBU,
+    LSU_LHU,
+    LSU_SB,
+    LSU_SH,
+    LSU_SW
 } lsu_oper_t;
 
 typedef enum logic [3:0] {
@@ -237,6 +237,13 @@ typedef struct packed {
     logic  [4:0]        archTag;
     tag_t               rd_tag;
 } rename_rob_t;
+
+typedef struct packed {
+    pc_t                         target_addr;
+    logic       [XLEN - 1:0]     store_data;
+    lsu_oper_t                   oper;
+    logic                        valid;
+} agu_out_t;
 
 endpackage : include_pkg
 `endif  

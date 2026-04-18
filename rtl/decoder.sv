@@ -36,11 +36,11 @@ module decoder
                         OUT_instr[i].u_type      = NOT_U;
 
                         case(IN_instr[i].instr[14:12])
-                            3'd0: OUT_instr[i].oper.lsu_oper = LOAD_BYTE;
-                            3'd1: OUT_instr[i].oper.lsu_oper = LOAD_HALF;
-                            3'd2: OUT_instr[i].oper.lsu_oper = LOAD_WORD;
-                            3'd4: OUT_instr[i].oper.lsu_oper = LOAD_BYTEU;
-                            3'd5: OUT_instr[i].oper.lsu_oper = LOAD_HALFU;
+                            3'd0: OUT_instr[i].oper.lsu_oper = LSU_LB;
+                            3'd1: OUT_instr[i].oper.lsu_oper = LSU_LH;
+                            3'd2: OUT_instr[i].oper.lsu_oper = LSU_LW;
+                            3'd4: OUT_instr[i].oper.lsu_oper = LSU_LBU;
+                            3'd5: OUT_instr[i].oper.lsu_oper = LSU_LHU;
                         endcase
                     end
 
@@ -87,9 +87,9 @@ module decoder
                         OUT_instr[i].u_type      = NOT_U;
 
                         case(IN_instr[i].instr[14:12])
-                            3'd0: OUT_instr[i].oper.lsu_oper = STORE_BYTE;
-                            3'd1: OUT_instr[i].oper.lsu_oper = STORE_HALF;
-                            3'd2: OUT_instr[i].oper.lsu_oper = STORE_WORD;
+                            3'd0: OUT_instr[i].oper.lsu_oper = LSU_SB;
+                            3'd1: OUT_instr[i].oper.lsu_oper = LSU_SH;
+                            3'd2: OUT_instr[i].oper.lsu_oper = LSU_SW;
                         endcase
                     end
 
