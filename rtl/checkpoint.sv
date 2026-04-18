@@ -67,8 +67,9 @@ module branch_checkpoint
             if (flush) begin
                 for (int i = 0; i < NUM_CHKPT; i++)
                     if (store[i].valid &&
-                        $signed({1'b0, sqN_t'(i)} - {1'b0, flush_sqN[CHKPT_BITS-1:0]}) >= 0) 
+			$signed({1'b0, sqN_t'(i)} - {1'b0, flush_sqN[CHKPT_BITS-1:0]}) >= 0) 
                         store[i].valid <= 1'b0;  // >= catches the match itself too
+
 
             // ── Allocate ─────────────────────────────────────
             end else begin
