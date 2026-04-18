@@ -7,7 +7,10 @@ module dispatch
     input   var logic                    ALU_buffer_busy      [NUM_ALU_FU],
     input       logic                    MUL_DIV_buffer_busy  [NUM_MUL_DIV_FU],
     input       logic                    LSU_buffer_busy      [NUM_AGU_FU],
+<<<<<<< HEAD
 
+=======
+>>>>>>> 9210420 (Generalized the dispatch unit.)
     input       logic                    LSU_busy,
     input       logic                    flush,
     input       sqN_t                    flush_sqN,

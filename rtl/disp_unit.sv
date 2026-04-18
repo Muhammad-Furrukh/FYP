@@ -5,49 +5,47 @@ module dispatch_unit
     input           logic                       clk,
     input           logic                       rst,
     input           logic                       flush,
-    input   var     rename_instr_t              IN_instr            	[RENAME_WIDTH],
-    input           logic                       ALU_buffer_busy     	[NUM_ALU_FU],
-    input           logic                       MUL_DIV_buffer_busy	[NUM_MUL_DIV_FU],
-    input           logic                       LSU_buffer_busy 	[NUM_AGU_FU],
+    input   var     rename_instr_t              IN_instr            [RENAME_WIDTH],
+    input           logic                       ALU_buffer_busy     [NUM_ALU_FU],
+    input           logic                       MUL_DIV_buffer_busy [NUM_MUL_DIV_FU],
+    input           logic                       LSU_buffer_busy     [NUM_AGU_FU],
     input           logic                       LSU_busy,
     output          logic                       OUT_busy,
-    output          alu_dispatch_instr_t        OUT_alu_instr       	[NUM_ALU_FU],
-    output          mul_div_dispatch_instr_t    OUT_mul_div_instr 	[NUM_MUL_DIV_FU],
-    output          lsu_dispatch_instr_t        OUT_lsu_instr		[NUM_AGU_FU]
+    output          alu_dispatch_instr_t        OUT_alu_instr       [NUM_ALU_FU],
+    output          mul_div_dispatch_instr_t    OUT_mul_div_instr   [NUM_MUL_DIV_FU],
+    output          lsu_dispatch_instr_t        OUT_lsu_instr       [NUM_AGU_FU]
 );
 
-    // ── Held packet ──────────────────────────────────────────
-    rename_instr_t  packet      [RENAME_WIDTH]; // This is sampled sequentially, can be combinational.
+    // ════════════════════════════════════════════════════
+    // 1. State
+    // ════════════════════════════════════════════════════
+
+    rename_instr_t  packet      [RENAME_WIDTH];
     logic           dispatched  [RENAME_WIDTH];
 
-    // ── Downstream ready ─────────────────────────────────────
+
+    // ════════════════════════════════════════════════════
+    // 2. Downstream ready
+    // ════════════════════════════════════════════════════
+
     logic alu_ready [NUM_ALU_FU];
     logic mul_ready [NUM_MUL_DIV_FU];
     logic lsu_ready [NUM_AGU_FU];
 
-    assign alu_ready[0] = !ALU_buffer_busy[0];
-    assign alu_ready[1] = !ALU_buffer_busy[1];
-    assign mul_ready    = !MUL_DIV_buffer_busy;
-    assign lsu_ready    = !LSU_buffer_busy && !LSU_busy;
+    for (genvar i = 0; i < NUM_ALU_FU;     i++) assign alu_ready[i] = !ALU_buffer_busy[i];
+    for (genvar i = 0; i < NUM_MUL_DIV_FU; i++) assign mul_ready[i] = !MUL_DIV_buffer_busy[i];
+    for (genvar i = 0; i < NUM_AGU_FU;     i++) assign lsu_ready[i] = !LSU_buffer_busy[i] && !LSU_busy;
 
-    // ── packet_done ──────────────────────────────────────────
-    logic packet_done;
-    always_comb begin
-        packet_done = 1'b1;
-        for (int i = 0; i < RENAME_WIDTH; i++)
-            if (packet[i].valid && !dispatched[i])
-                packet_done = 1'b0;
-    end
 
-    assign OUT_busy = !packet_done;
+    // ════════════════════════════════════════════════════
+    // 3. Slot classification
+    //    Determine type of each pending packet slot.
+    // ════════════════════════════════════════════════════
 
-    // ── Explicit slot classification ─────────────────────────
-    // Determine what type each packet slot is, only if pending.
-    // No automatic variables — pure combinational logic.
-    logic slot_is_alu     [RENAME_WIDTH];
-    logic slot_is_mul     [RENAME_WIDTH];
-    logic slot_is_lsu     [RENAME_WIDTH];
-    logic slot_pending    [RENAME_WIDTH];
+    logic slot_pending [RENAME_WIDTH];
+    logic slot_is_alu  [RENAME_WIDTH];
+    logic slot_is_mul  [RENAME_WIDTH];
+    logic slot_is_lsu  [RENAME_WIDTH];
 
     for (genvar i = 0; i < RENAME_WIDTH; i++) begin : g_slot_class
         assign slot_pending[i] = packet[i].valid && !dispatched[i];
@@ -56,129 +54,177 @@ module dispatch_unit
         assign slot_is_lsu[i]  = slot_pending[i] && (packet[i].f_unit == LSU);
     end
 
-    // ── ALU slot assignment ──────────────────────────────────
-    // slot 0 of packet → ALU port 0, slot 1 → ALU port 1
-    // If slot 0 is not ALU but slot 1 is, slot 1 gets port 0.
-    logic [$clog2(NUM_ALU_FU):0] 	alu_port 	[NUM_ALU_FU]; // which ALU port each slot maps to
-    logic       			alu_port_valid 	[NUM_ALU_FU];
+
+    // ════════════════════════════════════════════════════
+    // 4. Port assignment
+    //
+    //    For each FU port, scan packet slots in order and
+    //    take the first pending matching slot not already
+    //    claimed by an earlier port of the same FU type.
+    //
+    //    alu_slot[p] = which packet slot drives ALU port p
+    //    mul_slot[p] = which packet slot drives MUL port p
+    //    lsu_slot[p] = which packet slot drives LSU port p
+    //    *_valid[p]  = port p has a valid assignment
+    //
+    //    The "already claimed" mask is built by walking
+    //    ports 0..p-1 and marking their assigned slots.
+    // ════════════════════════════════════════════════════
+
+    logic [$clog2(RENAME_WIDTH)-1:0] alu_slot  [NUM_ALU_FU];
+    logic                            alu_valid  [NUM_ALU_FU];
+    logic [$clog2(RENAME_WIDTH)-1:0] mul_slot  [NUM_MUL_DIV_FU];
+    logic                            mul_valid  [NUM_MUL_DIV_FU];
+    logic [$clog2(RENAME_WIDTH)-1:0] lsu_slot  [NUM_AGU_FU];
+    logic                            lsu_valid  [NUM_AGU_FU];
 
     always_comb begin
-        alu_port[0]      = 2'd0;
-        alu_port[1]      = 2'd1;
-        alu_port_valid[0] = 1'b0;
-        alu_port_valid[1] = 1'b0;
+        // ── ALU ─────────────────────────────────────────
+        // claimed_alu[s] = slot s already assigned to a lower ALU port
+        logic claimed_alu [RENAME_WIDTH];
+        for (int s = 0; s < RENAME_WIDTH; s++) claimed_alu[s] = 1'b0;
 
-        // First pending ALU slot gets port 0, second gets port 1
-        if (slot_is_alu[0] && slot_is_alu[1]) begin
-            alu_port[0]       = 2'd0;
-            alu_port[1]       = 2'd1;
-            alu_port_valid[0] = alu_ready[0];
-            alu_port_valid[1] = alu_ready[1];
-        end else if (slot_is_alu[0]) begin
-            alu_port[0]       = 2'd0;
-            alu_port_valid[0] = alu_ready[0];
-        end else if (slot_is_alu[1]) begin
-            alu_port[1]       = 2'd0;  // only one ALU, takes port 0
-            alu_port_valid[1] = alu_ready[0];
+        for (int p = 0; p < NUM_ALU_FU; p++) begin
+            alu_slot[p]  = '0;
+            alu_valid[p] = 1'b0;
+            for (int s = 0; s < RENAME_WIDTH; s++) begin
+                if (slot_is_alu[s] && !claimed_alu[s] && alu_ready[p] && !alu_valid[p]) begin
+                    alu_slot[p]  = $clog2(RENAME_WIDTH)'(s);
+                    alu_valid[p] = 1'b1; 
+                end
+            end
+            // Mark this port's slot as claimed for subsequent ports
+            if (alu_valid[p]) claimed_alu[alu_slot[p]] = 1'b1;
+        end
+
+        // ── MUL ─────────────────────────────────────────
+        logic claimed_mul [RENAME_WIDTH];
+        for (int s = 0; s < RENAME_WIDTH; s++) claimed_mul[s] = 1'b0;
+
+        for (int p = 0; p < NUM_MUL_DIV_FU; p++) begin
+            mul_slot[p]  = '0;
+            mul_valid[p] = 1'b0;
+            for (int s = 0; s < RENAME_WIDTH; s++) begin
+                if (slot_is_mul[s] && !claimed_mul[s] && mul_ready[p] && !mul_valid[p]) begin
+                    mul_slot[p]  = $clog2(RENAME_WIDTH)'(s);
+                    mul_valid[p] = 1'b1;
+                end
+            end
+            if (mul_valid[p]) claimed_mul[mul_slot[p]] = 1'b1;
+        end
+
+        // ── LSU ─────────────────────────────────────────
+        logic claimed_lsu [RENAME_WIDTH];
+        for (int s = 0; s < RENAME_WIDTH; s++) claimed_lsu[s] = 1'b0;
+
+        for (int p = 0; p < NUM_AGU_FU; p++) begin
+            lsu_slot[p]  = '0;
+            lsu_valid[p] = 1'b0;
+            for (int s = 0; s < RENAME_WIDTH; s++) begin
+                if (slot_is_lsu[s] && !claimed_lsu[s] && lsu_ready[p] && !lsu_valid[p]) begin
+                    lsu_slot[p]  = $clog2(RENAME_WIDTH)'(s);
+                    lsu_valid[p] = 1'b1;
+                end
+            end
+            if (lsu_valid[p]) claimed_lsu[lsu_slot[p]] = 1'b1;
         end
     end
 
-    // ── MUL: first pending MUL slot wins this cycle ──────────
-    logic [$clog2(NUM_MUL_DIV_FU):0] 	mul_slot 	[NUM_MUL_DIV_FU]; // which packet slot drives MUL output
-    logic 				mul_valid 	[NUM_MUL_DIV_FU];
 
-    always_comb begin
-        mul_slot  = '0;
-        mul_valid = 1'b0;
-        if      (slot_is_mul[0] && mul_ready) begin mul_slot = 0; mul_valid = 1'b1; end
-        else if (slot_is_mul[1] && mul_ready) begin mul_slot = 1; mul_valid = 1'b1; end
-    end
+    // ════════════════════════════════════════════════════
+    // 5. can_dispatch
+    //    A slot can be dispatched this cycle if any FU
+    //    port has been assigned to it.
+    // ════════════════════════════════════════════════════
 
-    // ── LSU: first pending LSU slot wins this cycle ──────────
-    logic [$clog2(NUM_AGU_FU):0] lsu_slot 	[NUM_AGU_FU];
-    logic 			 lsu_valid 	[NUM_AGU_FU];
-
-    always_comb begin
-        lsu_slot  = '0;
-        lsu_valid = 1'b0;
-        if      (slot_is_lsu[0] && lsu_ready) begin lsu_slot = 0; lsu_valid = 1'b1; end
-        else if (slot_is_lsu[1] && lsu_ready) begin lsu_slot = 1; lsu_valid = 1'b1; end
-    end
-
-    // ── can_dispatch ─────────────────────────────────────────
     logic can_dispatch [RENAME_WIDTH];
 
     always_comb begin
-        can_dispatch[0] = 1'b0;
-        can_dispatch[1] = 1'b0;
-
-        // ALU
-        if (slot_is_alu[0] && alu_port_valid[0]) can_dispatch[0] = 1'b1;
-        if (slot_is_alu[1] && alu_port_valid[1]) can_dispatch[1] = 1'b1;
-        // Single ALU case — slot 1 on port 0
-        if (slot_is_alu[1] && !slot_is_alu[0] && alu_port_valid[1])
-            can_dispatch[1] = 1'b1;
-
-        // MUL
-        if (mul_valid) can_dispatch[mul_slot] = 1'b1;
-
-        // LSU
-        if (lsu_valid) can_dispatch[lsu_slot] = 1'b1;
+        for (int s = 0; s < RENAME_WIDTH; s++) can_dispatch[s] = 1'b0;
+        for (int p = 0; p < NUM_ALU_FU;     p++) if (alu_valid[p]) can_dispatch[alu_slot[p]] = 1'b1;
+        for (int p = 0; p < NUM_MUL_DIV_FU; p++) if (mul_valid[p]) can_dispatch[mul_slot[p]] = 1'b1;
+        for (int p = 0; p < NUM_AGU_FU;     p++) if (lsu_valid[p]) can_dispatch[lsu_slot[p]] = 1'b1;
     end
 
-    // ── Output drive ─────────────────────────────────────────
+
+    // ════════════════════════════════════════════════════
+    // 6. packet_done / OUT_busy
+    // ════════════════════════════════════════════════════
+
+    logic packet_done;
+    always_comb begin
+        packet_done = 1'b1;
+        for (int i = 0; i < RENAME_WIDTH; i++)
+            if (slot_pending[i]) packet_done = 1'b0;
+    end
+
+    assign OUT_busy = !packet_done;
+
+
+    // ════════════════════════════════════════════════════
+    // 7. Output drive (combinational)
+    // ════════════════════════════════════════════════════
+
     always_comb begin
         OUT_alu_instr     = '{default: '0};
         OUT_mul_div_instr = '{default: '0};
         OUT_lsu_instr     = '{default: '0};
 
-        // ALU outputs
-        for (int i = 0; i < RENAME_WIDTH; i++) begin
-            if (slot_is_alu[i] && can_dispatch[i]) begin
-                OUT_alu_instr[alu_port[i]].valid     = 1'b1;
-                OUT_alu_instr[alu_port[i]].sqN       = packet[i].sqN;
-                OUT_alu_instr[alu_port[i]].pc        = packet[i].pc;
-                OUT_alu_instr[alu_port[i]].f_unit    = packet[i].f_unit;
-                OUT_alu_instr[alu_port[i]].oper      = packet[i].oper;
-                OUT_alu_instr[alu_port[i]].rs1_tag   = packet[i].rs1_tag;
-                OUT_alu_instr[alu_port[i]].rs2_tag   = packet[i].rs2_tag;
-                OUT_alu_instr[alu_port[i]].rd_tag    = packet[i].rd_tag;
-                OUT_alu_instr[alu_port[i]].imm       = packet[i].imm;
-                OUT_alu_instr[alu_port[i]].is_imm    = packet[i].is_imm;
-                OUT_alu_instr[alu_port[i]].jump_type = packet[i].jump_type;
-                OUT_alu_instr[alu_port[i]].br_type   = packet[i].br_type;
-                OUT_alu_instr[alu_port[i]].u_type    = packet[i].u_type;
+        // ALU
+        for (int p = 0; p < NUM_ALU_FU; p++) begin
+            if (alu_valid[p]) begin
+                OUT_alu_instr[p].valid     = 1'b1;
+                OUT_alu_instr[p].sqN       = packet[alu_slot[p]].sqN;
+                OUT_alu_instr[p].pc        = packet[alu_slot[p]].pc;
+                OUT_alu_instr[p].f_unit    = packet[alu_slot[p]].f_unit;
+                OUT_alu_instr[p].oper      = packet[alu_slot[p]].oper;
+                OUT_alu_instr[p].rs1_tag   = packet[alu_slot[p]].rs1_tag;
+                OUT_alu_instr[p].rs2_tag   = packet[alu_slot[p]].rs2_tag;
+                OUT_alu_instr[p].rd_tag    = packet[alu_slot[p]].rd_tag;
+                OUT_alu_instr[p].imm       = packet[alu_slot[p]].imm;
+                OUT_alu_instr[p].is_imm    = packet[alu_slot[p]].is_imm;
+                OUT_alu_instr[p].jump_type = packet[alu_slot[p]].jump_type;
+                OUT_alu_instr[p].br_type   = packet[alu_slot[p]].br_type;
+                OUT_alu_instr[p].u_type    = packet[alu_slot[p]].u_type;
             end
         end
 
-        // MUL output
-        if (mul_valid) begin
-            OUT_mul_div_instr.valid   = 1'b1;
-            OUT_mul_div_instr.sqN     = packet[mul_slot].sqN;
-            OUT_mul_div_instr.pc      = packet[mul_slot].pc;
-            OUT_mul_div_instr.f_unit  = packet[mul_slot].f_unit;
-            OUT_mul_div_instr.oper    = packet[mul_slot].oper;
-            OUT_mul_div_instr.rs1_tag = packet[mul_slot].rs1_tag;
-            OUT_mul_div_instr.rs2_tag = packet[mul_slot].rs2_tag;
-            OUT_mul_div_instr.rd_tag  = packet[mul_slot].rd_tag;
+        // MUL
+        for (int p = 0; p < NUM_MUL_DIV_FU; p++) begin
+            if (mul_valid[p]) begin
+                OUT_mul_div_instr[p].valid   = 1'b1;
+                OUT_mul_div_instr[p].sqN     = packet[mul_slot[p]].sqN;
+                OUT_mul_div_instr[p].pc      = packet[mul_slot[p]].pc;
+                OUT_mul_div_instr[p].f_unit  = packet[mul_slot[p]].f_unit;
+                OUT_mul_div_instr[p].oper    = packet[mul_slot[p]].oper;
+                OUT_mul_div_instr[p].rs1_tag = packet[mul_slot[p]].rs1_tag;
+                OUT_mul_div_instr[p].rs2_tag = packet[mul_slot[p]].rs2_tag;
+                OUT_mul_div_instr[p].rd_tag  = packet[mul_slot[p]].rd_tag;
+            end
         end
 
-        // LSU output
-        if (lsu_valid) begin
-            OUT_lsu_instr.valid   = 1'b1;
-            OUT_lsu_instr.sqN     = packet[lsu_slot].sqN;
-            OUT_lsu_instr.pc      = packet[lsu_slot].pc;
-            OUT_lsu_instr.f_unit  = packet[lsu_slot].f_unit;
-            OUT_lsu_instr.oper    = packet[lsu_slot].oper;
-            OUT_lsu_instr.rs1_tag = packet[lsu_slot].rs1_tag;
-            OUT_lsu_instr.rs2_tag = packet[lsu_slot].rs2_tag;
-            OUT_lsu_instr.rd_tag  = packet[lsu_slot].rd_tag;
-            OUT_lsu_instr.imm     = packet[lsu_slot].imm;
-            OUT_lsu_instr.is_imm  = packet[lsu_slot].is_imm;
+        // LSU
+        for (int p = 0; p < NUM_AGU_FU; p++) begin
+            if (lsu_valid[p]) begin
+                OUT_lsu_instr[p].valid   = 1'b1;
+                OUT_lsu_instr[p].sqN     = packet[lsu_slot[p]].sqN;
+                OUT_lsu_instr[p].pc      = packet[lsu_slot[p]].pc;
+                OUT_lsu_instr[p].f_unit  = packet[lsu_slot[p]].f_unit;
+                OUT_lsu_instr[p].oper    = packet[lsu_slot[p]].oper;
+                OUT_lsu_instr[p].rs1_tag = packet[lsu_slot[p]].rs1_tag;
+                OUT_lsu_instr[p].rs2_tag = packet[lsu_slot[p]].rs2_tag;
+                OUT_lsu_instr[p].rd_tag  = packet[lsu_slot[p]].rd_tag;
+                OUT_lsu_instr[p].imm     = packet[lsu_slot[p]].imm;
+                OUT_lsu_instr[p].is_imm  = packet[lsu_slot[p]].is_imm;
+            end
         end
     end
 
-    // ── Sequential ───────────────────────────────────────────
+
+    // ════════════════════════════════════════════════════
+    // 8. Sequential
+    // ════════════════════════════════════════════════════
+
     always_ff @(posedge clk) begin
         if (rst || flush) begin
             for (int i = 0; i < RENAME_WIDTH; i++) begin
@@ -186,10 +232,11 @@ module dispatch_unit
                 dispatched[i] <= 1'b0;
             end
         end else begin
+            // Mark slots dispatched this cycle
             for (int i = 0; i < RENAME_WIDTH; i++)
-                if (can_dispatch[i])
-                    dispatched[i] <= 1'b1;
+                if (can_dispatch[i]) dispatched[i] <= 1'b1;
 
+            // Load new packet when current one is fully dispatched
             if (packet_done) begin
                 for (int i = 0; i < RENAME_WIDTH; i++) begin
                     packet[i]     <= IN_instr[i];
