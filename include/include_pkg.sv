@@ -245,5 +245,60 @@ typedef struct packed {
     logic                        valid;
 } agu_out_t;
 
+typedef struct packed {
+    logic               valid;
+    sqN_t               sqN;
+    logic [1:0]         data_size;
+} stb_alloc_t;  // Dispatch to Store Buffer
+
+typedef struct packed {
+    logic               valid;
+    sqN_t               sqN;
+    logic [XLEN - 1:0]  addr;
+    logic [XLEN - 1:0]  data;
+} stb_wb_t;    // AGU to Store Buffer (write-back)
+
+typedef struct packed {
+    logic               valid;
+    sqN_t               sqN;
+    tag_t               rd_tag;
+    logic [1:0]         data_size;
+    logic               is_unsigned;
+} ldb_alloc_t;  // Dispatch to Load Buffer    
+
+typedef struct packed {
+    logic               valid;
+    sqN_t               sqN;
+    logic [XLEN - 1:0]  addr;
+} ldb_addr_t;   // AGU to Load Buffer (write-back)
+
+typedef struct packed {
+    logic               valid;  // If data and address fields are valid
+    sqN_t               sqN;
+    logic [XLEN - 1:0]  addr;
+    logic [XLEN - 1:0]  data;
+} stb_fwd_entry_t;   // Store Buffer to Load Buffer forwarding entry
+
+typedef struct packed {
+    logic               valid;
+    logic [XLEN - 1:0]  wr_addr;
+    logic [XLEN - 1:0]  data;
+    logic [1:0]         data_size;
+} stb_mem_req_t;  // Store Buffer to Data Memory request
+
+typedef struct packed {
+    logic               valid;
+    sqN_t               sqN;
+    logic [XLEN - 1:0]  r_addr;
+    logic [1:0]         data_size;
+    logic               is_unsigned;
+} ldb_mem_req_t;  // Load Buffer to Data Memory request
+
+typedef struct packed {
+    logic               valid;
+    sqN_t               sqN;
+    logic [XLEN - 1:0]  data;
+} dmem_resp_t;   // Data Memory to Load Buffer response
+
 endpackage : include_pkg
 `endif  
