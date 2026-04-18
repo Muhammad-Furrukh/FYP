@@ -17,7 +17,7 @@ module dispatch_unit
 );
 
     // ── Held packet ──────────────────────────────────────────
-    rename_instr_t  packet      [RENAME_WIDTH];
+    rename_instr_t  packet      [RENAME_WIDTH]; // This is sampled sequentially, can be combinational.
     logic           dispatched  [RENAME_WIDTH];
 
     // ── Downstream ready ─────────────────────────────────────
