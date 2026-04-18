@@ -5,15 +5,15 @@ module dispatch_unit
     input           logic                       clk,
     input           logic                       rst,
     input           logic                       flush,
-    input   var     rename_instr_t              IN_instr            [RENAME_WIDTH],
-    input           logic                       ALU_buffer_busy     [2],
-    input           logic                       MUL_DIV_buffer_busy,
-    input           logic                       LSU_buffer_busy,
+    input   var     rename_instr_t              IN_instr            	[RENAME_WIDTH],
+    input           logic                       ALU_buffer_busy     	[NUM_ALU_FU],
+    input           logic                       MUL_DIV_buffer_busy	[NUM_MUL_DIV_FU],
+    input           logic                       LSU_buffer_busy 	[NUM_AGU_FU],
     input           logic                       LSU_busy,
     output          logic                       OUT_busy,
-    output          alu_dispatch_instr_t        OUT_alu_instr       [2],
-    output          mul_div_dispatch_instr_t    OUT_mul_div_instr,
-    output          lsu_dispatch_instr_t        OUT_lsu_instr
+    output          alu_dispatch_instr_t        OUT_alu_instr       	[NUM_ALU_FU],
+    output          mul_div_dispatch_instr_t    OUT_mul_div_instr 	[NUM_MUL_DIV_FU],
+    output          lsu_dispatch_instr_t        OUT_lsu_instr		[NUM_AGU_FU]
 );
 
     // ── Held packet ──────────────────────────────────────────
@@ -21,9 +21,9 @@ module dispatch_unit
     logic           dispatched  [RENAME_WIDTH];
 
     // ── Downstream ready ─────────────────────────────────────
-    logic alu_ready [2];
-    logic mul_ready;
-    logic lsu_ready;
+    logic alu_ready [NUM_ALU_FU];
+    logic mul_ready [NUM_MUL_DIV_FU];
+    logic lsu_ready [NUM_AGU_FU];
 
     assign alu_ready[0] = !ALU_buffer_busy[0];
     assign alu_ready[1] = !ALU_buffer_busy[1];
@@ -59,8 +59,8 @@ module dispatch_unit
     // ── ALU slot assignment ──────────────────────────────────
     // slot 0 of packet → ALU port 0, slot 1 → ALU port 1
     // If slot 0 is not ALU but slot 1 is, slot 1 gets port 0.
-    logic [1:0] alu_port [RENAME_WIDTH]; // which ALU port each slot maps to
-    logic       alu_port_valid [2];
+    logic [$clog2(NUM_ALU_FU):0] 	alu_port 	[NUM_ALU_FU]; // which ALU port each slot maps to
+    logic       			alu_port_valid 	[NUM_ALU_FU];
 
     always_comb begin
         alu_port[0]      = 2'd0;
@@ -84,8 +84,8 @@ module dispatch_unit
     end
 
     // ── MUL: first pending MUL slot wins this cycle ──────────
-    logic mul_slot; // which packet slot drives MUL output
-    logic mul_valid;
+    logic [$clog2(NUM_MUL_DIV_FU):0] 	mul_slot 	[NUM_MUL_DIV_FU]; // which packet slot drives MUL output
+    logic 				mul_valid 	[NUM_MUL_DIV_FU];
 
     always_comb begin
         mul_slot  = '0;
@@ -95,8 +95,8 @@ module dispatch_unit
     end
 
     // ── LSU: first pending LSU slot wins this cycle ──────────
-    logic lsu_slot;
-    logic lsu_valid;
+    logic [$clog2(NUM_AGU_FU):0] lsu_slot 	[NUM_AGU_FU];
+    logic 			 lsu_valid 	[NUM_AGU_FU];
 
     always_comb begin
         lsu_slot  = '0;
