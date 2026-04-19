@@ -17,7 +17,7 @@ module issue
     input  var  logic                               CDB_valid         [ISSUE_WIDTH],
     output      issue_instr_t                       OUT_instr         [NUM_INT_FU],
     output      lsu_issue_instr_t                   OUT_lsu_instr,
-    output      br_type_t                           OUT_br_type       [NUM_ALU_FU],
+    output      logic                               OUT_br_taken      [NUM_ALU_FU],
     output      jump_type_t                         OUT_jump_type     [NUM_ALU_FU],
     output      tag_t                               check_ready       [ISSUE_WIDTH][2],
     output      tag_t                               read_tag          [ISSUE_WIDTH][2],
@@ -25,7 +25,6 @@ module issue
     output      logic                               jump2    
 );
 
-    logic            br_taken       [NUM_ALU_FU];
     pc_t             pc             [NUM_ALU_FU];
     sqN_t            instr_sqN      [NUM_ALU_FU];
     logic [XLEN-1:0] alu_rs1_result [NUM_ALU_FU];
@@ -46,8 +45,7 @@ module issue
             .CDB_tag(CDB_tag),
             .CDB_valid(CDB_valid),
             .OUT_instr(OUT_instr[i]),
-            .OUT_br_type(OUT_br_type[i]),
-            .OUT_br_taken(br_taken[i]),
+            .OUT_br_taken(OUT_br_taken[i]),
             .OUT_jump_type(OUT_jump_type[i]),
             .OUT_pc(pc[i]),
             .rs1_result(alu_rs1_result[i]),
@@ -105,7 +103,7 @@ module issue
 
     ta_gen2 ta_gen2
     (
-        .br_taken(br_taken),
+        .br_taken(OUT_br_taken),
         .jump_type(OUT_jump_type),
         .instr_sqN(instr_sqN),
         .pc(pc),

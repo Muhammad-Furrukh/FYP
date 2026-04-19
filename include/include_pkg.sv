@@ -226,8 +226,6 @@ typedef struct packed {
     logic [XLEN - 1:0]  result;
 } CDB_line_t;
 
-CDB_line_t CDB [NUM_CDB_LINES];
-
 typedef struct packed {
     logic               valid;
     sqN_t               sqN;

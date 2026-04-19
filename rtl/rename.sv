@@ -12,15 +12,17 @@ module rename
     input  var  logic             IN_free        [2**REG_ADDR_WIDTH],
     input  var  commit_packet_t   commit_packet  [COMMIT_WIDTH],
     input  var  decode_instr_t    IN_instr       [DECODE_WIDTH],
-    input  var  tag_t             CDB_tag        [ISSUE_WIDTH],
-    input  var  logic             CDB_valid      [ISSUE_WIDTH],
+    input  var  tag_t             CDB_tag        [NUM_CDB_LINES],
+    input  var  logic             CDB_valid      [NUM_CDB_LINES],
     input  var  tag_t             read_tag       [ISSUE_WIDTH][2],
     output      rename_instr_t    OUT_instr      [DECODE_WIDTH],
     output      logic             reg_ready      [ISSUE_WIDTH][2],
     output      logic             chkpt          [DECODE_WIDTH],
     output      sqN_t             chkpt_sqN      [DECODE_WIDTH],
     output      tag_t             chkpt_specTag  [DECODE_WIDTH][32],
-    output      logic             chkpt_free     [DECODE_WIDTH][2**REG_ADDR_WIDTH]
+    output      logic             chkpt_free     [DECODE_WIDTH][2**REG_ADDR_WIDTH],
+    output      logic             OUT_busy,
+    output      logic  [4:0]      OUT_rd         [DECODE_WIDTH]
 );
 
     // ════════════════════════════════════════════════════
@@ -129,9 +131,10 @@ module rename
     end
 
     logic stall;
-    assign stall = ROB_busy || dispatch_busy
-                || (free_count < NUM_REG'(req_count))
-                || (chkpt_busy && chkpt_need);
+    assign stall    = ROB_busy || dispatch_busy
+                      || (free_count < NUM_REG'(req_count))
+                      || (chkpt_busy && chkpt_need);
+    assign OUT_busy = stall;
 
 
     // ════════════════════════════════════════════════════
@@ -179,8 +182,10 @@ module rename
     // Cleared on rst/flush. Held on stall. Written otherwise.
     always_ff @(posedge clk) begin
         if (rst || flush) begin
-            for (int i = 0; i < DECODE_WIDTH; i++)
+            for (int i = 0; i < DECODE_WIDTH; i++) begin
                 OUT_instr[i] <= '0;
+                OUT_rd[i]    <= '0;
+            end
 
         end else if (!stall) begin
             for (int i = 0; i < DECODE_WIDTH; i++) begin
@@ -197,6 +202,7 @@ module rename
                 OUT_instr[i].jump_type <= IN_instr[i].jump_type;
                 OUT_instr[i].br_type   <= IN_instr[i].br_type;
                 OUT_instr[i].u_type    <= IN_instr[i].u_type;
+                OUT_rd[i]              <= IN_instr[i].rd;
             end
         end
         // stall: outputs hold implicitly
