@@ -26,6 +26,10 @@ module store_buffer (
     // Busy (full) signal
     output logic             str_busy
 );
+    localparam PTR_W = $clog2(STOREB_SIZE);
+    localparam [PTR_W - 1:0] PTR_MASK = (1 << PTR_W) - 1;
+    localparam SQN_W = $clog2(ROB_SIZE) + 1;
+    localparam [SQN_W - 1:0] SQN_MASK = (1 << SQN_W) - 1;
 
     // --------------------------------------------------------
     // Entry definition
@@ -49,7 +53,7 @@ module store_buffer (
     logic [$clog2(STOREB_SIZE)-1:0] drain_ptr;
     logic [$clog2(STOREB_SIZE):0]   count;
 
-    assign str_busy = (count == STOREB_SIZE);
+    assign str_busy = (count == STOREB_SIZE - 1);
 
     // --------------------------------------------------------
     // Forwarding broadcast: expose all valid entries to Load Buffer
@@ -70,17 +74,49 @@ module store_buffer (
     always_comb begin
         mem_req[0] = '0;
         mem_req[1] = '0;
-        int found = 0;
-        for (int i = 0; i < STOREB_SIZE && found < 2; i++) begin
-            automatic int idx = (drain_ptr + i) % STOREB_SIZE;
-            if (entries[idx].valid &&
-                entries[idx].committed &&
+        for (int i = 0; i < 2; i++) begin
+            automatic int idx = (drain_ptr + i) & (STOREB_SIZE - 1);
+            if (entries[idx].valid && entries[idx].committed &&
                 entries[idx].addr_data_valid) begin
-                mem_req[found].valid     = 1'b1;
-                mem_req[found].wr_addr   = entries[idx].addr;
-                mem_req[found].data      = entries[idx].data;
-                mem_req[found].data_size = entries[idx].data_size;
-                found++;
+                mem_req[i].valid     = 1'b1;
+                mem_req[i].wr_addr   = entries[idx].addr;
+                mem_req[i].data      = entries[idx].data;
+                mem_req[i].data_size = entries[idx].data_size;
+            end
+        end
+    end
+
+    logic [PTR_W-1:0]        new_tail;
+    logic [STOREB_SIZE-1:0]  on_flush_valid;
+    always_comb begin
+        // -------------------------
+        // Defaults (avoid latches)
+        // -------------------------
+        new_tail       = tail_ptr;
+        on_flush_valid = '0;
+        if (flush) begin
+            logic [PTR_W-1:0] idx;
+
+            // assume empty unless we find valid ones
+            new_tail = drain_ptr;
+
+            for (int i = 0; i < STOREB_SIZE; i++) begin
+                idx = (drain_ptr + i) & PTR_MASK;
+                
+                if (idx == tail_ptr)
+                    break;
+
+                if (entries[idx].valid &&
+                    ((flush_sqN - entries[idx].sqN) & SQN_MASK) < ROB_SIZE) begin
+                    // keep this entry
+                    on_flush_valid[idx] = 1'b1;
+                    // move tail to NEXT slot
+                    new_tail = (idx + 1) & PTR_MASK;
+                end
+
+                else begin
+                    on_flush_valid[idx] = 1'b0;
+                end
             end
         end
     end
@@ -92,72 +128,76 @@ module store_buffer (
         if (rst) begin
             tail_ptr  <= '0;
             drain_ptr <= '0;
-            count     <= '0;
+
             for (int i = 0; i < STOREB_SIZE; i++)
                 entries[i] <= '0;
+        end 
 
-        end else begin
+        // =====================
+        // FLUSH (exclusive)
+        // =====================
+        else if (flush) begin
+            tail_ptr <= new_tail;
+        end
 
-            // -- Flush: invalidate all entries newer than flush_sqN --
-            if (flush) begin
-                for (int i = 0; i < STOREB_SIZE; i++) begin
-                    if (entries[i].valid &&
-                        $signed({1'b0, entries[i].sqN} - {1'b0, flush_sqN}) > 0) begin
-                        entries[i].valid <= 1'b0;
-                        count <= count - 1;
-                    end
-                end
-                // Rewind tail to flush boundary
-                tail_ptr <= drain_ptr; // recalculated below if needed
+        // =====================
+        // NORMAL OPERATION
+        // =====================
+        else begin
+            logic [PTR_W:0] drain_inc;
+
+            // ---------------------
+            // ALLOCATE
+            // ---------------------
+            if (alloc.valid && !str_busy) begin
+                entries[tail_ptr] <= '{
+                    addr_data_valid: 1'b0,
+                    committed      : 1'b0,
+                    sqN            : alloc.sqN,
+                    data_size      : alloc.data_size,
+                    addr           : '0,
+                    data           : '0
+                };
+
+                tail_ptr <= (tail_ptr + 1) & PTR_MASK;
             end
 
-            // -- Allocate: new store dispatched --
-            if (alloc.valid && !str_busy && !flush) begin
-                entries[tail_ptr].valid          <= 1'b1;
-                entries[tail_ptr].addr_data_valid <= 1'b0;
-                entries[tail_ptr].committed      <= 1'b0;
-                entries[tail_ptr].sqN            <= alloc.sqN;
-                entries[tail_ptr].data_size      <= alloc.data_size;
-                entries[tail_ptr].addr           <= '0;
-                entries[tail_ptr].data           <= '0;
-                tail_ptr <= tail_ptr + 1;
-                count    <= count + 1;
-            end
 
-            // -- AGU write-back: fill in addr + data for matching sqN --
+            // ---------------------
+            // AGU WRITEBACK
+            // ---------------------
             if (wb.valid) begin
                 for (int i = 0; i < STOREB_SIZE; i++) begin
-                    if (entries[i].valid && entries[i].sqN == wb.sqN) begin
-                        entries[i].addr           <= wb.addr;
-                        entries[i].data           <= wb.data;
+                    if ((entries[i].valid) && 
+                    (entries[i].sqN == wb.sqN)) begin
+                        entries[i].addr            <= wb.addr;
+                        entries[i].data            <= wb.data;
                         entries[i].addr_data_valid <= 1'b1;
                     end
                 end
             end
 
-            // -- Commit: mark entries whose sqN is being retired --
+
+            // ---------------------
+            // COMMIT
+            // ---------------------
             for (int c = 0; c < COMMIT_WIDTH; c++) begin
                 for (int i = 0; i < STOREB_SIZE; i++) begin
-                    if (entries[i].valid && !entries[i].committed &&
-                        entries[i].sqN == commit_sqN[c])
+                    if (entries[i].valid &&
+                        entries[i].sqN == commit_sqN[c]) begin
                         entries[i].committed <= 1'b1;
+                    end
                 end
             end
 
-            // -- Drain: free entries issued to memory this cycle --
-            // mem_req[0] always corresponds to drain_ptr (oldest),
-            // mem_req[1] to drain_ptr+1, so we can free them in order.
-            if (mem_req[0].valid) begin
-                entries[drain_ptr].valid <= 1'b0;
-                drain_ptr <= drain_ptr + 1;
-                count     <= count - 1;
 
-                if (mem_req[1].valid) begin
-                    entries[(drain_ptr + 1) % STOREB_SIZE].valid <= 1'b0;
-                    drain_ptr <= drain_ptr + 2;
-                    count     <= count - 2;
-                end
-            end
+            // ---------------------
+            // DRAIN
+            // ---------------------
+            drain_inc = mem_req[0].valid + mem_req[1].valid;
+
+            if (drain_inc != 0)
+                drain_ptr <= (drain_ptr + drain_inc) & PTR_MASK;
 
         end
     end
