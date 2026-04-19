@@ -28,8 +28,6 @@ module store_buffer (
 );
     localparam PTR_W = $clog2(STOREB_SIZE);
     localparam [PTR_W - 1:0] PTR_MASK = (1 << PTR_W) - 1;
-    localparam SQN_W = $clog2(ROB_SIZE) + 1;
-    localparam [SQN_W - 1:0] SQN_MASK = (1 << SQN_W) - 1;
 
     // --------------------------------------------------------
     // Entry definition
@@ -124,7 +122,7 @@ module store_buffer (
     // --------------------------------------------------------
     // Sequential logic
     // --------------------------------------------------------
-    always_ff @(posedge clk or posedge rst) begin
+    always_ff @(posedge clk) begin
         if (rst) begin
             tail_ptr  <= '0;
             drain_ptr <= '0;

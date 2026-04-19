@@ -23,9 +23,13 @@ parameter int unsigned LOADB_SIZE        = 16;
 parameter int unsigned NUM_ALU_FU        = 2;
 parameter int unsigned NUM_MUL_DIV_FU    = 1;
 parameter int unsigned NUM_AGU_FU        = 1;
+parameter int unsigned NUM_INT_FU = NUM_ALU_FU + NUM_MUL_DIV_FU;
 parameter int unsigned NUM_LD_BUFFER_WR_PORTS = 1;
 parameter int unsigned NUM_CDB_LINES     = NUM_ALU_FU + NUM_MUL_DIV_FU + 
                                             NUM_LD_BUFFER_WR_PORTS;
+parameter int unsigned SQN_W             = $clog2(ROB_SIZE) + 1;
+parameter [SQN_W - 1:0] SQN_MASK = (1 << SQN_W) - 1;
+
 
 //------------------------------------------------------------------
 // Simple typedefs
@@ -239,10 +243,11 @@ typedef struct packed {
 } rename_rob_t;
 
 typedef struct packed {
+    logic                        valid;
+    sqN_t                        sqN;
     pc_t                         target_addr;
     logic       [XLEN - 1:0]     store_data;
     lsu_oper_t                   oper;
-    logic                        valid;
 } agu_out_t;
 
 typedef struct packed {

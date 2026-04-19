@@ -1,6 +1,5 @@
 import include_pkg::*;
 
-parameter NUM_INT_FU = NUM_ALU_FU + NUM_MUL_DIV_FU;
 module issue
 (
     input       logic                               clk,
