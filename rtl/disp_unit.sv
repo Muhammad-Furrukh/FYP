@@ -72,10 +72,11 @@ module dispatch_unit
     // ════════════════════════════════════════════════════
 
     logic [$clog2(RENAME_WIDTH)-1:0] alu_slot  [NUM_ALU_FU];
-    logic                            alu_valid  [NUM_ALU_FU];
     logic [$clog2(RENAME_WIDTH)-1:0] mul_slot  [NUM_MUL_DIV_FU];
-    logic                            mul_valid  [NUM_MUL_DIV_FU];
     logic [$clog2(RENAME_WIDTH)-1:0] lsu_slot  [NUM_AGU_FU];
+    
+    logic                            alu_valid  [NUM_ALU_FU];
+    logic                            mul_valid  [NUM_MUL_DIV_FU];
     logic                            lsu_valid  [NUM_AGU_FU];
 
     always_comb begin
