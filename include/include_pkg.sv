@@ -23,13 +23,9 @@ parameter int unsigned LOADB_SIZE        = 16;
 parameter int unsigned NUM_ALU_FU        = 2;
 parameter int unsigned NUM_MUL_DIV_FU    = 1;
 parameter int unsigned NUM_AGU_FU        = 1;
-parameter int unsigned NUM_INT_FU = NUM_ALU_FU + NUM_MUL_DIV_FU;
 parameter int unsigned NUM_LD_BUFFER_WR_PORTS = 1;
 parameter int unsigned NUM_CDB_LINES     = NUM_ALU_FU + NUM_MUL_DIV_FU + 
                                             NUM_LD_BUFFER_WR_PORTS;
-parameter int unsigned SQN_W             = $clog2(ROB_SIZE) + 1;
-parameter [SQN_W - 1:0] SQN_MASK = (1 << SQN_W) - 1;
-
 
 //------------------------------------------------------------------
 // Simple typedefs
@@ -76,14 +72,14 @@ typedef enum logic [3:0] {
 } mul_div_oper_t;
 
 typedef enum logic [3:0] {
-    LSU_LB,
-    LSU_LH,
-    LSU_LW,
-    LSU_LBU,
-    LSU_LHU,
-    LSU_SB,
-    LSU_SH,
-    LSU_SW
+    LOAD_BYTE,
+    LOAD_HALF,
+    LOAD_WORD,
+    LOAD_BYTEU,
+    LOAD_HALFU,
+    STORE_BYTE,
+    STORE_HALF,
+    STORE_WORD
 } lsu_oper_t;
 
 typedef enum logic [3:0] {
@@ -226,82 +222,28 @@ typedef struct packed {
     logic [XLEN - 1:0]  result;
 } CDB_line_t;
 
+CDB_line_t CDB [NUM_CDB_LINES];
+
 typedef struct packed {
     logic               valid;
     sqN_t               sqN;
-    logic  [4:0]        archTag;
-    tag_t               comTag;
+    logic  [4:0]        archTag; // what user sees
+    tag_t               comTag;  // permanent mapping/tag
 } commit_packet_t;
 
 typedef struct packed {
     logic               valid;
     sqN_t               sqN;
-    logic  [4:0]        archTag;
-    tag_t               rd_tag;
+    logic  [4:0]        archTag; // what user sees
+    tag_t               rd_tag;  // our physical reg
 } rename_rob_t;
 
 typedef struct packed {
-    logic                        valid;
-    sqN_t                        sqN;
-    pc_t                         target_addr;
-    logic       [XLEN - 1:0]     store_data;
-    lsu_oper_t                   oper;
-} agu_out_t;
-
-typedef struct packed {
-    logic               valid;
-    sqN_t               sqN;
-    logic [1:0]         data_size;
-} stb_alloc_t;  // Dispatch to Store Buffer
-
-typedef struct packed {
-    logic               valid;
-    sqN_t               sqN;
-    logic [XLEN - 1:0]  addr;
-    logic [XLEN - 1:0]  data;
-} stb_wb_t;    // AGU to Store Buffer (write-back)
-
-typedef struct packed {
-    logic               valid;
-    sqN_t               sqN;
-    tag_t               rd_tag;
-    logic [1:0]         data_size;
-    logic               is_unsigned;
-} ldb_alloc_t;  // Dispatch to Load Buffer    
-
-typedef struct packed {
-    logic               valid;
-    sqN_t               sqN;
-    logic [XLEN - 1:0]  addr;
-} ldb_addr_t;   // AGU to Load Buffer (write-back)
-
-typedef struct packed {
-    logic               valid;  // If data and address fields are valid
-    sqN_t               sqN;
-    logic [XLEN - 1:0]  addr;
-    logic [XLEN - 1:0]  data;
-} stb_fwd_entry_t;   // Store Buffer to Load Buffer forwarding entry
-
-typedef struct packed {
-    logic               valid;
-    logic [XLEN - 1:0]  wr_addr;
-    logic [XLEN - 1:0]  data;
-    logic [1:0]         data_size;
-} stb_mem_req_t;  // Store Buffer to Data Memory request
-
-typedef struct packed {
-    logic               valid;
-    sqN_t               sqN;
-    logic [XLEN - 1:0]  r_addr;
-    logic [1:0]         data_size;
-    logic               is_unsigned;
-} ldb_mem_req_t;  // Load Buffer to Data Memory request
-
-typedef struct packed {
-    logic               valid;
-    sqN_t               sqN;
-    logic [XLEN - 1:0]  data;
-} dmem_resp_t;   // Data Memory to Load Buffer response
+  logic       ready;
+  logic [6:0] SqN;
+  logic [5:0] tag;
+  logic [4:0] rd;
+} rob_entry;
 
 endpackage : include_pkg
 `endif  
