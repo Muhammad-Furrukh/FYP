@@ -421,7 +421,7 @@
         <mxCell id="hVz2Koirkbf_-3uycq4o-80" value="(result + tag + sqN + CDB_valid)&amp;nbsp;&lt;div&gt;x 4&lt;/div&gt;" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="2804" y="1436" width="186" height="24.75" as="geometry" />
         </mxCell>
-        <mxCell id="hVz2Koirkbf_-3uycq4o-81" value="(br_type + jump_type + sqN) x 2" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" parent="1" vertex="1">
+        <mxCell id="hVz2Koirkbf_-3uycq4o-81" value="(br_taken + jump_type + sqN) x 2" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="2134" y="1411.5" width="100" height="46.5" as="geometry" />
         </mxCell>
         <mxCell id="hVz2Koirkbf_-3uycq4o-82" value="" style="endArrow=none;dashed=1;html=1;rounded=0;" parent="1" edge="1">
