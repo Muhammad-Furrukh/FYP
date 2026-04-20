@@ -1,19 +1,19 @@
 import include_pkg::*;
 
 module flushController (
-    input  logic         br_taken[2],
-    input  sqN_t         sqN[2],
-    input  jump_type_t   jump_type[2],
+    input  logic         br_taken [2],
+    input  sqN_t         sqN [2],
+    input  jump_type_t   jump_type [2],
 
     output logic         flush,
     output sqN_t         flush_sqN
 );
 
     always_comb begin
-        flush     = 1'b0;
-        flush_sqN = '0;
 
         logic valid0, valid1;
+        sqN_t diff;
+
 
         // branch , JALR  
         valid0 = br_taken[0] || (jump_type[0] == 2'b10);
@@ -21,8 +21,8 @@ module flushController (
 
         if (valid0 && valid1) begin
             flush = 1'b1;
-
-            if ((sqN[0] - sqN[1])[$bits(sqN_t)-1])
+            diff = sqN[0] - sqN[1];
+            if (diff[$bits(sqN_t)-1])
                 flush_sqN = sqN[0];
             else
                 flush_sqN = sqN[1];
