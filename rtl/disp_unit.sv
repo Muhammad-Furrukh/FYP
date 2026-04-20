@@ -20,8 +20,8 @@ module dispatch_unit
     // 1. State
     // ════════════════════════════════════════════════════
 
-    rename_instr_t  packet      [RENAME_WIDTH];
-    logic           dispatched  [RENAME_WIDTH];
+    rename_instr_t  packet     [RENAME_WIDTH];
+    logic           dispatched [RENAME_WIDTH];
 
 
     // ════════════════════════════════════════════════════
@@ -38,8 +38,11 @@ module dispatch_unit
 
 
     // ════════════════════════════════════════════════════
-    // 3. Slot classification
-    //    Determine type of each pending packet slot.
+    // 3. Slot classification — pending slots per FU type
+    //
+    //    alu_mask[s] = slot s is pending and is an ALU op
+    //    Similarly for mul/lsu.
+    //    These are plain assign — no loops, no feedback.
     // ════════════════════════════════════════════════════
 
     logic slot_pending [RENAME_WIDTH];
@@ -56,86 +59,113 @@ module dispatch_unit
 
 
     // ════════════════════════════════════════════════════
-    // 4. Port assignment
+    // 4. Port assignment — prefix-sum based, no loops
     //
-    //    For each FU port, scan packet slots in order and
-    //    take the first pending matching slot not already
-    //    claimed by an earlier port of the same FU type.
+    //    prefix_alu[s]       = # ALU slots in [0..s-1]
+    //    prefix_ready_alu[p] = # ready ALU ports in [0..p-1]
     //
-    //    alu_slot[p] = which packet slot drives ALU port p
-    //    mul_slot[p] = which packet slot drives MUL port p
-    //    lsu_slot[p] = which packet slot drives LSU port p
-    //    *_valid[p]  = port p has a valid assignment
+    //    Port p gets slot s when:
+    //      slot_is_alu[s]
+    //      && prefix_alu[s] == prefix_ready_alu[p]
+    //      && alu_ready[p]
     //
-    //    The "already claimed" mask is built by walking
-    //    ports 0..p-1 and marking their assigned slots.
+    //    This pairs the n-th ready port with the n-th
+    //    pending slot, skipping busy ports and empty slots.
+    //    All reads are from prefix arrays — no writeback.
     // ════════════════════════════════════════════════════
 
+    // ── Slot-side prefix sums ────────────────────────────
+    logic [$clog2(RENAME_WIDTH):0] prefix_alu [RENAME_WIDTH+1];
+    logic [$clog2(RENAME_WIDTH):0] prefix_mul [RENAME_WIDTH+1];
+    logic [$clog2(RENAME_WIDTH):0] prefix_lsu [RENAME_WIDTH+1];
+
+    assign prefix_alu[0] = '0;
+    assign prefix_mul[0] = '0;
+    assign prefix_lsu[0] = '0;
+
+    for (genvar s = 0; s < RENAME_WIDTH; s++) begin : g_slot_prefix
+        assign prefix_alu[s+1] = prefix_alu[s] + ($clog2(RENAME_WIDTH)+1)'(slot_is_alu[s]);
+        assign prefix_mul[s+1] = prefix_mul[s] + ($clog2(RENAME_WIDTH)+1)'(slot_is_mul[s]);
+        assign prefix_lsu[s+1] = prefix_lsu[s] + ($clog2(RENAME_WIDTH)+1)'(slot_is_lsu[s]);
+    end
+
+    // ── Port-side prefix sums ────────────────────────────
+    logic [$clog2(NUM_ALU_FU):0]     prefix_ready_alu [NUM_ALU_FU+1];
+    logic [$clog2(NUM_MUL_DIV_FU):0] prefix_ready_mul [NUM_MUL_DIV_FU+1];
+    logic [$clog2(NUM_AGU_FU):0]     prefix_ready_lsu [NUM_AGU_FU+1];
+
+    assign prefix_ready_alu[0] = '0;
+    assign prefix_ready_mul[0] = '0;
+    assign prefix_ready_lsu[0] = '0;
+
+    for (genvar p = 0; p < NUM_ALU_FU; p++) begin : g_alu_port_prefix
+        assign prefix_ready_alu[p+1] = prefix_ready_alu[p] + ($clog2(NUM_ALU_FU)+1)'(alu_ready[p]);
+    end
+    for (genvar p = 0; p < NUM_MUL_DIV_FU; p++) begin : g_mul_port_prefix
+        assign prefix_ready_mul[p+1] = prefix_ready_mul[p] + ($clog2(NUM_MUL_DIV_FU)+1)'(mul_ready[p]);
+    end
+    for (genvar p = 0; p < NUM_AGU_FU; p++) begin : g_lsu_port_prefix
+        assign prefix_ready_lsu[p+1] = prefix_ready_lsu[p] + ($clog2(NUM_AGU_FU)+1)'(lsu_ready[p]);
+    end
+
+    // ── Port assignment ───────────────────────────────────
     logic [$clog2(RENAME_WIDTH)-1:0] alu_slot  [NUM_ALU_FU];
-    logic [$clog2(RENAME_WIDTH)-1:0] mul_slot  [NUM_MUL_DIV_FU];
-    logic [$clog2(RENAME_WIDTH)-1:0] lsu_slot  [NUM_AGU_FU];
-    
     logic                            alu_valid  [NUM_ALU_FU];
+    logic [$clog2(RENAME_WIDTH)-1:0] mul_slot  [NUM_MUL_DIV_FU];
     logic                            mul_valid  [NUM_MUL_DIV_FU];
+    logic [$clog2(RENAME_WIDTH)-1:0] lsu_slot  [NUM_AGU_FU];
     logic                            lsu_valid  [NUM_AGU_FU];
 
-    always_comb begin
-        // ── ALU ─────────────────────────────────────────
-        // claimed_alu[s] = slot s already assigned to a lower ALU port
-        logic claimed_alu [RENAME_WIDTH];
-        for (int s = 0; s < RENAME_WIDTH; s++) claimed_alu[s] = 1'b0;
-
-        for (int p = 0; p < NUM_ALU_FU; p++) begin
+    for (genvar p = 0; p < NUM_ALU_FU; p++) begin : g_alu_assign
+        always_comb begin
             alu_slot[p]  = '0;
             alu_valid[p] = 1'b0;
-            for (int s = 0; s < RENAME_WIDTH; s++) begin
-                if (slot_is_alu[s] && !claimed_alu[s] && alu_ready[p] && !alu_valid[p]) begin
-                    alu_slot[p]  = $clog2(RENAME_WIDTH)'(s);
-                    alu_valid[p] = 1'b1; 
+            if (alu_ready[p]) begin
+                for (int s = 0; s < RENAME_WIDTH; s++) begin
+                    if (slot_is_alu[s] &&
+                        (prefix_alu[s] == ($clog2(RENAME_WIDTH)+1)'(prefix_ready_alu[p]))) begin
+                        alu_slot[p]  = $clog2(RENAME_WIDTH)'(s);
+                        alu_valid[p] = 1'b1;
+                    end
                 end
             end
-            // Mark this port's slot as claimed for subsequent ports
-            if (alu_valid[p]) claimed_alu[alu_slot[p]] = 1'b1;
-        end
-
-        // ── MUL ─────────────────────────────────────────
-        logic claimed_mul [RENAME_WIDTH];
-        for (int s = 0; s < RENAME_WIDTH; s++) claimed_mul[s] = 1'b0;
-
-        for (int p = 0; p < NUM_MUL_DIV_FU; p++) begin
-            mul_slot[p]  = '0;
-            mul_valid[p] = 1'b0;
-            for (int s = 0; s < RENAME_WIDTH; s++) begin
-                if (slot_is_mul[s] && !claimed_mul[s] && mul_ready[p] && !mul_valid[p]) begin
-                    mul_slot[p]  = $clog2(RENAME_WIDTH)'(s);
-                    mul_valid[p] = 1'b1;
-                end
-            end
-            if (mul_valid[p]) claimed_mul[mul_slot[p]] = 1'b1;
-        end
-
-        // ── LSU ─────────────────────────────────────────
-        logic claimed_lsu [RENAME_WIDTH];
-        for (int s = 0; s < RENAME_WIDTH; s++) claimed_lsu[s] = 1'b0;
-
-        for (int p = 0; p < NUM_AGU_FU; p++) begin
-            lsu_slot[p]  = '0;
-            lsu_valid[p] = 1'b0;
-            for (int s = 0; s < RENAME_WIDTH; s++) begin
-                if (slot_is_lsu[s] && !claimed_lsu[s] && lsu_ready[p] && !lsu_valid[p]) begin
-                    lsu_slot[p]  = $clog2(RENAME_WIDTH)'(s);
-                    lsu_valid[p] = 1'b1;
-                end
-            end
-            if (lsu_valid[p]) claimed_lsu[lsu_slot[p]] = 1'b1;
         end
     end
 
+    for (genvar p = 0; p < NUM_MUL_DIV_FU; p++) begin : g_mul_assign
+        always_comb begin
+            mul_slot[p]  = '0;
+            mul_valid[p] = 1'b0;
+            if (mul_ready[p]) begin
+                for (int s = 0; s < RENAME_WIDTH; s++) begin
+                    if (slot_is_mul[s] &&
+                        (prefix_mul[s] == ($clog2(RENAME_WIDTH)+1)'(prefix_ready_mul[p]))) begin
+                        mul_slot[p]  = $clog2(RENAME_WIDTH)'(s);
+                        mul_valid[p] = 1'b1;
+                    end
+                end
+            end
+        end
+    end
+
+    for (genvar p = 0; p < NUM_AGU_FU; p++) begin : g_lsu_assign
+        always_comb begin
+            lsu_slot[p]  = '0;
+            lsu_valid[p] = 1'b0;
+            if (lsu_ready[p]) begin
+                for (int s = 0; s < RENAME_WIDTH; s++) begin
+                    if (slot_is_lsu[s] &&
+                        (prefix_lsu[s] == ($clog2(RENAME_WIDTH)+1)'(prefix_ready_lsu[p]))) begin
+                        lsu_slot[p]  = $clog2(RENAME_WIDTH)'(s);
+                        lsu_valid[p] = 1'b1;
+                    end
+                end
+            end
+        end
+    end
 
     // ════════════════════════════════════════════════════
     // 5. can_dispatch
-    //    A slot can be dispatched this cycle if any FU
-    //    port has been assigned to it.
     // ════════════════════════════════════════════════════
 
     logic can_dispatch [RENAME_WIDTH];
@@ -171,7 +201,6 @@ module dispatch_unit
         OUT_mul_div_instr = '{default: '0};
         OUT_lsu_instr     = '{default: '0};
 
-        // ALU
         for (int p = 0; p < NUM_ALU_FU; p++) begin
             if (alu_valid[p]) begin
                 OUT_alu_instr[p].valid     = 1'b1;
@@ -190,7 +219,6 @@ module dispatch_unit
             end
         end
 
-        // MUL
         for (int p = 0; p < NUM_MUL_DIV_FU; p++) begin
             if (mul_valid[p]) begin
                 OUT_mul_div_instr[p].valid   = 1'b1;
@@ -204,7 +232,6 @@ module dispatch_unit
             end
         end
 
-        // LSU
         for (int p = 0; p < NUM_AGU_FU; p++) begin
             if (lsu_valid[p]) begin
                 OUT_lsu_instr[p].valid   = 1'b1;
@@ -233,11 +260,9 @@ module dispatch_unit
                 dispatched[i] <= 1'b0;
             end
         end else begin
-            // Mark slots dispatched this cycle
             for (int i = 0; i < RENAME_WIDTH; i++)
                 if (can_dispatch[i]) dispatched[i] <= 1'b1;
 
-            // Load new packet when current one is fully dispatched
             if (packet_done) begin
                 for (int i = 0; i < RENAME_WIDTH; i++) begin
                     packet[i]     <= IN_instr[i];
