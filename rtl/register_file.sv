@@ -1,15 +1,15 @@
 import include_pkg::*;
 
 module register_file(
-    input logic                       clk,
-    input logic                       rst,
-    input logic  [REG_ADDR_WIDTH-1:0] rs1_addr    [ISSUE_WIDTH],
-    input logic  [REG_ADDR_WIDTH-1:0] rs2_addr    [ISSUE_WIDTH],
-    input logic  [REG_ADDR_WIDTH-1:0] rd_addr     [NUM_CDB_LINES],
-    input logic                       rd_write_en [NUM_CDB_LINES],
-    input logic  [XLEN-1:0]           rd_data     [NUM_CDB_LINES],
-    output logic [XLEN-1:0]           rs1_data    [ISSUE_WIDTH],
-    output logic [XLEN-1:0]           rs2_data    [ISSUE_WIDTH]
+    input  logic                       clk,
+    input  logic                       rst,
+    input  logic  [REG_ADDR_WIDTH-1:0] rs1_addr    [ISSUE_WIDTH],
+    input  logic  [REG_ADDR_WIDTH-1:0] rs2_addr    [ISSUE_WIDTH],
+    input  logic  [REG_ADDR_WIDTH-1:0] rd_addr     [NUM_CDB_LINES],
+    input  logic                       rd_write_en [NUM_CDB_LINES],
+    input  logic  [XLEN-1:0]           rd_data     [NUM_CDB_LINES],
+    output logic  [XLEN-1:0]           rs1_data    [ISSUE_WIDTH],
+    output logic  [XLEN-1:0]           rs2_data    [ISSUE_WIDTH]
 );
 
 logic [XLEN-1:0] registers [(1<<REG_ADDR_WIDTH)-1:0];

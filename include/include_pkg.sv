@@ -304,8 +304,8 @@ typedef struct packed {
 
 typedef struct packed {
   logic       ready;
-  logic [6:0] SqN;
-  logic [5:0] tag;
+  sqN_t       sqN;
+  tag_t       tag;
   logic [4:0] rd;
 } rob_entry;
 

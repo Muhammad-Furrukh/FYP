@@ -1,379 +1,132 @@
 import include_pkg::*;
 module ROB
 (
-input  logic           clk,
-input  logic           rst,
-input  rename_rob_t    rename_rob [RENAME_WIDTH],
-input  logic           flush,
-input  sqN_t           flush_sqN,
-input  logic           CDB_valid  [NUM_CDB_LINES],
-input  sqN_t           CDB_sqN    [NUM_CDB_LINES],
+    input  logic           clk,
+    input  logic           rst,
+    input  rename_rob_t    rename_rob [RENAME_WIDTH],
+    input  logic           flush,
+    input  sqN_t           flush_sqN,
+    input  logic           CDB_valid  [NUM_CDB_LINES],
+    input  sqN_t           CDB_sqN    [NUM_CDB_LINES],
 
-output logic           OUT_busy,
-output commit_packet_t OUT_commit [COMMIT_WIDTH]
+    output logic           OUT_busy,
+    output commit_packet_t OUT_commit [COMMIT_WIDTH]
 );
 
-logic commit1, commit2;
-logic dataout_valid0, dataout_valid1;
-logic write_en1, write_en2;
+    logic [COMMIT_WIDTH-1:0] commit;
+    logic [COMMIT_WIDTH-1:0] dataout_valid;
+    logic [RENAME_WIDTH-1:0] write_en;
 
-logic [6:0] count;
-logic [5:0] head, tail;
+    logic [$clog2(ROB_SIZE):0]   count, next_count;
+    logic [$clog2(ROB_SIZE)-1:0] head, tail, next_head, next_tail;
 
-rob_entry rob [63:0];
+    rob_entry rob [ROB_SIZE];
 
-logic [5:0] alloc_index1, alloc_index2;
-logic [5:0] commit_index1, commit_index2;
+    logic [$clog2(ROB_SIZE)-1:0] alloc_index  [RENAME_WIDTH];
+    logic [$clog2(ROB_SIZE)-1:0] commit_index [COMMIT_WIDTH];
+    logic [$clog2(RENAME_WIDTH):0] num_wr;
+    logic [$clog2(COMMIT_WIDTH):0] num_commit;
 
-logic full, empty;
+    logic full, empty;
 
-// ---------------- COMBINATIONAL ----------------
-always_comb begin
-    alloc_index1 = tail;
-    alloc_index2 = tail + 1;
+    // ---------------- COMBINATIONAL ----------------
+    always_comb begin
+        logic [$clog2(ROB_SIZE)-1:0] next_head, next_tail;
+        OUT_busy = (count > ROB_SIZE - RENAME_WIDTH);
 
-    commit_index1 = head;
-    commit_index2 = head + 1;
+        full  = (count == 64);
 
-    OUT_busy = (count >= 63);
+        empty = (count == 0);
 
-    write_en1 = (rename_rob[0].valid && (count < 64));
-    write_en2 = (rename_rob[1].valid && (count < 63));
+        for (int i = 0; i < RENAME_WIDTH; i++) begin
+            alloc_index[i] = tail + i;
+            write_en[i]    = rename_rob[i].valid && (!OUT_busy);
+        end
 
-    commit1 = rob[commit_index1].ready && (!empty) ;
-    commit2 = rob[commit_index2].ready && (!empty) ;
-    
-    if (rst) begin
-        dataout_valid0 = 0;
-        dataout_valid1 = 0; end
-    else begin
-        dataout_valid0 = OUT_commit[0].valid;
-        dataout_valid1 = OUT_commit[1].valid;end
-end
+        next_tail = tail;
+        for (int i = 0; i < RENAME_WIDTH; i++) begin
+            next_tail = next_tail + write_en[i];
+        end
 
-assign full  = (count == 64);
-assign empty = (count == 0);
+        for (int i = 0; i < COMMIT_WIDTH; i++) begin
+            commit_index[i]  = head + i;
+            commit[i]        = rob[commit_index[i]].ready && (!empty);
+            dataout_valid[i] = OUT_commit[i].valid;
+        end
 
-// ---------------- SEQUENTIAL ----------------
-always_ff @(posedge clk or posedge rst) begin
+        next_head = head;
+        for (int i = 0; i < COMMIT_WIDTH; i++) begin
+            next_head = next_head + commit[i];
+        end
 
-    if (rst) begin
-        count <= 0;
-        head  <= 0;
-        tail  <= 0;
-        OUT_commit[0].valid <= 0;
-        OUT_commit[1].valid <= 0;
+        next_count = count + (next_tail - tail) - (next_head - head);
         
-        for (int i = 0; i < 64; i++) begin
-            rob[i] <= '0;
-        end
     end
 
-    else begin
-    
-          // update ready bits
-        for (int j = 0; j < 64; j++) begin
-            if (((j == alloc_index1) && write_en1) ||
-                ((j == alloc_index2) && write_en2)) begin
-                rob[j].ready <= 0;
-            end
-            else begin
-                if (
-                    (rob[j].SqN == CDB_sqN[0] && CDB_valid[0]) ||
-                    (rob[j].SqN == CDB_sqN[1] && CDB_valid[1]) ||
-                    (rob[j].SqN == CDB_sqN[2] && CDB_valid[2]) ||
-                    (rob[j].SqN == CDB_sqN[3] && CDB_valid[3])
-                )
-                    rob[j].ready <= 1;
+    // ---------------- SEQUENTIAL ----------------
+    always_ff @(posedge clk or posedge rst) begin
+
+        if (rst) begin
+            count <= 0;
+            head  <= 0;
+            tail  <= 0;
+            OUT_commit[0].valid <= 0;
+            OUT_commit[1].valid <= 0;
+            
+            for (int i = 0; i < 64; i++) begin
+                rob[i] <= '0;
             end
         end
 
-          if (flush && !empty) begin
-             OUT_commit[0].valid <= 0;
-             OUT_commit[1].valid <= 0;
-             $display("inside flush big statement");
-                  if (rob[tail-1].SqN < flush_sqN) begin
-                       $display("inside formula1");
-                       tail <= tail - (rob[tail-1].SqN-flush_sqN+128);
-                       count <= count - (rob[tail-1].SqN-flush_sqN+128);
-                       
-                                                   end
-                  else begin
-                       $display("inside formula2");
-                       tail <= tail-(rob[tail-1].SqN-flush_sqN);
-                       count <= count - (rob[tail-1].SqN-flush_sqN);
-                       
-                       end
+        else if (flush && !empty) begin
+                OUT_commit[0].valid <= 0;
+                OUT_commit[1].valid <= 0;
+                $display("inside flush big statement");
+                if (rob[tail-1].sqN < flush_sqN) begin
+                    $display("inside formula1");
+                    tail <= tail - (rob[tail-1].sqN-flush_sqN+128);
+                    count <= count - (rob[tail-1].sqN-flush_sqN+128);
+                end
+                else begin
+                    $display("inside formula2");
+                    tail <= tail-(rob[tail-1].sqN-flush_sqN);
+                    count <= count - (rob[tail-1].sqN-flush_sqN);
+                end
+            end
+
+        else begin
+            count <= next_count;
+            head  <= next_head;
+            tail  <= next_tail;
+
+            for (int i = 0; i < COMMIT_WIDTH; i++) begin
+                if (commit[i]) begin
+                    OUT_commit[i].sqN     <= rob[commit_index[i]].sqN;
+                    OUT_commit[i].comTag  <= rob[commit_index[i]].tag;
+                    OUT_commit[i].archTag <= rob[commit_index[i]].rd;
+                    OUT_commit[i].valid   <= 1;
+                end
+                else begin
+                    OUT_commit[i].valid <= 0;
+                end
+            end
+
+            for (int i = 0; i < RENAME_WIDTH; i++) begin
+                if (write_en[i]) begin
+                    rob[alloc_index[i]].sqN   <= rename_rob[i].sqN;
+                    rob[alloc_index[i]].tag   <= rename_rob[i].rd_tag;
+                    rob[alloc_index[i]].rd    <= rename_rob[i].archTag;
+                    rob[alloc_index[i]].ready <= 0;
+                end
+            end
+
+            for (int i = 0; i < ROB_SIZE; i++) begin
+                for (int j = 0; j < NUM_CDB_LINES; j++) begin
+                    if ((rob[i].sqN == CDB_sqN[j]) && CDB_valid[j]) begin
+                        rob[i].ready <= 1;
+                    end
+                end
+            end
         end
-
-       
-
-        // ---------------- BASIC CASE (your original logic kept) ----------------
-
-        else if ((!write_en1 && !write_en2) && (!commit1 && !commit2)) begin // 0 case
-            count <= count;
-            tail  <= tail;
-            head  <= head;
-
-            OUT_commit[0].valid <= (rob[commit_index1].ready && commit1);
-            OUT_commit[1].valid <= (rob[commit_index2].ready && commit2);
-        end
-
-        else if ((write_en1 && !write_en2) && (!commit1 && !commit2)) begin // 1 case
-            rob[alloc_index1].SqN <= rename_rob[0].sqN;
-            rob[alloc_index1].tag <= rename_rob[0].rd_tag;
-            rob[alloc_index1].rd  <= rename_rob[0].archTag;
-
-            count <= count + 1;
-            tail  <= tail + 1;
-
-            OUT_commit[0].valid <= (rob[commit_index1].ready && commit1);
-            OUT_commit[1].valid <= (rob[commit_index2].ready && commit2);
-        end
-
-        else if ((!write_en1 && write_en2) && (!commit1 && !commit2)) begin // 2 case
-            rob[alloc_index1].SqN <= rename_rob[1].sqN;
-            rob[alloc_index1].tag <= rename_rob[1].rd_tag;
-            rob[alloc_index1].rd  <= rename_rob[1].archTag;
-
-            count <= count + 1;
-            tail  <= tail + 1;
-
-            OUT_commit[0].valid <= (rob[commit_index1].ready && commit1);
-            OUT_commit[1].valid <= (rob[commit_index2].ready && commit2);
-        end
-
-        else if ((write_en1 && write_en2) && (!commit1 && !commit2)) begin // 3 case
-            rob[alloc_index1].SqN <= rename_rob[0].sqN;
-            rob[alloc_index1].tag <= rename_rob[0].rd_tag;
-            rob[alloc_index1].rd  <= rename_rob[0].archTag;
-
-            rob[alloc_index2].SqN <= rename_rob[1].sqN;
-            rob[alloc_index2].tag <= rename_rob[1].rd_tag;
-            rob[alloc_index2].rd  <= rename_rob[1].archTag;
-
-            count <= count + 2;
-            tail  <= tail + 2;
-
-            OUT_commit[0].valid <= (rob[commit_index1].ready && commit1);
-            OUT_commit[1].valid <= (rob[commit_index2].ready && commit2);
-        end
-     else if ((!write_en1 && !write_en2) && (commit1 && !commit2)) // 4 case
-     begin   
-       OUT_commit[0].sqN <= rob[commit_index1].SqN;
-       OUT_commit[0].comTag <= rob[commit_index1].tag;
-       OUT_commit[0].archTag <= rob[commit_index1].rd;
-     
-       count <= count - 1;
-       tail <= tail;
-       head <= head + 1;
-    
-       OUT_commit[0].valid <= (rob[commit_index1].ready && commit1);
-       OUT_commit[1].valid <= (rob[commit_index2].ready && commit2);
-     end
-  
-     else if ((write_en1 && !write_en2) && (commit1 && !commit2))  // 5 case
-     begin 
-       rob[alloc_index1].SqN <= rename_rob[0].sqN;
-       rob[alloc_index1].tag <= rename_rob[0].rd_tag;
-       rob[alloc_index1].rd <= rename_rob[0].archTag;
-  
-       OUT_commit[0].sqN <= rob[commit_index1].SqN;
-       OUT_commit[0].comTag <= rob[commit_index1].tag;
-       OUT_commit[0].archTag <= rob[commit_index1].rd;
-       
-       count <= count;
-       tail <= tail+1;
-       head <= head+1;
-  
-       OUT_commit[0].valid <= (rob[commit_index1].ready && commit1);
-       OUT_commit[1].valid <= (rob[commit_index2].ready && commit2);
-     end
-  
-     else if ((!write_en1 && write_en2) && (commit1 && !commit2))  // 6 case
-     begin 
-       rob[alloc_index1].SqN <= rename_rob[1].sqN;
-       rob[alloc_index1].tag <= rename_rob[1].rd_tag;
-       rob[alloc_index1].rd <= rename_rob[1].archTag;
-
-       OUT_commit[0].sqN <= rob[commit_index1].SqN;
-       OUT_commit[0].comTag <= rob[commit_index1].tag;
-       OUT_commit[0].archTag <= rob[commit_index1].rd;
-       
-       count <= count;
-       tail <= tail+1;
-       head <= head+1;
-  
-       OUT_commit[0].valid <= (rob[commit_index1].ready && commit1);
-       OUT_commit[1].valid <= (rob[commit_index2].ready && commit2);
-     end
-  
-     else if ((write_en1 && write_en2) && (commit1 && !commit2))  // 7 case
-     begin 
-       rob[alloc_index1].SqN <= rename_rob[0].sqN;
-       rob[alloc_index1].tag <= rename_rob[0].rd_tag;
-       rob[alloc_index1].rd <= rename_rob[0].archTag;
-  
-       rob[alloc_index2].SqN <= rename_rob[1].sqN;
-       rob[alloc_index2].tag <= rename_rob[1].rd_tag;
-       rob[alloc_index2].rd <= rename_rob[1].archTag;
-  
-       OUT_commit[0].sqN <= rob[commit_index1].SqN;
-       OUT_commit[0].comTag <= rob[commit_index1].tag;
-       OUT_commit[0].archTag <= rob[commit_index1].rd;
-       
-       count <= count + 1;
-       tail <= tail+2;
-       head <= head+1;
-  
-       OUT_commit[0].valid <= (rob[commit_index1].ready && commit1);
-       OUT_commit[1].valid <= (rob[commit_index2].ready && commit2);
-     end
-  //=================================================================================================
-     else if ((!write_en1 && !write_en2) && (!commit1 && commit2)) // 8 case
-     begin   
-       count <= count;
-       tail <= tail;
-       head <= head;
-     end
-  
-     else if ((write_en1 && !write_en2) && (!commit1 && commit2))  // 9 case
-     begin 
-       rob[alloc_index1].SqN <= rename_rob[0].sqN;
-       rob[alloc_index1].tag <= rename_rob[0].rd_tag;
-       rob[alloc_index1].rd <= rename_rob[0].archTag;
-  
-       count <= count + 1;
-       tail <= tail+1;
-       head <= head;
-  
-       OUT_commit[0].valid <= (rob[commit_index1].ready && commit1);
-       OUT_commit[1].valid <= (rob[commit_index2].ready && commit2);
-     end
-  
-     else if ((!write_en1 && write_en2) && (!commit1 && commit2))  // 10 case
-     begin 
-       rob[alloc_index1].SqN <= rename_rob[1].sqN;
-       rob[alloc_index1].tag <= rename_rob[1].rd_tag;
-       rob[alloc_index1].rd <= rename_rob[1].archTag;
-  
-       count <= count + 1;
-       tail <= tail+1;
-       head <= head;
-  
-       OUT_commit[0].valid <= (rob[commit_index1].ready && commit1);
-       OUT_commit[1].valid <= (rob[commit_index2].ready && commit2);
-     end
-  
-     else if ((write_en1 && write_en2) && (!commit1 && commit2))  // 11 case
-     begin 
-       rob[alloc_index1].SqN <= rename_rob[0].sqN;
-       rob[alloc_index1].tag <= rename_rob[0].rd_tag;
-       rob[alloc_index1].rd <= rename_rob[0].archTag;
-  
-       rob[alloc_index2].SqN <= rename_rob[1].sqN;
-       rob[alloc_index2].tag <= rename_rob[1].rd_tag;
-       rob[alloc_index2].rd <= rename_rob[1].archTag;
-  
-       count <= count + 2;
-       tail <= tail+2;
-       head <= head;
-  
-       OUT_commit[0].valid <= (rob[commit_index1].ready && commit1);
-       OUT_commit[1].valid <= (rob[commit_index2].ready && commit2);
-     end
-  //=================================================================================================
-  
-    
-     else if ((!write_en1 && !write_en2) && (commit1 && commit2)) // 12 case
-     begin   
-       OUT_commit[0].sqN <= rob[commit_index1].SqN;
-       OUT_commit[0].comTag <= rob[commit_index1].tag;
-       OUT_commit[0].archTag <= rob[commit_index1].rd;
-
-       OUT_commit[1].sqN <= rob[commit_index2].SqN;
-       OUT_commit[1].comTag <= rob[commit_index2].tag;
-       OUT_commit[1].archTag <= rob[commit_index2].rd;
-       
-       count <= count - 2;
-       tail <= tail;
-       head <= head + 2;
-    
-       OUT_commit[0].valid <= (rob[commit_index1].ready && commit1);
-       OUT_commit[1].valid <= (rob[commit_index2].ready && commit2);
-     end
-  
-     else if ((write_en1 && !write_en2) && (commit1 && commit2))  // 13 case
-     begin 
-       rob[alloc_index1].SqN <= rename_rob[0].sqN;
-       rob[alloc_index1].tag <= rename_rob[0].rd_tag;
-       rob[alloc_index1].rd <= rename_rob[0].archTag;
-  
-       OUT_commit[0].sqN <= rob[commit_index1].SqN;
-       OUT_commit[0].comTag <= rob[commit_index1].tag;
-       OUT_commit[0].archTag <= rob[commit_index1].rd;
-     
-       OUT_commit[1].sqN <= rob[commit_index2].SqN;
-       OUT_commit[1].comTag <= rob[commit_index2].tag;
-       OUT_commit[1].archTag <= rob[commit_index2].rd;
-       
-       count <= count-1;
-       tail <= tail+1;
-       head <= head+2;
-  
-       OUT_commit[0].valid <= (rob[commit_index1].ready && commit1);
-       OUT_commit[1].valid <= (rob[commit_index2].ready && commit2);
-     end
-  
-     else if ((!write_en1 && write_en2) && (commit1 && commit2))  // 14 case
-     begin 
-       rob[alloc_index1].SqN <= rename_rob[1].sqN;
-       rob[alloc_index1].tag <= rename_rob[1].rd_tag;
-       rob[alloc_index1].rd <= rename_rob[1].archTag;
-
-       OUT_commit[0].sqN <= rob[commit_index1].SqN;
-       OUT_commit[0].comTag <= rob[commit_index1].tag;
-       OUT_commit[0].archTag <= rob[commit_index1].rd;
-     
-       OUT_commit[1].sqN <= rob[commit_index2].SqN;
-       OUT_commit[1].comTag <= rob[commit_index2].tag;
-       OUT_commit[1].archTag <= rob[commit_index2].rd;
-       
-       count <= count-1;
-       tail <= tail+1;
-       head <= head+2;
-   
-       OUT_commit[0].valid <= (rob[commit_index1].ready && commit1);
-       OUT_commit[1].valid <= (rob[commit_index2].ready && commit2);
-     end
-  
-     else if ((write_en1 && write_en2) && (commit1 && commit2))  // 15 case
-     begin 
-       rob[alloc_index1].SqN <= rename_rob[0].sqN;
-       rob[alloc_index1].tag <= rename_rob[0].rd_tag;
-       rob[alloc_index1].rd <= rename_rob[0].archTag;
-  
-       rob[alloc_index2].SqN <= rename_rob[1].sqN;
-       rob[alloc_index2].tag <= rename_rob[1].rd_tag;
-       rob[alloc_index2].rd <= rename_rob[1].archTag;
-  
-       OUT_commit[0].sqN <= rob[commit_index1].SqN;
-       OUT_commit[0].comTag <= rob[commit_index1].tag;
-       OUT_commit[0].archTag <= rob[commit_index1].rd;
-     
-       OUT_commit[1].sqN <= rob[commit_index2].SqN;
-       OUT_commit[1].comTag <= rob[commit_index2].tag;
-       OUT_commit[1].archTag <= rob[commit_index2].rd;
-       
-       count <= count;
-       tail <= tail+2;
-       head <= head+2;
-  
-       OUT_commit[0].valid <= (rob[commit_index1].ready && commit1);
-       OUT_commit[1].valid <= (rob[commit_index2].ready && commit2);
-     end
-
     end
-end
-
 endmodule
