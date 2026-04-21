@@ -206,7 +206,6 @@ module dispatch_unit
                 OUT_alu_instr[p].valid     = 1'b1;
                 OUT_alu_instr[p].sqN       = packet[alu_slot[p]].sqN;
                 OUT_alu_instr[p].pc        = packet[alu_slot[p]].pc;
-                OUT_alu_instr[p].f_unit    = packet[alu_slot[p]].f_unit;
                 OUT_alu_instr[p].oper      = packet[alu_slot[p]].oper;
                 OUT_alu_instr[p].rs1_tag   = packet[alu_slot[p]].rs1_tag;
                 OUT_alu_instr[p].rs2_tag   = packet[alu_slot[p]].rs2_tag;
@@ -223,8 +222,6 @@ module dispatch_unit
             if (mul_valid[p]) begin
                 OUT_mul_div_instr[p].valid   = 1'b1;
                 OUT_mul_div_instr[p].sqN     = packet[mul_slot[p]].sqN;
-                OUT_mul_div_instr[p].pc      = packet[mul_slot[p]].pc;
-                OUT_mul_div_instr[p].f_unit  = packet[mul_slot[p]].f_unit;
                 OUT_mul_div_instr[p].oper    = packet[mul_slot[p]].oper;
                 OUT_mul_div_instr[p].rs1_tag = packet[mul_slot[p]].rs1_tag;
                 OUT_mul_div_instr[p].rs2_tag = packet[mul_slot[p]].rs2_tag;
@@ -236,8 +233,6 @@ module dispatch_unit
             if (lsu_valid[p]) begin
                 OUT_lsu_instr[p].valid   = 1'b1;
                 OUT_lsu_instr[p].sqN     = packet[lsu_slot[p]].sqN;
-                OUT_lsu_instr[p].pc      = packet[lsu_slot[p]].pc;
-                OUT_lsu_instr[p].f_unit  = packet[lsu_slot[p]].f_unit;
                 OUT_lsu_instr[p].oper    = packet[lsu_slot[p]].oper;
                 OUT_lsu_instr[p].rs1_tag = packet[lsu_slot[p]].rs1_tag;
                 OUT_lsu_instr[p].rs2_tag = packet[lsu_slot[p]].rs2_tag;

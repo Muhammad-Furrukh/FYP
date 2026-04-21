@@ -24,8 +24,11 @@ parameter int unsigned NUM_ALU_FU        = 2;
 parameter int unsigned NUM_MUL_DIV_FU    = 1;
 parameter int unsigned NUM_AGU_FU        = 1;
 parameter int unsigned NUM_LD_BUFFER_WR_PORTS = 1;
+parameter int unsigned NUM_INT_FU        = NUM_ALU_FU + NUM_MUL_DIV_FU;
 parameter int unsigned NUM_CDB_LINES     = NUM_ALU_FU + NUM_MUL_DIV_FU + 
                                             NUM_LD_BUFFER_WR_PORTS;
+parameter int unsigned SQN_W             = $clog2(ROB_SIZE) + 1;
+parameter logic [SQN_W-1:0] SQN_MASK     = (1 << SQN_W) - 1;
 
 //------------------------------------------------------------------
 // Simple typedefs
@@ -72,14 +75,14 @@ typedef enum logic [3:0] {
 } mul_div_oper_t;
 
 typedef enum logic [3:0] {
-    LOAD_BYTE,
-    LOAD_HALF,
-    LOAD_WORD,
-    LOAD_BYTEU,
-    LOAD_HALFU,
-    STORE_BYTE,
-    STORE_HALF,
-    STORE_WORD
+    LSU_LB,
+    LSU_LH,
+    LSU_LW,
+    LSU_LBU,
+    LSU_LHU,
+    LSU_SB,
+    LSU_SH,
+    LSU_SW
 } lsu_oper_t;
 
 typedef enum logic [3:0] {
@@ -214,6 +217,67 @@ typedef struct packed {
     oper_t              oper;
     tag_t               rd_tag;
 } lsu_issue_instr_t;
+
+typedef struct packed {
+    logic               valid;
+    sqN_t               sqN;
+    logic [XLEN - 1:0]  target_addr;
+    logic [XLEN - 1:0]  store_data;
+} agu_out_t;
+
+typedef struct packed {
+    logic               valid;
+    sqN_t               sqN;
+    logic [1:0]         data_size;
+} stb_alloc_t;
+
+typedef struct packed {
+    logic               valid;
+    sqN_t               sqN;
+    logic [XLEN - 1:0]  addr;
+    logic [XLEN - 1:0]  data;
+} stb_wb_t;
+
+typedef struct packed {
+    logic               valid;
+    sqN_t               sqN;
+    tag_t               rd_tag;
+    logic [1:0]         data_size;
+    logic               is_unsigned;
+} ldb_alloc_t;
+
+typedef struct packed {
+    logic               valid;
+    logic [XLEN - 1:0]  addr;
+} ldb_addr_t;
+
+typedef struct packed {
+    logic               valid;
+    logic [XLEN - 1:0]  wr_addr;
+    logic [XLEN - 1:0]  data;
+    logic [1:0]         data_size;
+} stb_mem_req_t;
+
+typedef struct packed {
+    logic               valid;
+    sqN_t               sqN;
+    logic [XLEN - 1:0]  addr;
+    logic [XLEN - 1:0]  data;
+} stb_fwd_entry_t;
+
+typedef struct packed {
+    logic               valid;
+    sqN_t               sqN;
+    logic [XLEN - 1:0]  r_addr;
+    logic [1:0]         data_size;
+    logic               is_unsigned;
+} ldb_mem_req_t;
+
+typedef struct packed {
+    logic               valid;
+    sqN_t               sqN;
+    logic [XLEN - 1:0]  rd_data;
+} dmem_resp_t;
 
 typedef struct packed {
     logic               valid;

@@ -1,15 +1,15 @@
 import include_pkg::*;
 
 module lsu (
-    input  logic             clk,
-    input  logic             rst,
-    input  lsu_issue_instr_t dispatch_instr,
-    input  agu_out_t         agu_out,
-    input  sqN_t             commit_sqN [COMMIT_WIDTH],
-    input  logic             flush,
-    input  sqN_t             flush_sqN,
-    output logic             OUT_busy,
-    output CDB_line_t        OUT_cdb
+    input  logic                clk,
+    input  logic                rst,
+    input  lsu_dispatch_instr_t dispatch_instr,
+    input  agu_out_t            agu_out,
+    input  sqN_t                commit_sqN [COMMIT_WIDTH],
+    input  logic                flush,
+    input  sqN_t                flush_sqN,
+    output logic                OUT_busy,
+    output CDB_line_t           OUT_cdb
 );
 
     // --------------------------------------------------------
