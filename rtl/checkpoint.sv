@@ -21,9 +21,9 @@ module branch_checkpoint
     localparam int CHKPT_BITS = $clog2(NUM_CHKPT);
 
     typedef struct packed {
-        logic   valid;
-        tag_t   specTag [32];
-        logic   free    [NUM_REG];
+        logic            valid;
+        tag_t   [32]   specTag;
+        logic   [NUM_REG] free;
     } chkpt_entry_t;
 
     // ── Store indexed directly by low bits of sqN ───────────
