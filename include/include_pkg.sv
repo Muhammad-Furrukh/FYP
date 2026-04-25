@@ -28,7 +28,8 @@ parameter int unsigned NUM_INT_FU        = NUM_ALU_FU + NUM_MUL_DIV_FU;
 parameter int unsigned NUM_CDB_LINES     = NUM_ALU_FU + NUM_MUL_DIV_FU + 
                                             NUM_LD_BUFFER_WR_PORTS;
 parameter int unsigned SQN_W             = $clog2(ROB_SIZE) + 1;
-parameter logic [SQN_W-1:0] SQN_MASK     = (1 << SQN_W) - 1;
+parameter [SQN_W:0] SQN_MASK = (1 << SQN_W) - 1;
+
 
 //------------------------------------------------------------------
 // Simple typedefs
@@ -106,6 +107,12 @@ typedef enum logic [1:0] {
     AUIPC,
     LUI
 } u_type_t;
+
+typedef enum logic [1:0] {
+    BYTE = 0,
+    HALF = 1,
+    WORD = 3
+} data_size_t;
 
 //------------------------------------------------------------------
 // Unions
@@ -248,8 +255,17 @@ typedef struct packed {
 
 typedef struct packed {
     logic               valid;
+    sqN_t               sqN;
     logic [XLEN - 1:0]  addr;
-} ldb_addr_t;
+} ldb_addr_t;   // AGU to Load Buffer (write-back)
+
+typedef struct packed {
+    logic               valid;  
+    sqN_t               sqN;
+    logic [XLEN - 1:0]  addr;
+    logic [1:0]         data_size;
+    logic               addr_data_valid;
+} stb_fwd_entry_t;   // Store Buffer to Load Buffer forwarding entry
 
 typedef struct packed {
     logic               valid;
@@ -257,13 +273,6 @@ typedef struct packed {
     logic [XLEN - 1:0]  data;
     logic [1:0]         data_size;
 } stb_mem_req_t;
-
-typedef struct packed {
-    logic               valid;
-    sqN_t               sqN;
-    logic [XLEN - 1:0]  addr;
-    logic [XLEN - 1:0]  data;
-} stb_fwd_entry_t;
 
 typedef struct packed {
     logic               valid;
@@ -276,7 +285,7 @@ typedef struct packed {
 typedef struct packed {
     logic               valid;
     sqN_t               sqN;
-    logic [XLEN - 1:0]  rd_data;
+    logic [XLEN - 1:0]  data;
 } dmem_resp_t;
 
 typedef struct packed {
@@ -285,8 +294,6 @@ typedef struct packed {
     tag_t               tag;
     logic [XLEN - 1:0]  result;
 } CDB_line_t;
-
-CDB_line_t CDB [NUM_CDB_LINES];
 
 typedef struct packed {
     logic               valid;

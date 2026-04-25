@@ -58,10 +58,11 @@ module store_buffer (
     // --------------------------------------------------------
     always_comb begin
         for (int i = 0; i < STOREB_SIZE; i++) begin
-            fwd[i].valid = entries[i].valid & entries[i].addr_data_valid;
+            fwd[i].valid = entries[i].valid;
             fwd[i].sqN   = entries[i].sqN;
             fwd[i].addr  = entries[i].addr;
-            fwd[i].data  = entries[i].data;
+            fwd[i].addr_data_valid = entries[i].addr_data_valid;
+            fwd[i].data_size = entries[i].data_size;
         end
     end
 

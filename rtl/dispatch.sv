@@ -25,14 +25,6 @@ module dispatch
     output      lsu_dispatch_instr_t     OUT_lsu_instr        [NUM_AGU_FU]
 );
 
-    // ════════════════════════════════════════════════════
-    // 1. dispatch_unit outputs (combinational from DU)
-    // ════════════════════════════════════════════════════
-
-    alu_dispatch_instr_t        du_alu  [NUM_ALU_FU];
-    mul_div_dispatch_instr_t    du_mul  [NUM_MUL_DIV_FU];
-    lsu_dispatch_instr_t        du_lsu  [NUM_AGU_FU];
-
     dispatch_unit DU
     (
         .clk                (clk),
@@ -44,15 +36,10 @@ module dispatch
         .LSU_buffer_busy    (LSU_buffer_busy),
         .LSU_busy           (LSU_busy),
         .OUT_busy           (d_unit_busy),
-        .OUT_alu_instr      (du_alu),
-        .OUT_mul_div_instr  (du_mul),
-        .OUT_lsu_instr      (du_lsu)
+        .OUT_alu_instr      (OUT_alu_instr),
+        .OUT_mul_div_instr  (OUT_mul_div_instr),
+        .OUT_lsu_instr      (OUT_lsu_instr)
     );
-
-
-    // ════════════════════════════════════════════════════
-    // 2. branch_checkpoint
-    // ════════════════════════════════════════════════════
 
     branch_checkpoint BC
     (
@@ -69,46 +56,5 @@ module dispatch
         .OUT_specTag        (OUT_specTag),
         .OUT_free           (OUT_free)
     );
-
-
-    // ════════════════════════════════════════════════════
-    // 3. Output registers
-    //
-    //    Each port holds its own output independently:
-    //    if the downstream buffer for port p is busy,
-    //    that port holds its current value so the buffer
-    //    can consume it next cycle. All other ports
-    //    take the fresh dispatch_unit output.
-    //
-    //    This replaces the mutually-exclusive else-if
-    //    chain, which could not handle simultaneous busy
-    //    signals across different FU types.
-    // ════════════════════════════════════════════════════
-
-    always_ff @(posedge clk) begin
-        if (rst || flush) begin
-            OUT_alu_instr     <= '{default: '0};
-            OUT_mul_div_instr <= '{default: '0};
-            OUT_lsu_instr     <= '{default: '0};
-
-        end else begin
-            // ALU: each port holds independently
-            for (int p = 0; p < NUM_ALU_FU; p++)
-                OUT_alu_instr[p] <= ALU_buffer_busy[p] ? OUT_alu_instr[p]
-                                                       : du_alu[p];
-
-            // MUL: each port holds independently
-            for (int p = 0; p < NUM_MUL_DIV_FU; p++)
-                OUT_mul_div_instr[p] <= MUL_DIV_buffer_busy[p] ? OUT_mul_div_instr[p]
-                                                                : du_mul[p];
-
-            // LSU: each port holds independently
-            // LSU_busy is a shared structural hazard (e.g. store buffer full)
-            // that blocks all LSU ports regardless of individual buffer state
-            for (int p = 0; p < NUM_AGU_FU; p++)
-                OUT_lsu_instr[p] <= (LSU_buffer_busy[p] || LSU_busy) ? OUT_lsu_instr[p]
-                                                                      : du_lsu[p];
-        end
-    end
 
 endmodule
