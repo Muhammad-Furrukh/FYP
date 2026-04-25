@@ -64,7 +64,7 @@ module alu_issue_buffer #(
     assign read_tag[0]   = queue[issue_idx].rs1_tag;
     assign read_tag[1]   = queue[issue_idx].rs2_tag;
 
-    assign is_jump = (IN_alu_instr.jump_type == 2'b10) || (IN_alu_instr.jump_type == 2'b01);
+    assign is_jump = (IN_alu_instr.jump_type == JALR) || (IN_alu_instr.jump_type == JAL);
     assign sel_ready2 = is_jump || IN_alu_instr.is_imm;
 
     assign dispatch_ready_1 = is_jump ? 1'b1 : tag_ready[0];
@@ -86,7 +86,8 @@ module alu_issue_buffer #(
                         CDB_tag[j] == queue[i].rs2_tag) r2 = 1'b1;
                 end
                 ready_mask[i] = r1 & r2;
-            end else begin
+            end 
+            else begin
                 ready_mask[i] = 1'b0;
             end
         end
@@ -101,16 +102,16 @@ module alu_issue_buffer #(
     assign issue_valid = issue_found && !flush;
 
     always_comb begin
-    rs1_data_selected = '0;
-    if (issue_valid) begin
-        rs1_data_selected = RF_data[0];
-        for (int j = 0; j < ISSUE_WIDTH; j++) begin
-            if (CDB_valid[j] &&
-                !queue[issue_idx].ready_1 &&
-                queue[issue_idx].rs1_tag == CDB_tag[j])
-                rs1_data_selected = CDB_result[j];
+        rs1_data_selected = '0;
+        if (issue_valid) begin
+            rs1_data_selected = RF_data[0];
+            for (int j = 0; j < ISSUE_WIDTH; j++) begin
+                if (CDB_valid[j] &&
+                    !queue[issue_idx].ready_1 &&
+                    queue[issue_idx].rs1_tag == CDB_tag[j])
+                    rs1_data_selected = CDB_result[j];
+            end
         end
-    end
     end
 
     always_comb begin
@@ -126,23 +127,23 @@ module alu_issue_buffer #(
     end
     
     always_comb begin
-    sel1 = '0;
-    sel2 = '0;
+        sel1 = '0;
+        sel2 = '0;
 
-    if (issue_valid) begin
-        sel1 = (queue[issue_idx].jump_type == 2'b10) ||
-               (queue[issue_idx].jump_type == 2'b01) ||
-               (queue[issue_idx].u_type    == 2'b01);
+        if (issue_valid) begin
+            sel1 = (queue[issue_idx].jump_type == JALR) ||
+                (queue[issue_idx].jump_type == JAL) ||
+                (queue[issue_idx].u_type    == AUIPC);
 
-        sel2[1] = (queue[issue_idx].jump_type == 2'b01) ||
-                  (queue[issue_idx].jump_type == 2'b10);
+            sel2[1] = (queue[issue_idx].jump_type == JALR) ||
+                    (queue[issue_idx].jump_type == JAL);
 
-        sel2[0] = (queue[issue_idx].u_type    == 2'b10) ||
-                  (queue[issue_idx].u_type    == 2'b01) ||
-                  (queue[issue_idx].jump_type == 2'b01) ||
-                  (queue[issue_idx].jump_type == 2'b10) ||
-                  queue[issue_idx].is_imm;
-    end
+            sel2[0] = (queue[issue_idx].u_type    == LUI) ||
+                    (queue[issue_idx].u_type    == AUIPC) ||
+                    (queue[issue_idx].jump_type == JAL) ||
+                    (queue[issue_idx].jump_type == JALR) ||
+                    queue[issue_idx].is_imm;
+        end
     end
 
     assign op1 = sel1
@@ -169,7 +170,8 @@ module alu_issue_buffer #(
         end
         tail <= '0;
   
-    end else begin
+    end 
+    else begin
         new_tail = tail;
         // 1. FLUSH   
         if (flush) begin
@@ -263,42 +265,3 @@ module alu_issue_buffer #(
         end 
     end
 endmodule
- 
-module branch_comparator (
-    input  logic [XLEN-1:0]  rs1_data,
-    input  logic [XLEN-1:0]  rs2_data,
-    input  br_type_t          br_type,
-    output logic              br_taken
-);
-    always_comb begin
-        case (br_type)
-            BEQ    : br_taken =  (rs1_data == rs2_data);
-            BNE    : br_taken =  (rs1_data != rs2_data);
-            BLT    : br_taken = ($signed(rs1_data) <  $signed(rs2_data));
-            BGE    : br_taken = ($signed(rs1_data) >= $signed(rs2_data));
-            BLTU   : br_taken =  (rs1_data <  rs2_data);
-            BGEU   : br_taken =  (rs1_data >= rs2_data);
-            default: br_taken = 1'b0;
-        endcase
-    end
-endmodule
- 
-module priority_encoder #(
-    parameter int WIDTH = 8
-)(
-    input  logic [WIDTH-1:0]           req,
-    output logic [$clog2(WIDTH)-1:0]   grant_idx,
-    output logic                       grant_valid
-);
-    always_comb begin
-        grant_idx   = '0;
-        grant_valid = 1'b0;
-        // iterate high to low so lowest index wins  
-        for (int i = WIDTH-1; i >= 0; i--) begin
-            if (req[i]) begin
-                grant_idx   = ($clog2(WIDTH))'(unsigned'(i));
-                grant_valid = 1'b1;
-            end
-        end
-    end
-endmodule 

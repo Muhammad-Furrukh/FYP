@@ -16,8 +16,8 @@ module flushController (
 
 
         // branch , JALR  
-        valid0 = br_taken[0] || (jump_type[0] == 2'b10);
-        valid1 = br_taken[1] || (jump_type[1] == 2'b10);
+        valid0 = br_taken[0] || (jump_type[0] == JALR);
+        valid1 = br_taken[1] || (jump_type[1] == JALR);
 
         if (valid0 && valid1) begin
             flush = 1'b1;
@@ -35,6 +35,11 @@ module flushController (
         else if (valid1) begin
             flush     = 1'b1;
             flush_sqN = sqN[1];
+        end
+
+        else begin
+            flush     = 1'b0;
+            flush_sqN = '0;
         end
 
     end
