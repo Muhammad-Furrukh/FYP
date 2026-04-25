@@ -26,13 +26,13 @@ module branch_checkpoint
     logic [NUM_REG-1:0] free		[NUM_CHKPT];
 
     // ── Fullness: count valid entries ───────────────────────
-    logic [CHKPT_BITS:0] count;
+    logic [CHKPT_BITS:0] count [NUM_CHKPT];
     always_comb begin
         count = '0;
         for (int i = 0; i < NUM_CHKPT; i++)
-            count += valid[i];
+            count[i+1] = count[i] + valid[i];
     end
-    assign check_busy = count[CHKPT_BITS];
+    assign check_busy = count[NUM_CHKPT-1][CHKPT_BITS];
 
     // ── Output mux ──────────────────────────────────────────
     always_comb begin
