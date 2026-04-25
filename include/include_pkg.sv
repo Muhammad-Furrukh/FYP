@@ -114,6 +114,11 @@ typedef enum logic [1:0] {
     WORD = 3
 } data_size_t;
 
+typedef enum logic [1:0] {
+    STORE,
+    LOAD
+} mem_req_type_t;
+
 //------------------------------------------------------------------
 // Unions
 //------------------------------------------------------------------
@@ -247,17 +252,18 @@ typedef struct packed {
 } rename_rob_t;
 
 typedef struct packed {
-    logic                        valid;
-    sqN_t                        sqN;
-    pc_t                         target_addr;
-    logic       [XLEN - 1:0]     store_data;
-    lsu_oper_t                   oper;
+    logic                           valid;
+    sqN_t                           sqN;
+    pc_t                            target_addr;
+    logic          [XLEN - 1:0]     store_data;
+    mem_req_type_t                  req_type;
+    data_size_t                     data_size;
+    logic                           is_unsigned;
 } agu_out_t;
 
 typedef struct packed {
     logic               valid;
     sqN_t               sqN;
-    logic [1:0]         data_size;
 } stb_alloc_t;  // Dispatch to Store Buffer
 
 typedef struct packed {
@@ -265,20 +271,21 @@ typedef struct packed {
     sqN_t               sqN;
     logic [XLEN - 1:0]  addr;
     logic [XLEN - 1:0]  data;
+    data_size_t         data_size;
 } stb_wb_t;    // AGU to Store Buffer (write-back)
 
 typedef struct packed {
     logic               valid;
     sqN_t               sqN;
     tag_t               rd_tag;
-    logic [1:0]         data_size;
-    logic               is_unsigned;
 } ldb_alloc_t;  // Dispatch to Load Buffer    
 
 typedef struct packed {
     logic               valid;
     sqN_t               sqN;
     logic [XLEN - 1:0]  addr;
+    data_size_t         data_size;
+    logic               is_unsigned;
 } ldb_addr_t;   // AGU to Load Buffer (write-back)
 
 typedef struct packed {
