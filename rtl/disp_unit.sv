@@ -218,7 +218,6 @@ module dispatch_unit
 		        OUT_alu_instr[p].u_type    = packet[alu_slot[p]].u_type;
 		    end
 		end
-        end
 
 		for (int p = 0; p < NUM_MUL_DIV_FU; p++) begin
 		    if (mul_valid[p]) begin
@@ -243,6 +242,7 @@ module dispatch_unit
 		        OUT_lsu_instr[p].is_imm  = packet[lsu_slot[p]].is_imm;
 		    end
 		end
+        end
     end
 
 

@@ -141,18 +141,20 @@ module load_buffer (
         else begin
             // Handle new allocation
             if (alloc.valid) begin
-                entries[alloc_idx].valid       <= 1'b1;
-                entries[alloc_idx].sqN         <= alloc.sqN;
-                entries[alloc_idx].rd_tag      <= alloc.rd_tag;
-                entries[alloc_idx].data_size   <= alloc.data_size;
-                entries[alloc_idx].is_unsigned <= alloc.is_unsigned;
+                entries[alloc_idx].valid  <= 1'b1;
+                entries[alloc_idx].sqN    <= alloc.sqN;
+                entries[alloc_idx].rd_tag <= alloc.rd_tag;
+                entries[alloc_idx].data_valid <= 1'b0;   
+                entries[alloc_idx].addr_valid <= 1'b0;
                 count <= count + 1;
             end
 
             // Handle AGU target address write-back
             if (addr_wb.valid) begin
-                entries[ta_wb_idx].addr       <= addr_wb.addr;
-                entries[ta_wb_idx].addr_valid <= addr_wb.valid;
+                entries[ta_wb_idx].addr        <= addr_wb.addr;
+                entries[ta_wb_idx].addr_valid  <= addr_wb.valid;
+                entries[ta_wb_idx].data_size   <= addr_wb.data_size;
+                entries[ta_wb_idx].is_unsigned <= addr_wb.is_unsigned;
             end
 
             // Handle memory response: find the matching entry and write back the data
