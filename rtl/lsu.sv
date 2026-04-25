@@ -13,64 +13,64 @@ module lsu (
 );
 
     // --------------------------------------------------------
-    // Decode: determine if store or load, extract data_size / is_unsigned
+    // Decode dispatch_instr: determine if store or load
+    // This must happen immediately for allocation
     // --------------------------------------------------------
     logic       is_store, is_load;
-    logic [1:0] data_size;
-    logic       is_unsigned;
 
     always_comb begin
-        is_store    = 1'b0;
-        is_load     = 1'b0;
-        data_size   = 2'b10;
-        is_unsigned = 1'b0;
+        is_store = 1'b0;
+        is_load  = 1'b0;
 
         if (dispatch_instr.valid) begin
             case (dispatch_instr.oper)
-                LSU_LB:  begin is_load   = 1'b1;  data_size   = 2'b00; end
-                LSU_LH:  begin is_load   = 1'b1;  data_size   = 2'b01; end
-                LSU_LW:  begin is_load   = 1'b1;  data_size   = 2'b10; end
-                LSU_LBU: begin is_load   = 1'b1;  data_size   = 2'b00; is_unsigned = 1'b1; end
-                LSU_LHU: begin is_load   = 1'b1;  data_size   = 2'b01; is_unsigned = 1'b1; end
-                LSU_SB:  begin is_store  = 1'b1;  data_size   = 2'b00; end
-                LSU_SH:  begin is_store  = 1'b1;  data_size   = 2'b01; end
-                LSU_SW:  begin is_store  = 1'b1;  data_size   = 2'b10; end
-                default: begin is_store  = 1'b0;  is_load     = 1'b0; 
-                               data_size = 2'b10; is_unsigned = 1'b0; end
+                LSU_LB:  is_load  = 1'b1;
+                LSU_LH:  is_load  = 1'b1;
+                LSU_LW:  is_load  = 1'b1;
+                LSU_LBU: is_load  = 1'b1;
+                LSU_LHU: is_load  = 1'b1;
+                LSU_SB:  is_store = 1'b1;
+                LSU_SH:  is_store = 1'b1;
+                LSU_SW:  is_store = 1'b1;
+                default: begin is_store = 1'b0; is_load = 1'b0; end
             endcase
         end
     end
 
     // --------------------------------------------------------
-    // Switch + Decode → Store Buffer
-    // sqN + data_size + valid  (allocation)
-    // target_addr + data + valid  (AGU write-back, routed by Switch)
+    // Allocation → Store Buffer
     // --------------------------------------------------------
     stb_alloc_t stb_alloc;
-    assign stb_alloc.valid     = dispatch_instr.valid & is_store;
-    assign stb_alloc.sqN       = dispatch_instr.sqN;
-    assign stb_alloc.data_size = data_size;
-
-    stb_wb_t stb_wb;
-    assign stb_wb.valid = agu_out.valid & is_store;
-    assign stb_wb.addr  = agu_out.target_addr;
-    assign stb_wb.data  = agu_out.store_data;
+    assign stb_alloc.valid = dispatch_instr.valid & is_store;
+    assign stb_alloc.sqN   = dispatch_instr.sqN;
 
     // --------------------------------------------------------
-    // Switch + Decode → Load Buffer
-    // sqN + rd_tag + data_size + is_unsigned + valid  (allocation)
-    // target_addr + valid  (AGU write-back, routed by Switch)
+    // Write-back → Store Buffer (use AGU decoded req_type)
+    // --------------------------------------------------------
+    stb_wb_t stb_wb;
+    assign stb_wb.valid     = agu_out.valid & (agu_out.req_type == STORE);
+    assign stb_wb.sqN       = agu_out.sqN;
+    assign stb_wb.addr      = agu_out.target_addr;
+    assign stb_wb.data      = agu_out.store_data;
+    assign stb_wb.data_size = agu_out.data_size;
+
+    // --------------------------------------------------------
+    // Allocation → Load Buffer
     // --------------------------------------------------------
     ldb_alloc_t ldb_alloc;
-    assign ldb_alloc.valid       = dispatch_instr.valid & is_load;
-    assign ldb_alloc.sqN         = dispatch_instr.sqN;
-    assign ldb_alloc.rd_tag      = dispatch_instr.rd_tag;
-    assign ldb_alloc.data_size   = data_size;
-    assign ldb_alloc.is_unsigned = is_unsigned;
+    assign ldb_alloc.valid  = dispatch_instr.valid & is_load;
+    assign ldb_alloc.sqN    = dispatch_instr.sqN;
+    assign ldb_alloc.rd_tag = dispatch_instr.rd_tag;
 
+    // --------------------------------------------------------
+    // Write-back → Load Buffer (use AGU decoded req_type)
+    // --------------------------------------------------------
     ldb_addr_t ldb_addr_wb;
-    assign ldb_addr_wb.valid = agu_out.valid & is_load;
-    assign ldb_addr_wb.addr  = agu_out.target_addr;
+    assign ldb_addr_wb.valid       = agu_out.valid & (agu_out.req_type == LOAD);
+    assign ldb_addr_wb.sqN         = agu_out.sqN;
+    assign ldb_addr_wb.addr        = agu_out.target_addr;
+    assign ldb_addr_wb.data_size   = agu_out.data_size;
+    assign ldb_addr_wb.is_unsigned = agu_out.is_unsigned;
 
     // --------------------------------------------------------
     // Store Buffer ↔ Data Memory wiring

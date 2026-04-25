@@ -150,10 +150,11 @@ module store_buffer (
             // ---------------------
             if (alloc.valid && !str_busy) begin
                 entries[tail_ptr] <= '{
+                    valid          : 1'b1,
                     addr_data_valid: 1'b0,
                     committed      : 1'b0,
                     sqN            : alloc.sqN,
-                    data_size      : alloc.data_size,
+                    data_size      : '0,
                     addr           : '0,
                     data           : '0
                 };
@@ -171,6 +172,7 @@ module store_buffer (
                     (entries[i].sqN == wb.sqN)) begin
                         entries[i].addr            <= wb.addr;
                         entries[i].data            <= wb.data;
+                        entries[i].data_size       <= wb.data_size;
                         entries[i].addr_data_valid <= 1'b1;
                     end
                 end
@@ -195,8 +197,20 @@ module store_buffer (
             // ---------------------
             drain_inc = mem_req[0].valid + mem_req[1].valid;
 
-            if (drain_inc != 0)
+            if (drain_inc != 0) begin
                 drain_ptr <= (drain_ptr + drain_inc) & PTR_MASK;
+                
+                // Invalidate entries that are being drained
+                for (int i = 0; i < 2; i++) begin
+                    automatic int idx = (drain_ptr + i) & (STOREB_SIZE - 1);
+                    if (mem_req[i].valid) begin
+                        entries[idx].valid <= 1'b0;
+                    end
+                end
+                
+                // Decrement count by the number of drained entries
+                count <= count - drain_inc;
+            end
 
         end
     end
