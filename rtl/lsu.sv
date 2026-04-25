@@ -117,11 +117,18 @@ module lsu (
     // Data Memory
     // --------------------------------------------------------
     data_memory u_dmem (
-        .clk     (clk),
-        .rst     (rst),
-        .wr_req  (stb_mem_req),
-        .rd_req  (ldb_mem_req),
-        .rd_resp (ldb_mem_resp)
+        .clk_cpu     	(clk),
+        .rst_cpu     	(rst),
+        
+        .clk_mem     	(clk_m),
+        .rst_mem     	(rst_m),	
+        
+        .wr_req  	(stb_mem_req),
+        .wr_stall	(),
+        
+        .rd_req  	(ldb_mem_req),
+        .rd_resp 	(ldb_mem_resp),
+        .rd_stall	()
     );
 
     // --------------------------------------------------------
