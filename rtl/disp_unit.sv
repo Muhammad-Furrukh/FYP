@@ -116,53 +116,54 @@ module dispatch_unit
     logic [$clog2(RENAME_WIDTH)-1:0] lsu_slot  [NUM_AGU_FU];
     logic                            lsu_valid  [NUM_AGU_FU];
 
-    for (genvar p = 0; p < NUM_ALU_FU; p++) begin : g_alu_assign
+    
         always_comb begin
-            alu_slot[p]  = '0;
-            alu_valid[p] = 1'b0;
-            if (alu_ready[p]) begin
-                for (int s = 0; s < RENAME_WIDTH; s++) begin
-                    if (slot_is_alu[s] &&
-                        (prefix_alu[s] == ($clog2(RENAME_WIDTH)+1)'(prefix_ready_alu[p]))) begin
-                        alu_slot[p]  = $clog2(RENAME_WIDTH)'(s);
-                        alu_valid[p] = 1'b1;
-                    end
-                end
-            end
-        end
-    end
+		for (int p = 0; p < NUM_ALU_FU; p++) begin : g_alu_assign
+		    alu_slot[p]  = '0;
+		    alu_valid[p] = 1'b0;
+		    if (alu_ready[p]) begin
+		        for (int s = 0; s < RENAME_WIDTH; s++) begin
+		            if (slot_is_alu[s] &&
+		                (prefix_alu[s] == ($clog2(RENAME_WIDTH)+1)'(prefix_ready_alu[p]))) begin
+		                alu_slot[p]  = $clog2(RENAME_WIDTH)'(s);
+		                alu_valid[p] = 1'b1;
+		            end
+		        end
+		    end
+		end
+    	end
 
-    for (genvar p = 0; p < NUM_MUL_DIV_FU; p++) begin : g_mul_assign
         always_comb begin
-            mul_slot[p]  = '0;
-            mul_valid[p] = 1'b0;
-            if (mul_ready[p]) begin
-                for (int s = 0; s < RENAME_WIDTH; s++) begin
-                    if (slot_is_mul[s] &&
-                        (prefix_mul[s] == ($clog2(RENAME_WIDTH)+1)'(prefix_ready_mul[p]))) begin
-                        mul_slot[p]  = $clog2(RENAME_WIDTH)'(s);
-                        mul_valid[p] = 1'b1;
-                    end
-                end
-            end
-        end
-    end
+		for (int p = 0; p < NUM_MUL_DIV_FU; p++) begin 
+		    mul_slot[p]  = '0;
+		    mul_valid[p] = 1'b0;
+		    if (mul_ready[p]) begin
+		        for (int s = 0; s < RENAME_WIDTH; s++) begin
+		            if (slot_is_mul[s] &&
+		                (prefix_mul[s] == ($clog2(RENAME_WIDTH)+1)'(prefix_ready_mul[p]))) begin
+		                mul_slot[p]  = $clog2(RENAME_WIDTH)'(s);
+		                mul_valid[p] = 1'b1;
+		            end
+		        end
+		    end
+		end
+    	end
 
-    for (genvar p = 0; p < NUM_AGU_FU; p++) begin : g_lsu_assign
-        always_comb begin
-            lsu_slot[p]  = '0;
-            lsu_valid[p] = 1'b0;
-            if (lsu_ready[p]) begin
-                for (int s = 0; s < RENAME_WIDTH; s++) begin
-                    if (slot_is_lsu[s] &&
-                        (prefix_lsu[s] == ($clog2(RENAME_WIDTH)+1)'(prefix_ready_lsu[p]))) begin
-                        lsu_slot[p]  = $clog2(RENAME_WIDTH)'(s);
-                        lsu_valid[p] = 1'b1;
-                    end
-                end
-            end
-        end
-    end
+	always_comb begin
+		for (int p = 0; p < NUM_AGU_FU; p++) begin	
+		    lsu_slot[p]  = '0;
+		    lsu_valid[p] = 1'b0;
+		    if (lsu_ready[p]) begin
+			for (int s = 0; s < RENAME_WIDTH; s++) begin
+			    if (slot_is_lsu[s] &&
+				(prefix_lsu[s] == ($clog2(RENAME_WIDTH)+1)'(prefix_ready_lsu[p]))) begin
+				lsu_slot[p]  = $clog2(RENAME_WIDTH)'(s);
+				lsu_valid[p] = 1'b1;
+			    end
+			end
+		    end
+		end
+	end
 
     // ════════════════════════════════════════════════════
     // 5. can_dispatch
