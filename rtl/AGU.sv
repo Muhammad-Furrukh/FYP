@@ -30,7 +30,7 @@ module AGU
     
     assign OUT.valid = IN_instr.valid;
     assign OUT.sqN = IN_instr.sqN;
-    assign OUT.addr_result = addr_result;
+    assign OUT.target_addr = addr_result;
     assign OUT.store_data = IN_instr.operand2; // For store instructions, operand2 holds the data to be stored
 
 endmodule

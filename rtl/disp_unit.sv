@@ -25,7 +25,7 @@ module dispatch_unit
 
 
     // ════════════════════════════════════════════════════
-    // 2. Downstream ready
+    // 2. Downstream readyRENAME_WIDTH
     // ════════════════════════════════════════════════════
 
     logic alu_ready [NUM_ALU_FU];
