@@ -21,8 +21,8 @@ module branch_checkpoint
     localparam int CHKPT_BITS = $clog2(NUM_CHKPT);
     
     logic            	valid	[NUM_CHKPT];
-    tag_t      		specTag [32][NUM_CHKPT];
-    logic    		free 	[NUM_REG][NUM_CHKPT];
+    tag_t      		specTag     [NUM_CHKPT][32];
+    logic    		free 	    [NUM_CHKPT][NUM_REG];
 
     // ── Fullness: count valid entries ───────────────────────
     logic [CHKPT_BITS:0] count;
@@ -35,7 +35,7 @@ module branch_checkpoint
 
     // ── Output mux ──────────────────────────────────────────
     always_comb begin
-        if (flush && store[flush_sqN[CHKPT_BITS-1:0]].valid) begin
+        if (flush && valid[flush_sqN[CHKPT_BITS-1:0]]) begin
             OUT_specTag = specTag[flush_sqN[CHKPT_BITS-1:0]];
             OUT_free    = free[flush_sqN[CHKPT_BITS-1:0]];
         end else begin

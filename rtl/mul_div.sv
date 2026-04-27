@@ -1,6 +1,6 @@
 import include_pkg::*;
 
-module mul_div_unit (
+module MUL_DIV (
     input  logic                  clk,
     input  logic                  rst,
     input  logic                  flush,

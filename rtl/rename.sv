@@ -116,11 +116,11 @@ module rename
     logic                              chkpt_need;
 
     always_comb begin
-        free_count = '0;
+        free_count = '{default: '0};
         for (int b = 0; b < NUM_REG; b++)
             free_count[b+1] = free_count[b] + ftb[b];
 
-        req_count  = '0;
+        req_count  = '{default: '0};
         chkpt_need = 1'b0;
         for (int i = 0; i < DECODE_WIDTH; i++) begin
             req_count[i+1] = req_count[i] + req_valid[i];
@@ -132,7 +132,7 @@ module rename
 
     logic stall;
     assign stall    = ROB_busy || dispatch_busy
-                      || (free_count < NUM_REG'(req_count[DECODE_WIDTH-1]))
+                      || (free_count[NUM_REG-1] < NUM_REG'(req_count[DECODE_WIDTH-1]))
                       || (chkpt_busy && chkpt_need);
     assign OUT_busy = stall;
 

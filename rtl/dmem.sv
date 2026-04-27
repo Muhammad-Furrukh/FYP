@@ -37,7 +37,7 @@ endmodule
 //             = visible as LDB_WAITING state
 // ════════════════════════════════════════════════════
 
-module data_memory_cdc (
+module data_memory (
     // Fast domain
     input  logic         clk_cpu,
     input  logic         rst_cpu,
@@ -202,9 +202,9 @@ module data_memory_cdc (
                         logic            bsel;
                         logic [BANK_AW-1:0] boff;
                         be   = byte_en(wr_req_held[i].data_size,
-                                       wr_req_held[i].addr[1:0]);
-                        bsel = wr_req_held[i].addr[2];
-                        boff = wr_req_held[i].addr[BANK_AW+2:3];
+                                       wr_req_held[i].wr_addr[1:0]);
+                        bsel = wr_req_held[i].wr_addr[2];
+                        boff = wr_req_held[i].wr_addr[BANK_AW+2:3];
                         if (be[0]) bank[bsel][boff][7:0]   <= wr_req_held[i].data[7:0];
                         if (be[1]) bank[bsel][boff][15:8]  <= wr_req_held[i].data[15:8];
                         if (be[2]) bank[bsel][boff][23:16] <= wr_req_held[i].data[23:16];
@@ -218,11 +218,10 @@ module data_memory_cdc (
             
             for (int i = 0; i < 2; i++) begin
                 if (rd_valid_sync[i] && !rd_valid_sync_r[i]) begin
-                    rd_data_mem[i]       <= bank[rd_req_held[i].addr[2]]
-                                               [rd_req_held[i].addr[BANK_AW+2:3]];
+                    rd_data_mem[i]       <= bank[rd_req_held[i].r_addr[2]]
+                                               [rd_req_held[i].r_addr[BANK_AW+2:3]];
                     rd_resp_valid_mem[i] <= 1'b1;
                     rd_ack_mem[i]        <= 1'b1;
-                    rd_tag_mem[i]        <= rd_req_held[i].tag;
                 end
             end
         end
@@ -267,7 +266,6 @@ module data_memory_cdc (
                 if (rd_ack_sync[i]) begin
                     rd_resp[i].valid <= 1'b1;
                     rd_resp[i].data  <= rd_data_mem[i];
-                    rd_resp[i].tag   <= rd_tag_mem[i];
                 end
             end
         end
