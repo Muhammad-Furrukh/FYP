@@ -6,7 +6,7 @@ module alu_issue_buffer #(
 )(
     input       logic                          clk,
     input       logic                          rst,
-    input       alu_dispatch_instr_t           IN_alu_instr,
+    input       alu_dispatch_instr_t           IN_instr,
 
     input       logic                          flush,
     input       sqN_t                          flush_sqN,
@@ -56,15 +56,15 @@ module alu_issue_buffer #(
     logic                        issue_valid;
     
     // To Tag Buffer
-    assign check_ready[0]= IN_alu_instr.rs1_tag;
-    assign check_ready[1]= IN_alu_instr.rs2_tag;
+    assign check_ready[0]= IN_instr.rs1_tag;
+    assign check_ready[1]= IN_instr.rs2_tag;
 
     // To RF
     assign read_tag[0]   = queue[issue_idx].rs1_tag;
     assign read_tag[1]   = queue[issue_idx].rs2_tag;
 
-    assign is_jump = (IN_alu_instr.jump_type == 2'b10) || (IN_alu_instr.jump_type == 2'b01);
-    assign sel_ready2 = is_jump || IN_alu_instr.is_imm;
+    assign is_jump = (IN_instr.jump_type == 2'b10) || (IN_instr.jump_type == 2'b01);
+    assign sel_ready2 = is_jump || IN_instr.is_imm;
 
     assign dispatch_ready_1 = is_jump ? 1'b1 : tag_ready[0];
     assign dispatch_ready_2 = sel_ready2 ? 1'b1 : tag_ready[1];
@@ -232,23 +232,23 @@ module alu_issue_buffer #(
 
             end
             //4 . DISPATCH
-            if (IN_alu_instr.valid && !OUT_busy) begin
+            if (IN_instr.valid && !OUT_busy) begin
                 alu_dispatch_instr_t temp;
                 temp.valid      = 1'b1;
-                temp.sqN        = IN_alu_instr.sqN;
-                temp.pc         = IN_alu_instr.pc;
-                temp.oper       = IN_alu_instr.oper;
+                temp.sqN        = IN_instr.sqN;
+                temp.pc         = IN_instr.pc;
+                temp.oper       = IN_instr.oper;
 
-                temp.rs1_tag    = IN_alu_instr.rs1_tag;
-                temp.rs2_tag    = IN_alu_instr.rs2_tag;
-                temp.rd_tag     = IN_alu_instr.rd_tag;
+                temp.rs1_tag    = IN_instr.rs1_tag;
+                temp.rs2_tag    = IN_instr.rs2_tag;
+                temp.rd_tag     = IN_instr.rd_tag;
 
-                temp.imm        = IN_alu_instr.imm;
-                temp.is_imm     = IN_alu_instr.is_imm;
+                temp.imm        = IN_instr.imm;
+                temp.is_imm     = IN_instr.is_imm;
 
-                temp.jump_type  = IN_alu_instr.jump_type;
-                temp.br_type    = IN_alu_instr.br_type;
-                temp.u_type     = IN_alu_instr.u_type;
+                temp.jump_type  = IN_instr.jump_type;
+                temp.br_type    = IN_instr.br_type;
+                temp.u_type     = IN_instr.u_type;
 
                 temp.ready_1    = dispatch_ready_1;
                 temp.ready_2    = dispatch_ready_2;
