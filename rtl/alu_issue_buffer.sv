@@ -20,7 +20,6 @@ module alu_issue_buffer #(
 
     output      issue_instr_t                  OUT_instr,
 
-    output      br_type_t                      OUT_br_type,
     output      logic                          OUT_br_taken,
     output      jump_type_t                    OUT_jump_type,
     output      pc_t                           OUT_pc,
@@ -64,7 +63,7 @@ module alu_issue_buffer #(
     assign read_tag[0]   = queue[issue_idx].rs1_tag;
     assign read_tag[1]   = queue[issue_idx].rs2_tag;
 
-    assign is_jump = (IN_alu_instr.jump_type == JALR) || (IN_alu_instr.jump_type == JAL);
+    assign is_jump = (IN_alu_instr.jump_type == 2'b10) || (IN_alu_instr.jump_type == 2'b01);
     assign sel_ready2 = is_jump || IN_alu_instr.is_imm;
 
     assign dispatch_ready_1 = is_jump ? 1'b1 : tag_ready[0];
@@ -86,8 +85,7 @@ module alu_issue_buffer #(
                         CDB_tag[j] == queue[i].rs2_tag) r2 = 1'b1;
                 end
                 ready_mask[i] = r1 & r2;
-            end 
-            else begin
+            end else begin
                 ready_mask[i] = 1'b0;
             end
         end
@@ -102,16 +100,16 @@ module alu_issue_buffer #(
     assign issue_valid = issue_found && !flush;
 
     always_comb begin
-        rs1_data_selected = '0;
-        if (issue_valid) begin
-            rs1_data_selected = RF_data[0];
-            for (int j = 0; j < ISSUE_WIDTH; j++) begin
-                if (CDB_valid[j] &&
-                    !queue[issue_idx].ready_1 &&
-                    queue[issue_idx].rs1_tag == CDB_tag[j])
-                    rs1_data_selected = CDB_result[j];
-            end
+    rs1_data_selected = '0;
+    if (issue_valid) begin
+        rs1_data_selected = RF_data[0];
+        for (int j = 0; j < ISSUE_WIDTH; j++) begin
+            if (CDB_valid[j] &&
+                !queue[issue_idx].ready_1 &&
+                queue[issue_idx].rs1_tag == CDB_tag[j])
+                rs1_data_selected = CDB_result[j];
         end
+    end
     end
 
     always_comb begin
@@ -127,23 +125,23 @@ module alu_issue_buffer #(
     end
     
     always_comb begin
-        sel1 = '0;
-        sel2 = '0;
+    sel1 = '0;
+    sel2 = '0;
 
-        if (issue_valid) begin
-            sel1 = (queue[issue_idx].jump_type == JALR) ||
-                (queue[issue_idx].jump_type == JAL) ||
-                (queue[issue_idx].u_type    == AUIPC);
+    if (issue_valid) begin
+        sel1 = (queue[issue_idx].jump_type == 2'b10) ||
+               (queue[issue_idx].jump_type == 2'b01) ||
+               (queue[issue_idx].u_type    == 2'b01);
 
-            sel2[1] = (queue[issue_idx].jump_type == JALR) ||
-                    (queue[issue_idx].jump_type == JAL);
+        sel2[1] = (queue[issue_idx].jump_type == 2'b01) ||
+                  (queue[issue_idx].jump_type == 2'b10);
 
-            sel2[0] = (queue[issue_idx].u_type    == LUI) ||
-                    (queue[issue_idx].u_type    == AUIPC) ||
-                    (queue[issue_idx].jump_type == JAL) ||
-                    (queue[issue_idx].jump_type == JALR) ||
-                    queue[issue_idx].is_imm;
-        end
+        sel2[0] = (queue[issue_idx].u_type    == 2'b10) ||
+                  (queue[issue_idx].u_type    == 2'b01) ||
+                  (queue[issue_idx].jump_type == 2'b01) ||
+                  (queue[issue_idx].jump_type == 2'b10) ||
+                  queue[issue_idx].is_imm;
+    end
     end
 
     assign op1 = sel1
@@ -170,8 +168,7 @@ module alu_issue_buffer #(
         end
         tail <= '0;
   
-    end 
-    else begin
+    end else begin
         new_tail = tail;
         // 1. FLUSH   
         if (flush) begin
@@ -265,3 +262,5 @@ module alu_issue_buffer #(
         end 
     end
 endmodule
+  
+ 

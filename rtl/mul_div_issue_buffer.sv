@@ -1,12 +1,12 @@
-import include_pkg::*;
-
+import include_pkg::*;clk(clk),
+            
 module mul_div_issue_buffer #(
     parameter int DEPTH = ISSUEB_SIZE,
     parameter int NUM_INT_FU = NUM_ALU_FU + NUM_MUL_DIV_FU
 )(
     input       logic                          clk,
     input       logic                          rst,
-    input       mul_div_dispatch_instr_t       IN_mul_div_instr,
+    input       mul_div_dispatch_instr_t       IN_instr,
 
     input       logic                          flush,
     input       sqN_t                          flush_sqN,
@@ -42,8 +42,8 @@ module mul_div_issue_buffer #(
     logic                        issue_valid;
     
     // To Tag Buffer
-    assign check_ready[0]= IN_mul_div_instr.rs1_tag;
-    assign check_ready[1]= IN_mul_div_instr.rs2_tag;
+    assign check_ready[0]= IN_instr.rs1_tag;
+    assign check_ready[1]= IN_instr.rs2_tag;
 
     // To RF
     assign read_tag[0]   = queue[issue_idx].rs1_tag;
@@ -169,15 +169,15 @@ module mul_div_issue_buffer #(
 
             end
             //4 . DISPATCH
-            if (IN_mul_div_instr.valid && !OUT_busy) begin
+            if (IN_instr.valid && !OUT_busy) begin
                 mul_div_dispatch_instr_t temp;
                 temp.valid      = 1'b1;
-                temp.sqN        = IN_mul_div_instr.sqN;
-                temp.oper       = IN_mul_div_instr.oper;
+                temp.sqN        = IN_instr.sqN;
+                temp.oper       = IN_instr.oper;
 
-                temp.rs1_tag    = IN_mul_div_instr.rs1_tag;
-                temp.rs2_tag    = IN_mul_div_instr.rs2_tag;
-                temp.rd_tag     = IN_mul_div_instr.rd_tag;
+                temp.rs1_tag    = IN_instr.rs1_tag;
+                temp.rs2_tag    = IN_instr.rs2_tag;
+                temp.rd_tag     = IN_instr.rd_tag;
 
                 temp.ready_1    = tag_ready[0] ;
                 temp.ready_2    = tag_ready[1] ;
@@ -192,22 +192,3 @@ module mul_div_issue_buffer #(
     end
 endmodule
  
-module priority_encoder #(
-    parameter int WIDTH = 8
-)(
-    input  logic [WIDTH-1:0]           req,
-    output logic [$clog2(WIDTH)-1:0]   grant_idx,
-    output logic                       grant_valid
-);
-    always_comb begin
-        grant_idx   = '0;
-        grant_valid = 1'b0;
-        // iterate high to low so lowest index wins  
-        for (int i = WIDTH-1; i >= 0; i--) begin
-            if (req[i]) begin
-                grant_idx   = ($clog2(WIDTH))'(unsigned'(i));
-                grant_valid = 1'b1;
-            end
-        end
-    end
-endmodule 

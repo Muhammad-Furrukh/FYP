@@ -1,11 +1,12 @@
 import include_pkg::*;
 
+
 module lsu_issue_buffer #(
     parameter int DEPTH = ISSUEB_SIZE
 )(
     input       logic                          clk,
     input       logic                          rst,
-    input       lsu_dispatch_instr_t           IN_lsu_instr,
+    input       lsu_dispatch_instr_t           IN_instr,
 
     input       logic                          flush,
     input       sqN_t                          flush_sqN,
@@ -40,8 +41,8 @@ module lsu_issue_buffer #(
     logic                        dispatch_ready_2;
  
     // To Tag Buffer 
-    assign check_ready[0] = IN_lsu_instr.rs1_tag;
-    assign check_ready[1] = IN_lsu_instr.rs2_tag;
+    assign check_ready[0] = IN_instr.rs1_tag;
+    assign check_ready[1] = IN_instr.rs2_tag;
  
     // To RF 
     assign read_tag[0]    = queue[issue_idx].rs1_tag;
@@ -182,16 +183,16 @@ module lsu_issue_buffer #(
                 end
 
                 // 4. DISPATCH
-                if (IN_lsu_instr.valid && !OUT_busy) begin
+                if (IN_instr.valid && !OUT_busy) begin
                     lsu_dispatch_instr_t temp;
                     temp.valid    = 1'b1;
-                    temp.sqN      = IN_lsu_instr.sqN;
-                    temp.oper     = IN_lsu_instr.oper;
-                    temp.rs1_tag  = IN_lsu_instr.rs1_tag;
-                    temp.rs2_tag  = IN_lsu_instr.rs2_tag;
-                    temp.rd_tag   = IN_lsu_instr.rd_tag;
-                    temp.imm      = IN_lsu_instr.imm;
-                    temp.is_imm   = IN_lsu_instr.is_imm;
+                    temp.sqN      = IN_instr.sqN;
+                    temp.oper     = IN_instr.oper;
+                    temp.rs1_tag  = IN_instr.rs1_tag;
+                    temp.rs2_tag  = IN_instr.rs2_tag;
+                    temp.rd_tag   = IN_instr.rd_tag;
+                    temp.imm      = IN_instr.imm;
+                    temp.is_imm   = IN_instr.is_imm;
                     temp.ready_1  = dispatch_ready_1;
                     temp.ready_2  = dispatch_ready_2;
 
@@ -205,23 +206,4 @@ module lsu_issue_buffer #(
     end
 
 endmodule
-
-module priority_encoder #(
-    parameter int WIDTH = 8
-)(
-    input  logic [WIDTH-1:0]           req,
-    output logic [$clog2(WIDTH)-1:0]   grant_idx,
-    output logic                       grant_valid
-);
-    always_comb begin
-        grant_idx   = '0;
-        grant_valid = 1'b0;
-        // iterate high to low so lowest index wins  
-        for (int i = WIDTH-1; i >= 0; i--) begin
-            if (req[i]) begin
-                grant_idx   = ($clog2(WIDTH))'(unsigned'(i));
-                grant_valid = 1'b1;
-            end
-        end
-    end
-endmodule 
+ 
