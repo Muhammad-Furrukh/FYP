@@ -5,7 +5,7 @@ module MUL_DIV (
     input  logic                  rst,
     input  logic                  flush,
     input  sqN_t                  flush_sqN,
-    input  issue_instr_t          dispatch_instr,
+    input  issue_instr_t          IN_instr,
     output logic                  OUT_busy,
     output CDB_line_t             OUT_cdb
 );
@@ -99,17 +99,17 @@ module MUL_DIV (
 
         // Shift valid/tag/oper through pipeline
         mul_pipe_valid <= {mul_pipe_valid[1:0],
-                           (state == IDLE && dispatch_instr.valid &&
-                            dispatch_instr.oper.mul_div_oper inside
+                           (state == IDLE && IN_instr.valid &&
+                            IN_instr.oper.mul_div_oper inside
                             {MUL, MULH, MULHU, MULHSU})};
         for (int s = 1; s < 3; s++) begin
             mul_pipe_sqN[s]  <= mul_pipe_sqN[s-1];
             mul_pipe_tag[s]  <= mul_pipe_tag[s-1];
             mul_pipe_oper[s] <= mul_pipe_oper[s-1];
         end
-        mul_pipe_sqN[0]  <= dispatch_instr.sqN;
-        mul_pipe_tag[0]  <= dispatch_instr.rd_tag;
-        mul_pipe_oper[0] <= dispatch_instr.oper.mul_div_oper;
+        mul_pipe_sqN[0]  <= IN_instr.sqN;
+        mul_pipe_tag[0]  <= IN_instr.rd_tag;
+        mul_pipe_oper[0] <= IN_instr.oper.mul_div_oper;
     end
 
 
@@ -135,7 +135,7 @@ module MUL_DIV (
             // ── Flush ────────────────────────────────────
             // If in-flight instruction is squashed, abort.
             if (flush && state != IDLE
-                && instr_r.sqN > flush_sqN) begin
+                && (flush_sqN - instr_r.sqN) && SQN_MASK < ROB_SIZE) begin
                 state   <= IDLE;
                 OUT_cdb <= '{default: '0};
             end
@@ -144,7 +144,7 @@ module MUL_DIV (
             // Also need to invalidate MUL pipeline stages
             if (flush) begin
                 for (int s = 0; s < 3; s++) begin
-                    if (mul_pipe_valid[s] && mul_pipe_sqN[s] > flush_sqN)
+                    if (mul_pipe_valid[s] && (flush_sqN - mul_pipe_sqN[s]) && SQN_MASK < ROB_SIZE)
                         mul_pipe_valid[s] <= 1'b0;
                 end
             end
@@ -156,10 +156,10 @@ module MUL_DIV (
                     IDLE: begin
                         OUT_cdb <= '{default: '0};
 
-                        if (dispatch_instr.valid) begin
-                            instr_r <= dispatch_instr;
+                        if (IN_instr.valid) begin
+                            instr_r <= IN_instr;
 
-                            case (dispatch_instr.oper.mul_div_oper)
+                            case (IN_instr.oper.mul_div_oper)
                                 // ── MUL: kick off DSP pipeline ──
                                 MUL, MULH, MULHU, MULHSU: begin
                                     state <= MUL_EXEC;
@@ -170,14 +170,14 @@ module MUL_DIV (
                                     begin
                                         logic [31:0] op1, op2;
                                         logic        s1, s2;
-                                        op1 = dispatch_instr.operand1;
-                                        op2 = dispatch_instr.operand2;
+                                        op1 = IN_instr.operand1;
+                                        op2 = IN_instr.operand2;
 
                                         // Division by zero
                                         div_by_zero <= (op2 == 32'd0);
 
                                         // Signed: track sign and work with abs values
-                                        if (dispatch_instr.oper.mul_div_oper inside {DIV, REM}) begin
+                                        if (IN_instr.oper.mul_div_oper inside {DIV, REM}) begin
                                             s1 = op1[31]; s2 = op2[31];
                                             div_quot_sign <= s1 ^ s2;
                                             div_rem_sign  <= s1;
@@ -195,9 +195,9 @@ module MUL_DIV (
                                     // Initialise shift register:
                                     // {remainder=0, dividend} packed into 64 bits
                                     div_partial <= {32'd0,
-                                                    dispatch_instr.operand1[31]
-                                                    ? abs32(dispatch_instr.operand1)
-                                                    : dispatch_instr.operand1};
+                                                    IN_instr.operand1[31]
+                                                    ? abs32(IN_instr.operand1)
+                                                    : IN_instr.operand1};
                                     div_count   <= 6'd0;
                                     state       <= DIV_EXEC;
                                 end

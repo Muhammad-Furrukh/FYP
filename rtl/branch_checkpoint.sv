@@ -48,7 +48,7 @@ module branch_checkpoint
     always_ff @(posedge clk) begin
         if (rst) begin
             for (int i = 0; i < NUM_CHKPT; i++)
-                store[i].valid <= 1'b0;
+                valid[i] <= 1'b0;
 
         end else begin
 
@@ -60,7 +60,7 @@ module branch_checkpoint
             //           invalidate everything strictly after it.
             if (flush) begin
                 for (int i = 0; i < NUM_CHKPT; i++)
-                    if (store[i].valid &&
+                    if (valid[i] &&
 			$signed({1'b0, sqN_t'(i)} - {1'b0, flush_sqN[CHKPT_BITS-1:0]}) >= 0) 
                         valid[i] <= 1'b0;  // >= catches the match itself too
 

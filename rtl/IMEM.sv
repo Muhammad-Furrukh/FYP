@@ -20,9 +20,9 @@ module IMEM
         $readmemh("imem.hex", mem);
     end
     
-    logic [IMEM_ADDR_WIDTH] block_idx;
-    logic [IMEM_ADDR_WIDTH] base_word;
-    logic [IMEM_ADDR_WIDTH] word_index;
+    logic [IMEM_ADDR_WIDTH-1:0] block_idx;
+    logic [IMEM_ADDR_WIDTH-1:0] base_word;
+    logic [IMEM_ADDR_WIDTH-1:0] word_index;
 
     always_ff @(posedge clk) begin
         block_idx = (addr >> 3); 
