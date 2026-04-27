@@ -19,6 +19,7 @@ module store_buffer (
 
     // To Data Memory (2 write ports)
     output stb_mem_req_t     mem_req [2],
+    input logic		     mem_stall [2],	
 
     // Forwarding entries broadcast to Load Buffer
     output stb_fwd_entry_t   fwd [STOREB_SIZE],
@@ -76,7 +77,7 @@ module store_buffer (
         for (int i = 0; i < 2; i++) begin
             automatic int idx = (drain_ptr + i) & (STOREB_SIZE - 1);
             if (entries[idx].valid && entries[idx].committed &&
-                entries[idx].addr_data_valid) begin
+                entries[idx].addr_data_valid && !mem_stall[i]) begin
                 mem_req[i].valid     = 1'b1;
                 mem_req[i].wr_addr   = entries[idx].addr;
                 mem_req[i].data      = entries[idx].data;
