@@ -49,7 +49,7 @@ module dispatch
         .flush_sqN          (flush_sqN),
         .commit_sqN         (commit_sqN),
         .instr_sqN          (instr_sqN),
-        .checkpoint         (checkpoint),
+        .chk_valid          (checkpoint),
         .IN_specTag         (IN_specTag),
         .IN_free            (IN_free),
         .check_busy         (check_busy),

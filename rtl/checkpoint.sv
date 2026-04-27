@@ -8,7 +8,7 @@ module branch_checkpoint
     input           sqN_t       flush_sqN,
     input           sqN_t       commit_sqN  [COMMIT_WIDTH],
     input           sqN_t       instr_sqN   [DECODE_WIDTH],
-    input           logic       checkpoint  [DECODE_WIDTH],
+    input           logic       chk_valid   [DECODE_WIDTH],
     input   var     tag_t       IN_specTag  [DECODE_WIDTH][32],
     input   var     logic       IN_free     [DECODE_WIDTH][2**REG_ADDR_WIDTH],
     output          logic       check_busy,
@@ -19,29 +19,28 @@ module branch_checkpoint
     localparam int NUM_REG    = 2**REG_ADDR_WIDTH;
     localparam int NUM_CHKPT  = ROB_SIZE/4;
     localparam int CHKPT_BITS = $clog2(NUM_CHKPT);
-
-    // ── Store indexed directly by low bits of sqN ───────────
-    logic 		valid 		[NUM_CHKPT];
-    tag_t [31:0]  	specTag 	[NUM_CHKPT];
-    logic [NUM_REG-1:0] free		[NUM_CHKPT];
+    
+    logic            	valid	[NUM_CHKPT];
+    tag_t      		specTag [32][NUM_CHKPT];
+    logic    		free 	[NUM_REG][NUM_CHKPT];
 
     // ── Fullness: count valid entries ───────────────────────
-    logic [CHKPT_BITS:0] count [NUM_CHKPT];
+    logic [CHKPT_BITS:0] count;
     always_comb begin
         count = '0;
         for (int i = 0; i < NUM_CHKPT; i++)
-            count[i+1] = count[i] + valid[i];
+            count += valid[i];
     end
-    assign check_busy = count[NUM_CHKPT-1][CHKPT_BITS];
+    assign check_busy = count[CHKPT_BITS];
 
     // ── Output mux ──────────────────────────────────────────
     always_comb begin
-        if (flush && valid[flush_sqN]) begin
-            OUT_specTag = specTag[flush_sqN];
-            OUT_free    = free[flush_sqN];
+        if (flush && store[flush_sqN[CHKPT_BITS-1:0]].valid) begin
+            OUT_specTag = specTag[flush_sqN[CHKPT_BITS-1:0]];
+            OUT_free    = free[flush_sqN[CHKPT_BITS-1:0]];
         end else begin
-            OUT_specTag = IN_specTag	[DECODE_WIDTH-1];
-            OUT_free    = IN_free   	[DECODE_WIDTH-1];
+            OUT_specTag = IN_specTag[DECODE_WIDTH-1];
+            OUT_free    = IN_free   [DECODE_WIDTH-1];
         end
     end
 
@@ -49,30 +48,30 @@ module branch_checkpoint
     always_ff @(posedge clk) begin
         if (rst) begin
             for (int i = 0; i < NUM_CHKPT; i++)
-                valid[i] <= 1'b0;
+                store[i].valid <= 1'b0;
 
         end else begin
 
             // ── Commit: free the committed entry directly ────
             for (int i = 0; i < COMMIT_WIDTH; i++)
-                valid[commit_sqN[i]] <= 1'b0;
+                valid[commit_sqN[i][CHKPT_BITS-1:0]] <= 1'b0;
 
             // ── Flush: restore and immediately free matched entry,
             //           invalidate everything strictly after it.
             if (flush) begin
                 for (int i = 0; i < NUM_CHKPT; i++)
-                    if (valid[i] &&
-			$signed({1'b0, sqN_t'(i)} - {1'b0, flush_sqN}) >= 0) 
+                    if (store[i].valid &&
+			$signed({1'b0, sqN_t'(i)} - {1'b0, flush_sqN[CHKPT_BITS-1:0]}) >= 0) 
                         valid[i] <= 1'b0;  // >= catches the match itself too
 
 
             // ── Allocate ─────────────────────────────────────
             end else begin
                 for (int i = 0; i < DECODE_WIDTH; i++)
-                    if (checkpoint[i]) begin
-                        valid[instr_sqN[i]]   <= 1'b1;
-                        specTag[instr_sqN[i]] <= IN_specTag[i];
-                        free[instr_sqN[i]]    <= IN_free[i];
+                    if (chk_valid[i]) begin
+                        valid[instr_sqN[i][CHKPT_BITS-1:0]]   <= 1'b1;
+                        specTag[instr_sqN[i][CHKPT_BITS-1:0]] <= IN_specTag[i];
+                        free[instr_sqN[i][CHKPT_BITS-1:0]]    <= IN_free[i];
                     end
             end
 

@@ -2,8 +2,8 @@ import include_pkg::*;
 
 module core
 (
-    input logic clk,
-    input logic rst
+    input logic clk, clk_m,
+    input logic rst, rst_m
 );
     logic                     fb_busy;
     logic                     jump1;
@@ -243,7 +243,9 @@ module core
     lsu lsu
     (
         .clk(clk),
+        .clk_m(clk_m),
         .rst(rst),
+        .rst_m(rst_m),
         .dispatch_instr(lsu_dispatch_instr),
         .agu_out(agu_out),
         .commit_sqN(commit_sqN),
