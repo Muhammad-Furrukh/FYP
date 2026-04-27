@@ -25,8 +25,9 @@ module execute
     for (genvar i = 0; i < NUM_MUL_DIV_FU; i++) begin
         MUL_DIV MUL_DIV_i
         (
+            .clk(clk), .rst(rst), .flush(flush), .flush_sqN(flush_sqN),	
             .IN_instr(int_issue_instr[i + NUM_ALU_FU]),
-            .OUT(int_fu_out[i + NUM_ALU_FU]),
+            .OUT_cdb(int_fu_out[i + NUM_ALU_FU]),
             .OUT_busy(mul_div_busy[i])
         );
     end

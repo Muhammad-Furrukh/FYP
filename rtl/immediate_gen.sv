@@ -1,4 +1,5 @@
 import include_pkg::*;
+
 module immediate_gen
 (
     input   var fetch_instr_t           IN_instr [FETCH_WIDTH],
