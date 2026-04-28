@@ -10,6 +10,7 @@ module load_buffer (
     input  sqN_t             flush_sqN,
     input  dmem_resp_t       mem_resp   [2],
     output ldb_mem_req_t     mem_req    [2],
+    input  logic	     mem_stall  [2],	
     output CDB_line_t        cdb_out,
     output logic             ld_busy
 );
@@ -93,7 +94,7 @@ module load_buffer (
 
         // Send request to memory
         for (int i = 0; i < 2; i++) begin
-            if (entries[req_idx[i]].valid) begin
+            if (entries[req_idx[i]].valid && !mem_stall[i]) begin
                 mem_req[i].valid       = 1'b1;
                 mem_req[i].sqN         = entries[req_idx[i]].sqN;
                 mem_req[i].r_addr      = entries[req_idx[i]].addr;

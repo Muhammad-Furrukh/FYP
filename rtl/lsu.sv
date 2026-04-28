@@ -76,7 +76,7 @@ module lsu (
     // Store Buffer ↔ Data Memory wiring
     // --------------------------------------------------------
     stb_mem_req_t   stb_mem_req [2];
-    logic	    mem_stall [2];
+    logic	    stb_stall 	[2];
     stb_fwd_entry_t stb_fwd     [STOREB_SIZE];
     logic           str_busy;
 
@@ -88,7 +88,7 @@ module lsu (
         .commit_sqN (commit_sqN),
         .flush      (flush),
         .flush_sqN  (flush_sqN),
-        .mem_stall  (mem_stall),
+        .mem_stall  (stb_stall),
         .mem_req    (stb_mem_req),
         .fwd        (stb_fwd),
         .str_busy   (str_busy)
@@ -97,9 +97,10 @@ module lsu (
     // --------------------------------------------------------
     // Load Buffer ↔ Data Memory wiring
     // --------------------------------------------------------
-    ldb_mem_req_t ldb_mem_req  [2];
-    dmem_resp_t   ldb_mem_resp [2];
-    logic         ld_busy;
+    ldb_mem_req_t ldb_mem_req  	[2];
+    dmem_resp_t   ldb_mem_resp 	[2];
+    logic 	  ldb_stall 	[2];
+    logic         ld_busy; 	
 
     load_buffer u_ldb (
         .clk       (clk),
@@ -111,6 +112,7 @@ module lsu (
         .flush_sqN (flush_sqN),
         .mem_req   (ldb_mem_req),
         .mem_resp  (ldb_mem_resp),
+        .mem_stall (ldb_stall),
         .cdb_out   (OUT_cdb),
         .ld_busy   (ld_busy)
     );
@@ -126,11 +128,11 @@ module lsu (
         .rst_mem     	(rst_m),	
         
         .wr_req  	(stb_mem_req),
-        .wr_stall	(mem_stall),
+        .wr_stall	(stb_stall),
         
         .rd_req  	(ldb_mem_req),
         .rd_resp 	(ldb_mem_resp),
-        .rd_stall	()
+        .rd_stall	(ldb_stall)
     );
 
     // --------------------------------------------------------
