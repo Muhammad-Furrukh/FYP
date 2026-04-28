@@ -173,7 +173,7 @@ module rename
     // ════════════════════════════════════════════════════
 
     // ── 6a. reg_ready (combinational — exception to rule) ─
-    for (genvar i = 0; i < ISSUE_WIDTH; i++) begin
+    for (genvar i = 0; i < ISSUE_WIDTH; i++) begin : gen_reg_ready
         assign reg_ready[i][0] = tag_buffer[read_tag[i][0]].ready;
         assign reg_ready[i][1] = tag_buffer[read_tag[i][1]].ready;
     end
@@ -258,8 +258,9 @@ module rename
     // ════════════════════════════════════════════════════
 
     logic [REG_ADDR_WIDTH-1:0] free_CommTag [COMMIT_WIDTH];
-    for (genvar i = 0; i < COMMIT_WIDTH; i++)
+    for (genvar i = 0; i < COMMIT_WIDTH; i++) begin : gen_freeCom
         assign free_CommTag[i] = rename_table[commit_packet[i].archTag].commTag;
+    end
 
     // ── 7a. tag_buffer ────────────────────────────────────
     always_ff @(posedge clk) begin

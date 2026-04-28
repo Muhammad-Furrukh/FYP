@@ -3,7 +3,7 @@ TOP           = core
 TB_CPP        = tb/tb_core.cpp
 RTL_DIR       = rtl
 INC_DIR       = include
-SIM_DIR       = sim
+SIM_DIR       = sim_verilator
 VERILATOR_DIR = $(SIM_DIR)/V$(TOP)
 
 # Package must be first — all other files import it

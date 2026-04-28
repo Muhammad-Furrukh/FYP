@@ -135,7 +135,7 @@ module MUL_DIV (
             // ── Flush ────────────────────────────────────
             // If in-flight instruction is squashed, abort.
             if (flush && state != IDLE
-                && (flush_sqN - instr_r.sqN) && SQN_MASK < ROB_SIZE) begin
+                && (flush_sqN - instr_r.sqN) & SQN_MASK < ROB_SIZE) begin
                 state   <= IDLE;
                 OUT_cdb <= '{default: '0};
             end
@@ -144,7 +144,7 @@ module MUL_DIV (
             // Also need to invalidate MUL pipeline stages
             if (flush) begin
                 for (int s = 0; s < 3; s++) begin
-                    if (mul_pipe_valid[s] && (flush_sqN - mul_pipe_sqN[s]) && SQN_MASK < ROB_SIZE)
+                    if (mul_pipe_valid[s] && (flush_sqN - mul_pipe_sqN[s]) & SQN_MASK < ROB_SIZE)
                         mul_pipe_valid[s] <= 1'b0;
                 end
             end

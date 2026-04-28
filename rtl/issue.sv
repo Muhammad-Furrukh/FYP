@@ -19,6 +19,7 @@ module issue
     output      lsu_issue_instr_t                   OUT_lsu_instr     [NUM_AGU_FU],
     output      logic                               OUT_br_taken      [NUM_ALU_FU],
     output      jump_type_t                         OUT_jump_type     [NUM_ALU_FU],
+    output      logic                               OUT_busy          [ISSUE_WIDTH],
     output      tag_t                               check_ready       [ISSUE_WIDTH][2],
     output      tag_t                               read_tag          [ISSUE_WIDTH][2],
     output      pc_t                                jta2,
@@ -31,7 +32,7 @@ module issue
     logic [XLEN-1:0] alu_rs1_result [NUM_ALU_FU];
     logic [XLEN-1:0] alu_imm        [NUM_ALU_FU];
 
-    for (genvar i = 0; i < NUM_ALU_FU; i++) begin
+    for (genvar i = 0; i < NUM_ALU_FU; i++) begin : gen_alu_buffer
         alu_issue_buffer alu_issue_buffer_i
         (
             .clk(clk),
@@ -48,6 +49,7 @@ module issue
             .OUT_br_taken(OUT_br_taken[i]),
             .OUT_jump_type(OUT_jump_type[i]),
             .OUT_pc(pc[i]),
+            .OUT_busy(OUT_busy[i]),
             .rs1_result(alu_rs1_result[i]),
             .imm(alu_imm[i]),
             .check_ready(check_ready[i]),
@@ -62,7 +64,7 @@ module issue
         end
     end
 
-    for (genvar i = 0; i < NUM_MUL_DIV_FU; i++) begin
+    for (genvar i = 0; i < NUM_MUL_DIV_FU; i++) begin : gen_mul_div_buffer
         mul_div_issue_buffer mul_div_issue_buffer_i
         (
             .clk(clk),
@@ -77,12 +79,13 @@ module issue
             .CDB_tag(CDB_tag),
             .CDB_valid(CDB_valid),
             .OUT_instr(OUT_instr[NUM_ALU_FU + i]),
+            .OUT_busy(OUT_busy[NUM_ALU_FU + i]),
             .check_ready(check_ready[NUM_ALU_FU + i]),
             .read_tag(read_tag[NUM_ALU_FU + i])
         );
     end
 
-    for (genvar i = 0; i < NUM_AGU_FU; i++) begin
+    for (genvar i = 0; i < NUM_AGU_FU; i++) begin : gen_agu_buffer
         lsu_issue_buffer lsu_issue_buffer_i
         (
             .clk(clk),
@@ -96,6 +99,7 @@ module issue
             .CDB_tag(CDB_tag),
             .CDB_valid(CDB_valid),
             .OUT_instr(OUT_lsu_instr[i]),
+            .OUT_busy(OUT_busy[NUM_INT_FU + i]),
             .check_ready(check_ready[NUM_INT_FU + i]),
             .read_tag(read_tag[NUM_INT_FU + i])
         );

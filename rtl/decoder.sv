@@ -36,11 +36,12 @@ module decoder
                         OUT_instr[i].u_type      = NOT_U;
 
                         case(IN_instr[i].instr[14:12])
-                            3'd0: OUT_instr[i].oper.lsu_oper = LSU_LB;
-                            3'd1: OUT_instr[i].oper.lsu_oper = LSU_LH;
-                            3'd2: OUT_instr[i].oper.lsu_oper = LSU_LW;
-                            3'd4: OUT_instr[i].oper.lsu_oper = LSU_LBU;
-                            3'd5: OUT_instr[i].oper.lsu_oper = LSU_LHU;
+                            3'd0: OUT_instr[i].oper.lsu_oper    = LSU_LB;
+                            3'd1: OUT_instr[i].oper.lsu_oper    = LSU_LH;
+                            3'd2: OUT_instr[i].oper.lsu_oper    = LSU_LW;
+                            3'd4: OUT_instr[i].oper.lsu_oper    = LSU_LBU;
+                            3'd5: OUT_instr[i].oper.lsu_oper    = LSU_LHU;
+                            default: OUT_instr[i].oper.lsu_oper = LSU_INVALID;
                         endcase
                     end
 
@@ -71,6 +72,7 @@ module decoder
                                 end
                             3'd6: OUT_instr[i].oper.alu_oper = OR;
                             3'd7: OUT_instr[i].oper.alu_oper = AND;
+                            default: OUT_instr[i].oper.alu_oper = ALU_INVALID;
                         endcase
                     end
 
@@ -87,9 +89,10 @@ module decoder
                         OUT_instr[i].u_type      = NOT_U;
 
                         case(IN_instr[i].instr[14:12])
-                            3'd0: OUT_instr[i].oper.lsu_oper = LSU_SB;
-                            3'd1: OUT_instr[i].oper.lsu_oper = LSU_SH;
-                            3'd2: OUT_instr[i].oper.lsu_oper = LSU_SW;
+                            3'd0: OUT_instr[i].oper.lsu_oper    = LSU_SB;
+                            3'd1: OUT_instr[i].oper.lsu_oper    = LSU_SH;
+                            3'd2: OUT_instr[i].oper.lsu_oper    = LSU_SW;
+                            default: OUT_instr[i].oper.lsu_oper = LSU_INVALID;
                         endcase
                     end
 
@@ -130,6 +133,7 @@ module decoder
                                 3'd5: OUT_instr[i].oper.mul_div_oper = DIVU;
                                 3'd6: OUT_instr[i].oper.mul_div_oper = REM;
                                 3'd7: OUT_instr[i].oper.mul_div_oper = REMU;
+                                default: OUT_instr[i].oper.mul_div_oper = MUL_INVALID;
                             endcase
                         end
                         else begin
@@ -156,6 +160,7 @@ module decoder
                                     end
                                 3'd6: OUT_instr[i].oper.alu_oper = OR;
                                 3'd7: OUT_instr[i].oper.alu_oper = AND;
+                                default: OUT_instr[i].oper.alu_oper = ALU_INVALID;
                             endcase
                         end  
                     end
@@ -187,12 +192,13 @@ module decoder
                         OUT_instr[i].u_type          = NOT_U;
 
                         case(IN_instr[i].instr[14:12])
-                            3'd0: OUT_instr[i].br_type = BEQ;
-                            3'd1: OUT_instr[i].br_type = BNE; 
-                            3'd4: OUT_instr[i].br_type = BLT;
-                            3'd5: OUT_instr[i].br_type = BGE;
-                            3'd6: OUT_instr[i].br_type = BLTU;
-                            3'd7: OUT_instr[i].br_type = BGEU;
+                            3'd0: OUT_instr[i].br_type    = BEQ;
+                            3'd1: OUT_instr[i].br_type    = BNE; 
+                            3'd4: OUT_instr[i].br_type    = BLT;
+                            3'd5: OUT_instr[i].br_type    = BGE;
+                            3'd6: OUT_instr[i].br_type    = BLTU;
+                            3'd7: OUT_instr[i].br_type    = BGEU;
+                            default: OUT_instr[i].br_type = NOT_BRANCH;
                         endcase
                     end
 
@@ -223,6 +229,19 @@ module decoder
                         OUT_instr[i].u_type          = NOT_U;
                         OUT_instr[i].oper.alu_oper   = ADD;
                     end
+                default: 
+                    begin
+                        OUT_instr[i].f_unit          = ALU;
+                        OUT_instr[i].rs1             = 5'b0;
+                        OUT_instr[i].rs2             = 5'b0;
+                        OUT_instr[i].rd              = '0;
+                        OUT_instr[i].imm             = '0;
+                        OUT_instr[i].is_imm          = '0;
+                        OUT_instr[i].jump_type       = NOT_JUMP;
+                        OUT_instr[i].br_type         = NOT_BRANCH;
+                        OUT_instr[i].u_type          = NOT_U;
+                        OUT_instr[i].oper.alu_oper   = ALU_INVALID;
+                    end    
             endcase
 
         end

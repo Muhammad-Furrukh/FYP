@@ -31,7 +31,6 @@ module ROB
 
     // ---------------- COMBINATIONAL ----------------
     always_comb begin
-        logic [$clog2(ROB_SIZE)-1:0] next_head, next_tail;
         OUT_busy = (count > ROB_SIZE - RENAME_WIDTH);
 
         full  = (count == 64);

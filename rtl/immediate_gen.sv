@@ -15,13 +15,17 @@ module immediate_gen
 
     always_comb begin
         for (int i = 0; i < FETCH_WIDTH; i++) begin
+            iw     = IN_instr[i].instr;
+            opcode = iw[6:0];
+            funct3 = iw[14:12];
+            imm12  = {iw[31:25], iw[11:7]};
+            imm13  = {iw[31], iw[7], iw[30:25], iw[11:8], 1'b0};
+            imm21  = {iw[31], iw[19:12], iw[20], iw[30:21], 1'b0};
+
             if (!IN_instr[i].valid) begin
                 immediate[i] = 32'b0;
             end
             else begin
-                iw = IN_instr[i].instr;
-                opcode = iw[6:0];
-
                 case (opcode)
                     7'd3,   // I-type: loads
                     7'd103: // I-type: JALR
@@ -29,7 +33,6 @@ module immediate_gen
 
                     7'd19: // I-type: ALU immediate (ADDI, SLLI, SRLI, SRAI, ...)
                         begin
-                            funct3 = iw[14:12];
                             // For shift-immediates (SLLI, SRLI, SRAI) use the shamt field (rs2/imm[4:0])
                             if (funct3 == 3'd1 || funct3 == 3'd5)
                                 immediate[i] = {27'b0, iw[24:20]};
@@ -39,13 +42,11 @@ module immediate_gen
 
                     7'd35: // S-type: stores
                         begin
-                            imm12 = {iw[31:25], iw[11:7]};
                             immediate[i] = {{20{imm12[11]}}, imm12};
                         end
 
                     7'd99: // B-type: branches
                         begin
-                            imm13 = {iw[31], iw[7], iw[30:25], iw[11:8], 1'b0};
                             immediate[i] = {{19{imm13[12]}}, imm13};
                         end
 
@@ -55,7 +56,6 @@ module immediate_gen
 
                     7'd111: // J-type: JAL
                         begin
-                            imm21 = {iw[31], iw[19:12], iw[20], iw[30:21], 1'b0};
                             immediate[i] = {{11{imm21[20]}}, imm21};
                         end
 

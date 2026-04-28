@@ -44,7 +44,8 @@ module fetch_buffer
     end
 
     // FIFO status
-    assign can_write = (count <= FETCHB_SIZE - FETCH_WIDTH);
+    assign can_write = (count <= (PTR_W)'(FETCHB_SIZE)
+                               - (PTR_W)'(FETCH_WIDTH));
     assign can_read  = (!IN_busy && count > 0);
     assign OUT_busy  = !can_write;
 
@@ -76,7 +77,6 @@ module fetch_buffer
     end
 
     // Sequential updates
-    logic [PTR_W - 1:0] idx_tail;
     always_ff @(posedge clk) begin
         if (rst) begin
             head  <= '0;
@@ -97,11 +97,18 @@ module fetch_buffer
             if (can_write) begin
                 for (int i = 0; i < FETCH_WIDTH; i++) begin
                     if (IN_instr[i].valid) begin
-                        idx_tail = (tail + i < FETCHB_SIZE) ? tail + i : tail + i - FETCHB_SIZE;
+                        if (tail + i < FETCHB_SIZE) begin
+                            buffer[tail + i].instr <= IN_instr[i].instr;
+                            buffer[tail + i].pc    <= IN_instr[i].pc;
+                            buffer[tail + i].sqN   <= sqN_counter;
+                        end
 
-                        buffer[idx_tail].instr <= IN_instr[i].instr;
-                        buffer[idx_tail].pc    <= IN_instr[i].pc;
-                        buffer[idx_tail].sqN   <= sqN_counter;
+                        else begin
+                            buffer[tail + i - FETCHB_SIZE].instr <= IN_instr[i].instr;
+                            buffer[tail + i - FETCHB_SIZE].pc    <= IN_instr[i].pc;
+                            buffer[tail + i - FETCHB_SIZE].sqN   <= sqN_counter;
+                        end
+
                         sqN_counter            <= sqN_counter + 1;
                     end
                 end

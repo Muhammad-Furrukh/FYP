@@ -134,10 +134,20 @@ module core
     alu_dispatch_instr_t     alu_dispatch_instr     [NUM_ALU_FU];
     mul_div_dispatch_instr_t mul_div_dispatch_instr [NUM_MUL_DIV_FU];
     lsu_dispatch_instr_t     lsu_dispatch_instr     [NUM_AGU_FU];
+    logic                    issue_buffer_busy      [ISSUE_WIDTH];
 
     always_comb begin
         for (int i = 0; i < COMMIT_WIDTH; i++) begin
             commit_sqN[i] = commit_packet[i].sqN;
+        end
+
+        for (int i = 0; i < ISSUE_WIDTH; i++) begin
+            if (i < NUM_ALU_FU) 
+                alu_buffer_busy[i]     = issue_buffer_busy[i];
+            else if (i < NUM_INT_FU)
+                mul_div_buffer_busy[i] = issue_buffer_busy[i];
+            else
+                lsu_buffer_busy[i]     = issue_buffer_busy[i];
         end
     end
 
@@ -193,6 +203,7 @@ module core
         .OUT_lsu_instr(lsu_issue_instr),
         .OUT_br_taken(br_taken),
         .OUT_jump_type(jump_type),
+        .OUT_busy(issue_buffer_busy),
         .check_ready(read_ready),
         .read_tag(RF_raddr),
         .jta2(jta2),
