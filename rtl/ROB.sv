@@ -1,5 +1,5 @@
 import include_pkg::*;
-module my_ROB
+module ROB
 (
 input  logic           clk,
 input  logic           rst,
@@ -26,11 +26,11 @@ logic full;
 logic empty;
 
 logic is_new_alloc;
-logic [RENAME_WIDTH] num_write;
-logic [COMMIT_WIDTH] num_commit;
+logic [RENAME_WIDTH-1:0] num_write;
+logic [COMMIT_WIDTH-1:0] num_commit;
 
-logic [COMMIT_WIDTH] c_ptr;
-logic [RENAME_WIDTH] w_ptr;
+logic [COMMIT_WIDTH-1:0] c_ptr;
+logic [RENAME_WIDTH-1:0] w_ptr;
 
 logic stop_commit;
 logic actual_commit;
