@@ -25,11 +25,8 @@ module alu_issue_buffer #(
     output      pc_t                           OUT_pc,
     output      logic           [XLEN-1:0]     rs1_result,
     output      logic           [XLEN-1:0]     imm,
-    output      sqN_t                          OUT_sqN,
-
     output      tag_t                          check_ready       [2],
     output      tag_t                          read_tag          [2],
-
     output      logic                          OUT_busy
 );
 
@@ -180,7 +177,6 @@ module alu_issue_buffer #(
             end
             tail       <= '0;
             OUT_instr  <= '0;
-            OUT_sqN    <= '0;
             OUT_pc     <= '0;
             rs1_result <= '0;
             imm        <= '0;
@@ -233,7 +229,6 @@ module alu_issue_buffer #(
                     OUT_instr.oper     <= next_queue[issue_idx].oper;
                     OUT_instr.rd_tag   <= next_queue[issue_idx].rd_tag;
 
-                    OUT_sqN       <= next_queue[issue_idx].sqN;
                     OUT_pc        <= next_queue[issue_idx].pc;
                     OUT_jump_type <= next_queue[issue_idx].jump_type;
                     rs1_result    <= rs1_data_selected;
