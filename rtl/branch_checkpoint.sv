@@ -20,18 +20,27 @@ module branch_checkpoint
     localparam int NUM_CHKPT  = ROB_SIZE/4;
     localparam int CHKPT_BITS = $clog2(NUM_CHKPT);
     
-    logic            	valid	[NUM_CHKPT];
+    logic            	valid	    [NUM_CHKPT];
     tag_t      		specTag     [NUM_CHKPT][32];
     logic    		free 	    [NUM_CHKPT][NUM_REG];
 
     // ── Fullness: count valid entries ───────────────────────
-    logic [CHKPT_BITS:0] count;
+    logic [CHKPT_BITS:0] count [NUM_CHKPT];
+    
     always_comb begin
-        count = '0;
-        for (int i = 0; i < NUM_CHKPT; i++)
-            count += valid[i];
+        for (int i = 0; i < NUM_CHKPT; i++) begin 	
+            count[i] = '0; if (valid[i]) count[i+1] = count[i] + 1;
+        end
     end
-    assign check_busy = count[CHKPT_BITS];
+	
+    logic [DECODE_WIDTH-1:0] stall;	
+    always_comb begin 
+        stall = '0;
+    	for (int i = 0; i < DECODE_WIDTH; i++)
+    	    stall[i+1] = stall[i] || valid[instr_sqN[i][CHKPT_BITS-1:0]]; 	
+    end
+    
+    assign check_busy = stall[DECODE_WIDTH-1] || count[NUM_CHKPT][CHKPT_BITS];
 
     // ── Output mux ──────────────────────────────────────────
     always_comb begin
@@ -61,20 +70,20 @@ module branch_checkpoint
             if (flush) begin
                 for (int i = 0; i < NUM_CHKPT; i++)
                     if (valid[i] &&
-			$signed({1'b0, sqN_t'(i)} - {1'b0, flush_sqN[CHKPT_BITS-1:0]}) >= 0) 
+			$signed({1'b0, sqN_t'(i)} - {1'b0, flush_sqN}) >= 0) 
                         valid[i] <= 1'b0;  // >= catches the match itself too
 
 
             // ── Allocate ─────────────────────────────────────
             end else begin
-                for (int i = 0; i < DECODE_WIDTH; i++)
-                    if (chk_valid[i]) begin
+                for (int i = 0; i < DECODE_WIDTH; i++) begin
+                    if (chk_valid[i] && !stall[i]) begin
                         valid[instr_sqN[i][CHKPT_BITS-1:0]]   <= 1'b1;
                         specTag[instr_sqN[i][CHKPT_BITS-1:0]] <= IN_specTag[i];
                         free[instr_sqN[i][CHKPT_BITS-1:0]]    <= IN_free[i];
                     end
+                end
             end
-
         end
     end
 

@@ -111,8 +111,8 @@ module rename
     //    tags, or a checkpoint is needed but slots are full.
     // ════════════════════════════════════════════════════
 
-    logic [$clog2(NUM_REG+1)-1:0]      free_count 	[NUM_REG]; // Gonna take a lot of resources, i fear.
-    logic [$clog2(DECODE_WIDTH+1)-1:0] req_count 	[DECODE_WIDTH];
+    logic [$clog2(NUM_REG+1)-1:0]      free_count 	[NUM_REG]; 
+    logic [$clog2(NUM_REG+1)-1:0]      req_count 	[DECODE_WIDTH];
     logic                              chkpt_need;
 
     always_comb begin
@@ -132,7 +132,7 @@ module rename
 
     logic stall;
     assign stall    = ROB_busy || dispatch_busy
-                      || (free_count[NUM_REG-1] < NUM_REG'(req_count[DECODE_WIDTH-1]))
+                      || (free_count[NUM_REG-1] < req_count[DECODE_WIDTH-1])
                       || (chkpt_busy && chkpt_need);
     assign OUT_busy = stall;
 
