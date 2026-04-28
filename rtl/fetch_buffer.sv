@@ -6,6 +6,7 @@ module fetch_buffer
     input  logic                   rst,
     input  logic                   IN_busy,
     input  logic                   flush,
+    input  sqN_t                   flush_sqN,
     input  var     aligner_instr_t IN_instr  [FETCH_WIDTH],
 
     output logic                   OUT_busy,
@@ -77,11 +78,18 @@ module fetch_buffer
     // Sequential updates
     logic [PTR_W - 1:0] idx_tail;
     always_ff @(posedge clk) begin
-        if (rst || flush) begin
+        if (rst) begin
             head  <= '0;
             tail  <= '0;
             count <= '0;
             sqN_counter <= 0;
+        end
+
+        else if (flush) begin
+            head  <= '0;
+            tail  <= '0;
+            count <= '0;
+            sqN_counter <= flush_sqN + 1;
         end
 
         else begin
@@ -94,7 +102,7 @@ module fetch_buffer
                         buffer[idx_tail].instr <= IN_instr[i].instr;
                         buffer[idx_tail].pc    <= IN_instr[i].pc;
                         buffer[idx_tail].sqN   <= sqN_counter;
-                        sqN_counter++;
+                        sqN_counter            <= sqN_counter + 1;
                     end
                 end
 

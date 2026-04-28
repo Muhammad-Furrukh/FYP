@@ -39,6 +39,7 @@ module core
         .IN_busy(rename_busy),
         .jump2(jump2),
         .flush(flush),
+        .flush_sqN(flush_sqN),
         .pc(pc),
         .IN_instr(prefetch_instr),
         .OUT_busy(fb_busy),
@@ -71,8 +72,8 @@ module core
     rename_instr_t               rename_instr    [DECODE_WIDTH];
     logic                        chkpt           [DECODE_WIDTH];
     sqN_t                        chkpt_sqN       [DECODE_WIDTH];
-    tag_t                        store_specTag   [32];
-    logic                        store_free      [2**REG_ADDR_WIDTH];
+    tag_t                        store_specTag   [DECODE_WIDTH][32];
+    logic                        store_free      [DECODE_WIDTH][2**REG_ADDR_WIDTH];
     CDB_line_t                   CDB             [NUM_CDB_LINES];
     tag_t                        CDB_tag         [NUM_CDB_LINES];
     logic                        CDB_valid       [NUM_CDB_LINES];
@@ -255,10 +256,11 @@ module core
         .OUT_cdb(lsu_cdb_lines[0])
     );
 
-    logic [XLEN - 1:0] rs1_addr [ISSUE_WIDTH];
-    logic [XLEN - 1:0] rs2_addr [ISSUE_WIDTH];
     logic [XLEN - 1:0] rs1_data [ISSUE_WIDTH];
     logic [XLEN - 1:0] rs2_data [ISSUE_WIDTH];
+    tag_t              rs1_addr [ISSUE_WIDTH];
+    tag_t              rs2_addr [ISSUE_WIDTH];
+
     always_comb begin
         for (int i = 0; i < ISSUE_WIDTH; i++) begin
             rs1_addr[i]        = RF_raddr[i][0];

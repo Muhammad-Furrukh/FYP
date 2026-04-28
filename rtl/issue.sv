@@ -11,7 +11,7 @@ module issue
     input       sqN_t                               flush_sqN,
     input  var  logic                               tag_ready         [ISSUE_WIDTH][2],
     input  var  logic                    [31:0]     RF_data           [ISSUE_WIDTH][2],
-    input  var  logic                               IN_busy           [ISSUE_WIDTH],
+    input  var  logic                               IN_busy           [NUM_MUL_DIV_FU],
     input  var  logic                    [XLEN-1:0] CDB_result        [ISSUE_WIDTH],
     input  var  tag_t                               CDB_tag           [ISSUE_WIDTH],
     input  var  logic                               CDB_valid         [ISSUE_WIDTH],
@@ -27,6 +27,7 @@ module issue
 
     pc_t             pc             [NUM_ALU_FU];
     sqN_t            instr_sqN      [NUM_ALU_FU];
+    logic            instr_valid    [NUM_ALU_FU];
     logic [XLEN-1:0] alu_rs1_result [NUM_ALU_FU];
     logic [XLEN-1:0] alu_imm        [NUM_ALU_FU];
 
@@ -40,7 +41,6 @@ module issue
             .flush_sqN(flush_sqN),
             .tag_ready(tag_ready[i]),
             .RF_data(RF_data[i]),
-            .IN_busy(IN_busy[i]),
             .CDB_result(CDB_result),
             .CDB_tag(CDB_tag),
             .CDB_valid(CDB_valid),
@@ -58,6 +58,7 @@ module issue
     always_comb begin 
         for (int i = 0; i < NUM_ALU_FU; i++) begin
             instr_sqN[i] = OUT_instr[i].sqN;
+            instr_valid[i] = OUT_instr[i].valid;
         end
     end
 
@@ -66,12 +67,12 @@ module issue
         (
             .clk(clk),
             .rst(rst),
-            .IN_instr(IN_mul_div_instr),
+            .IN_instr(IN_mul_div_instr[i]),
             .flush(flush),
             .flush_sqN(flush_sqN),
             .tag_ready(tag_ready[NUM_ALU_FU + i]),
             .RF_data(RF_data[NUM_ALU_FU + i]),
-            .IN_busy(IN_busy[NUM_ALU_FU + i]),
+            .IN_busy(IN_busy[i]),
             .CDB_result(CDB_result),
             .CDB_tag(CDB_tag),
             .CDB_valid(CDB_valid),
@@ -91,7 +92,6 @@ module issue
             .flush_sqN(flush_sqN),
             .tag_ready(tag_ready[NUM_INT_FU + i]),
             .RF_data(RF_data[NUM_INT_FU + i]),
-            .IN_busy(IN_busy[NUM_INT_FU + i]),
             .CDB_result(CDB_result),
             .CDB_tag(CDB_tag),
             .CDB_valid(CDB_valid),
@@ -102,7 +102,7 @@ module issue
     end
 
     ta_gen2 ta_gen2
-    (
+    (   .IN_valid(instr_valid),
         .br_taken(OUT_br_taken),
         .jump_type(OUT_jump_type),
         .instr_sqN(instr_sqN),

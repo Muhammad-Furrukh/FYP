@@ -4,33 +4,32 @@ module dispatch
 (
     input                                clk,
     input                                rst,
-    input   var logic                    ALU_buffer_busy         [2],
-    input       logic                    MUL_DIV_buffer_busy,
-    input       logic                    LSU_buffer_busy,
+    input       logic                    MUL_DIV_buffer_busy     [NUM_MUL_DIV_FU],
     input       logic                    LSU_busy,
     input       logic                    flush,
     input       sqN_t                    flush_sqN,
-    input       sqN_t                    commit_sqN,
-    input       sqN_t                    instr_sqN,
+    input       sqN_t                    commit_sqN              [COMMIT_WIDTH],
+    input       sqN_t                    instr_sqN               [RENAME_WIDTH], 
     input   var rename_instr_t           IN_instr                [RENAME_WIDTH],
-    input       logic                    checkpoint,
-    input   var tag_t                    IN_specTag              [32],
-    input   var logic                    IN_free                 [REG_ADDR_WIDTH - 1:0],
+    input       logic                    checkpoint              [RENAME_WIDTH],
+    input   var tag_t                    IN_specTag              [DECODE_WIDTH][32],
+    input   var logic                    IN_free                 [DECODE_WIDTH][2**REG_ADDR_WIDTH],
     output      tag_t                    OUT_specTag             [32],
-    output      logic                    OUT_free                [REG_ADDR_WIDTH - 1:0],
+    output      logic                    OUT_free                [2**REG_ADDR_WIDTH],
     output      logic                    d_unit_busy,
     output      logic                    check_busy,
-    output      alu_dispatch_instr_t     OUT_alu_instr           [2],
-    output      mul_div_dispatch_instr_t OUT_mul_div_instr,
-    output      lsu_dispatch_instr_t     OUT_lsu_instr
+    output      alu_dispatch_instr_t     OUT_alu_instr           [NUM_ALU_FU],
+    output      mul_div_dispatch_instr_t OUT_mul_div_instr       [NUM_MUL_DIV_FU],
+    output      lsu_dispatch_instr_t     OUT_lsu_instr           [NUM_AGU_FU]
 );
 
-    alu_dispatch_instr_t        alu_dispatch_out        [2];
-    mul_div_dispatch_instr_t    mul_div_dispatch_out; 
-    lsu_dispatch_instr_t        lsu_dispatch_out;
+    alu_dispatch_instr_t        alu_dispatch_out        [NUM_ALU_FU];
+    mul_div_dispatch_instr_t    mul_div_dispatch_out    [NUM_MUL_DIV_FU]; 
+    lsu_dispatch_instr_t        lsu_dispatch_out        [NUM_AGU_FU];
 
     dispatch_unit DU
-    (
+    (   .clk(clk),
+        .rst(rst),
         .IN_instr(IN_instr),
         .flush(flush),
         .OUT_busy(d_unit_busy),

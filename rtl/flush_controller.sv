@@ -1,6 +1,6 @@
 import include_pkg::*;
 
-module flushController (
+module flush_controller (
     input  logic         br_taken [2],
     input  sqN_t         sqN [2],
     input  jump_type_t   jump_type [2],
