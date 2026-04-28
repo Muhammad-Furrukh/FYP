@@ -288,7 +288,19 @@ module MUL_DIV (
                         OUT_cdb.result <= result;
                         state          <= IDLE;
                     end
+		default: begin
+		    state           <= IDLE;
+		    instr_r         <= '{default: '0};
+		    result          <= '0;
+		    div_count       <= '0;
+		    div_partial     <= '0;
+		    div_divisor     <= '0;
+		    div_quot_sign   <= '0;
+		    div_rem_sign    <= '0;
+		    div_by_zero     <= '0;
+		    OUT_cdb         <= '{default: '0};
 
+		end
                 endcase
             end
         end
