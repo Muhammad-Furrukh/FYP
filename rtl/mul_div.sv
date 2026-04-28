@@ -96,12 +96,22 @@ module MUL_DIV (
         mul_result_ss <= $signed(mul_op1_s) * $signed(mul_op2_s);
         mul_result_uu <= mul_op1_u * mul_op2_u;
         mul_result_su <= $signed(mul_op1_s) * $signed(mul_op2_u);
-
-        // Shift valid/tag/oper through pipeline
-        mul_pipe_valid <= {mul_pipe_valid[1:0],
-                           (state == IDLE && IN_instr.valid &&
-                            IN_instr.oper.mul_div_oper inside
-                            {MUL, MULH, MULHU, MULHSU})};
+	
+	
+         // ── MUL pipeline flush ────────────────────────
+         // Also need to invalidate MUL pipeline stages
+         if (flush) begin
+             for (int s = 0; s < 3; s++) begin
+                 if (mul_pipe_valid[s] && ((flush_sqN - mul_pipe_sqN[s]) & SQN_MASK) < ROB_SIZE) mul_pipe_valid[s] <= 1'b0;
+	     end
+         end else begin
+             // Shift valid/tag/oper through pipeline
+             mul_pipe_valid <= {mul_pipe_valid[1:0],
+                        (state == IDLE && IN_instr.valid &&
+                         IN_instr.oper.mul_div_oper inside
+                         {MUL, MULH, MULHU, MULHSU})};                    
+        end
+        
         for (int s = 1; s < 3; s++) begin
             mul_pipe_sqN[s]  <= mul_pipe_sqN[s-1];
             mul_pipe_tag[s]  <= mul_pipe_tag[s-1];
@@ -135,18 +145,9 @@ module MUL_DIV (
             // ── Flush ────────────────────────────────────
             // If in-flight instruction is squashed, abort.
             if (flush && state != IDLE
-                && (flush_sqN - instr_r.sqN) & SQN_MASK < ROB_SIZE) begin
+                && ((flush_sqN - instr_r.sqN) & SQN_MASK) < ROB_SIZE) begin
                 state   <= IDLE;
                 OUT_cdb <= '{default: '0};
-            end
-
-            // ── MUL pipeline flush ────────────────────────
-            // Also need to invalidate MUL pipeline stages
-            if (flush) begin
-                for (int s = 0; s < 3; s++) begin
-                    if (mul_pipe_valid[s] && (flush_sqN - mul_pipe_sqN[s]) & SQN_MASK < ROB_SIZE)
-                        mul_pipe_valid[s] <= 1'b0;
-                end
             end
 
             else begin
