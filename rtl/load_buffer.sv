@@ -42,12 +42,14 @@ module load_buffer (
             ld_busy = 1'b0;
         
         // Allocation logic: find the first invalid entry and allocate there
+        alloc_idx = 0;
         for (int i = LOADB_SIZE - 1; i >= 0; i--) begin
             if (!entries[i].valid) begin
                 alloc_idx = i;
             end
         end
-
+	
+	ta_wb_idx = 0;
         // Target address write-back: find the matching entry for the incoming AGU result
         for (int i = 0; i < LOADB_SIZE; i++) begin
             if (entries[i].valid && (entries[i].sqN == addr_wb.sqN)) begin
@@ -94,6 +96,11 @@ module load_buffer (
 
         // Send request to memory
         for (int i = 0; i < 2; i++) begin
+	    mem_req[i].valid       = 0;
+            mem_req[i].sqN         = 0;
+            mem_req[i].r_addr      = 0;
+            mem_req[i].data_size   = 0;
+            mem_req[i].is_unsigned = 0;
             if (entries[req_idx[i]].valid && !mem_stall[i]) begin
                 mem_req[i].valid       = 1'b1;
                 mem_req[i].sqN         = entries[req_idx[i]].sqN;
@@ -104,6 +111,7 @@ module load_buffer (
         end
 
         // Broadcast valid data entry on CDB
+        broadcast_idx = '0;
         for (int i = LOADB_SIZE; i >= 0; i--) begin
             if (entries[i].valid && entries[i].data_valid) begin
                 broadcast_idx = i;
@@ -117,8 +125,12 @@ module load_buffer (
             cdb_out.result      = entries[broadcast_idx].data;
         end
 
-        else
-            cdb_out.valid = 1'b0;
+        else begin
+            cdb_out.valid 	= 1'b0;
+            cdb_out.sqN   	= '0;
+            cdb_out.tag   	= '0;
+            cdb_out.result 	= '0;
+        end
     end
 
     always_ff @(posedge clk or posedge rst) begin
