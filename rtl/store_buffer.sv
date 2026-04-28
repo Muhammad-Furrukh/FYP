@@ -124,7 +124,7 @@ module store_buffer (
     // --------------------------------------------------------
     // Sequential logic
     // --------------------------------------------------------
-    always_ff @(posedge clk) begin
+    always_ff @(posedge clk or posedge rst) begin
         if (rst) begin
             tail_ptr  <= '0;
             drain_ptr <= '0;
