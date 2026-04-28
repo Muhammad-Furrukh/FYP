@@ -16,7 +16,7 @@ module issue
     input  var  tag_t                               CDB_tag           [ISSUE_WIDTH],
     input  var  logic                               CDB_valid         [ISSUE_WIDTH],
     output      issue_instr_t                       OUT_instr         [NUM_INT_FU],
-    output      lsu_issue_instr_t                   OUT_lsu_instr,
+    output      lsu_issue_instr_t                   OUT_lsu_instr     [NUM_AGU_FU],
     output      logic                               OUT_br_taken      [NUM_ALU_FU],
     output      jump_type_t                         OUT_jump_type     [NUM_ALU_FU],
     output      tag_t                               check_ready       [ISSUE_WIDTH][2],
@@ -86,7 +86,7 @@ module issue
         (
             .clk(clk),
             .rst(rst),
-            .IN_instr(IN_lsu_instr),
+            .IN_instr(IN_lsu_instr[i]),
             .flush(flush),
             .flush_sqN(flush_sqN),
             .tag_ready(tag_ready[NUM_INT_FU + i]),
@@ -95,7 +95,7 @@ module issue
             .CDB_result(CDB_result),
             .CDB_tag(CDB_tag),
             .CDB_valid(CDB_valid),
-            .OUT_instr(OUT_lsu_instr),
+            .OUT_instr(OUT_lsu_instr[i]),
             .check_ready(check_ready[NUM_INT_FU + i]),
             .read_tag(read_tag[NUM_INT_FU + i])
         );

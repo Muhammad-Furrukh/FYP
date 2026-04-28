@@ -44,6 +44,7 @@ typedef logic [XLEN - 1:0]              prefetch_instr_t;
 // Enums
 //------------------------------------------------------------------
 typedef enum logic [1:0] {
+    NO_UNIT,
     ALU,
     MUL_DIV,
     LSU

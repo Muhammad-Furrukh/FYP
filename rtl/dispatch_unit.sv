@@ -255,7 +255,19 @@ module dispatch_unit
     always_ff @(posedge clk) begin
         if (rst || flush) begin
             for (int i = 0; i < RENAME_WIDTH; i++) begin
-                packet[i]     <= '{default: '0};
+                packet[i]     <= '{valid: 1'b0,
+                                   sqN: '0,
+                                   pc: '0,
+                                   f_unit: NO_UNIT, 
+                                   oper: COPY,
+                                   rs1_tag: '0,
+                                   rs2_tag: '0,
+                                   rd_tag: '0,
+                                   imm: '0,
+                                   is_imm: 1'b0,
+                                   jump_type: NOT_JUMP,
+                                   br_type: NOT_BRANCH,
+                                   u_type: NOT_U};
                 dispatched[i] <= 1'b0;
             end
         end else begin

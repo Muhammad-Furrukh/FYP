@@ -246,13 +246,13 @@ module core
         .clk_m(clk_m),
         .rst(rst),
         .rst_m(rst_m),
-        .dispatch_instr(lsu_dispatch_instr),
-        .agu_out(agu_out),
+        .dispatch_instr(lsu_dispatch_instr[0]),
+        .agu_out(agu_out[0]),
         .commit_sqN(commit_sqN),
         .flush(flush),
         .flush_sqN(flush_sqN),
         .OUT_busy(lsu_busy),
-        .OUT_cdb(lsu_cdb_lines)
+        .OUT_cdb(lsu_cdb_lines[0])
     );
 
     logic [XLEN - 1:0] rs1_addr [ISSUE_WIDTH];
