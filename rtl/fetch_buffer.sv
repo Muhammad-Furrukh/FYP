@@ -77,7 +77,7 @@ module fetch_buffer
     end
 
     // Sequential updates
-    always_ff @(posedge clk) begin
+    always_ff @(posedge clk or posedge rst) begin
         if (rst) begin
             head  <= '0;
             tail  <= '0;

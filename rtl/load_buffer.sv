@@ -120,7 +120,7 @@ module load_buffer (
             cdb_out.valid = 1'b0;
     end
 
-    always_ff @(posedge clk) begin
+    always_ff @(posedge clk or posedge rst) begin
         if (rst) begin
             for (int i = 0; i < LOADB_SIZE; i++) begin
                 entries[i] <= '0;

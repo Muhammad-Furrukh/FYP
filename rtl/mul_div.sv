@@ -117,7 +117,7 @@ module MUL_DIV (
     // 4. Main FSM
     // ════════════════════════════════════════════════════
 
-    always_ff @(posedge clk) begin
+    always_ff @(posedge clk or posedge rst) begin
         if (rst) begin
             state           <= IDLE;
             instr_r         <= '{default: '0};

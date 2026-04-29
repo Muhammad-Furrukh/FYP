@@ -45,7 +45,7 @@ module branch_checkpoint
     end
 
     // ── Sequential ──────────────────────────────────────────
-    always_ff @(posedge clk) begin
+    always_ff @(posedge clk or posedge rst) begin
         if (rst) begin
             for (int i = 0; i < NUM_CHKPT; i++)
                 valid[i] <= 1'b0;

@@ -70,7 +70,7 @@ module fetch
         invalidate = q | flush;
     end
 
-    always_ff @(posedge clk) begin
+    always_ff @(posedge clk or posedge rst) begin
         if (rst)
             q <= 1'b0;
         else

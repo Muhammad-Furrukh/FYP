@@ -106,8 +106,7 @@ module store_buffer
         end
     end
 
-    // --- Sequential Logic ---
-    always_ff @(posedge clk) begin
+    always_ff @(posedge clk or posedge rst) begin
         if (rst) begin
             tail_ptr  <= '0;
             drain_ptr <= '0;
