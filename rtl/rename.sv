@@ -180,7 +180,7 @@ module rename
 
     // ── 6b. Renamed instructions (registered) ────────────
     // Cleared on rst/flush. Held on stall. Written otherwise.
-    always_ff @(posedge clk) begin
+    always_ff @(posedge clk or posedge rst) begin
         if (rst || flush) begin
             for (int i = 0; i < DECODE_WIDTH; i++) begin
                 OUT_instr[i] <= '0;
@@ -214,7 +214,7 @@ module rename
     // registered so downstream (branch predictor / ROB) sees
     // stable signals aligned with the renamed instruction.
     // Cleared on rst/flush. Held on stall. Written otherwise.
-    always_ff @(posedge clk) begin
+    always_ff @(posedge clk or posedge rst) begin
         if (rst || flush) begin
             for (int i = 0; i < DECODE_WIDTH; i++) begin
                 chkpt[i]     <= 1'b0;
@@ -263,7 +263,7 @@ module rename
     end
 
     // ── 7a. tag_buffer ────────────────────────────────────
-    always_ff @(posedge clk) begin
+    always_ff @(posedge clk or posedge rst) begin
         if (rst) begin
             for (int i = 0; i < 32; i++)
                 tag_buffer[i] <= '{freeComm: 1'b0, ready: 1'b0, free: 1'b0};
@@ -306,7 +306,7 @@ module rename
     end
 
     // ── 7b. rename_table ──────────────────────────────────
-    always_ff @(posedge clk) begin
+    always_ff @(posedge clk or posedge rst) begin
         if (rst) begin
             for (int r = 0; r < 32; r++) begin
                 rename_table[r].specTag <= REG_ADDR_WIDTH'(r);
