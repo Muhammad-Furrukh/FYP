@@ -93,13 +93,13 @@ always_ff @(posedge clk or posedge rst) begin
             OUT_commit[a].valid <= 0;
         end
 
-        if (rob[tail-1].SqN < flush_sqN) begin                   
-            tail <= tail - (rob[tail-1].SqN-flush_sqN+(2*ROB_SIZE));
-            count <= count - (rob[tail-1].SqN-flush_sqN+(2*ROB_SIZE));
+        if (rob[tail-1].sqN < flush_sqN) begin                   
+            tail <= tail - (rob[tail-1].sqN-flush_sqN+(2*ROB_SIZE));
+            count <= count - (rob[tail-1].sqN-flush_sqN+(2*ROB_SIZE));
         end
         else begin
-            tail <= tail-(rob[tail-1].SqN-flush_sqN);
-            count <= count - (rob[tail-1].SqN-flush_sqN);     
+            tail <= tail-(rob[tail-1].sqN-flush_sqN);
+            count <= count - (rob[tail-1].sqN-flush_sqN);     
         end
     end
     
@@ -116,7 +116,7 @@ always_ff @(posedge clk or posedge rst) begin
             end
             else begin
                 for (int k = 0; k < NUM_CDB_LINES; k++) begin
-                    if ((rob[j].SqN == CDB_sqN[k]) && CDB_valid[k]) begin
+                    if ((rob[j].sqN == CDB_sqN[k]) && CDB_valid[k]) begin
                         rob[j].ready <= 1;
                     end
                 end
@@ -131,7 +131,7 @@ always_ff @(posedge clk or posedge rst) begin
             for (int i = 0; i < COMMIT_WIDTH; i++) begin
                 if (!stop_commit && (commit[i] && rob[head+c_ptr].ready)) begin
                     // commit allowed
-                    OUT_commit[c_ptr].sqN     <= rob[head + c_ptr].SqN;
+                    OUT_commit[c_ptr].sqN     <= rob[head + c_ptr].sqN;
                     OUT_commit[c_ptr].comTag  <= rob[head + c_ptr].tag;
                     OUT_commit[c_ptr].archTag <= rob[head + c_ptr].rd;
                     OUT_commit[c_ptr].valid   <= rob[head + c_ptr].ready;
@@ -151,7 +151,7 @@ always_ff @(posedge clk or posedge rst) begin
             //--------------WRITE-----------ALLOCATE-----------
             for (int i = 0; i < RENAME_WIDTH; i++) begin
                 if (write_en[i]) begin
-                    rob[tail + w_ptr].SqN <= rename_rob[i].sqN;
+                    rob[tail + w_ptr].sqN <= rename_rob[i].sqN;
                     rob[tail + w_ptr].tag <= rename_rob[i].rd_tag;
                     rob[tail + w_ptr].rd  <= rename_rob[i].archTag;
                     w_ptr++;
