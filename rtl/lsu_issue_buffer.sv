@@ -64,7 +64,7 @@ module lsu_issue_buffer #(
 
     assign OUT_busy       = (tail == DEPTH);
  
-    // --- Combinational Logic (Using Blocking =) ---
+    // --- Combinational Logic ---
     always_comb begin
         ready_mask = '0;
         for (int i = 0; i < DEPTH; i++) begin

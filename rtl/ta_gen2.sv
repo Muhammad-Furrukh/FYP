@@ -41,14 +41,16 @@ module ta_gen2 (
                         imm[oldest_idx[NUM_ALU_FU-1]];
             end
 
-            else
+            else begin
                 jump2 = 1'b0;
                 jta2  = '0;
+            end
         end
 
-        else
+        else begin
             jump2 = 1'b0;
             jta2  = '0;
+        end
     end
 
 endmodule
