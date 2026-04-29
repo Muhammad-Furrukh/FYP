@@ -17,7 +17,7 @@ module IMEM
         for (int i = 0; i < MEM_WORDS; i++)
             mem[i] = 32'b0;
 
-        $readmemh("imem.hex", mem);
+        $readmemh("/home/x64/Downloads/FYP/rtl/imem.hex", mem);
     end
     
     logic [IMEM_ADDR_WIDTH-1:0] block_idx;

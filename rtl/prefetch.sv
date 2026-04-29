@@ -8,7 +8,7 @@ module prefetch
     input       pc_t                jta2,
     input       logic               jump1,
     input       logic               jump2,
-    input       logic               consumed,
+    input       logic   [1:0]       consumed,
     output      prefetch_instr_t    OUT_instr [FETCH_WIDTH],
     output      pc_t                out_pc
 );
@@ -34,10 +34,10 @@ module prefetch
 
     always_comb begin
         case({jump2, jump1})
-            2'b00:   in_pc = 4 * consumed + out_pc; // No jump, increment PC by 4 for each consumed instruction
+            2'b00:   in_pc = (consumed << 2) + out_pc; // No jump, increment PC by 4 for each consumed instruction
             2'b01:   in_pc = jta1; // Target address for jal
             2'b10:   in_pc = jta2; // Target address for branch or jalr
-            default: in_pc = 4 * consumed + out_pc;
+            default: in_pc = (consumed << 2) + out_pc;
         endcase
 
         fetch_base = out_pc & ( ~( XLEN'(7) ) ); // Align to 8-byte boundary

@@ -274,13 +274,20 @@ module core
     tag_t              rs1_addr [ISSUE_WIDTH];
     tag_t              rs2_addr [ISSUE_WIDTH];
 
+    // Block 1: addr — purely driven by RF_raddr (output of issue)
     always_comb begin
-        for (int i = 0; i < ISSUE_WIDTH; i++) begin
-            rs1_addr[i]        = RF_raddr[i][0];
-            rs2_addr[i]        = RF_raddr[i][1];
-            RF_read_data[i][0] = rs1_data[i];
-            RF_read_data[i][1] = rs2_data[i];
-        end
+	    for (int i = 0; i < ISSUE_WIDTH; i++) begin
+		rs1_addr[i] = RF_raddr[i][0];
+		rs2_addr[i] = RF_raddr[i][1];
+	    end 
+    end
+
+    // Block 2: data — purely driven by register_file outputs
+    always_comb begin
+	    for (int i = 0; i < ISSUE_WIDTH; i++) begin
+		RF_read_data[i][0] = rs1_data[i];
+		RF_read_data[i][1] = rs2_data[i];
+	    end
     end
 
     register_file register_file

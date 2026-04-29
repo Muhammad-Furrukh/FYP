@@ -14,11 +14,14 @@ ALL_RTL   = $(PKG_FILE) $(RTL_FILES)
 
 VFLAGS  = --cc
 VFLAGS += --exe
+VFLAGS += --public-depth 0
+VFLAGS += --public-flat-rw  
 VFLAGS += --build
 VFLAGS += --trace-fst
 VFLAGS += --top-module $(TOP)
 VFLAGS += --Mdir $(VERILATOR_DIR)
 VFLAGS += -Wall
+VFLAGS += -Wno-fatal
 VFLAGS += -Wno-UNUSED
 VFLAGS += -Wno-UNDRIVEN
 VFLAGS += -Wno-DECLFILENAME
