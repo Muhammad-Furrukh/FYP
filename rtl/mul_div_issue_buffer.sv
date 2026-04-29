@@ -1,8 +1,7 @@
 import include_pkg::*;
 
 module mul_div_issue_buffer #(
-    parameter int DEPTH = ISSUEB_SIZE,
-    parameter int NUM_INT_FU = NUM_ALU_FU + NUM_MUL_DIV_FU
+    parameter int DEPTH = ISSUEB_SIZE
 )(
     input       logic                          clk,
     input       logic                          rst,

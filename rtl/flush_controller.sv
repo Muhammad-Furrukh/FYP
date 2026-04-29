@@ -1,4 +1,3 @@
- 
 import include_pkg::*;
 
 module flush_controller #(

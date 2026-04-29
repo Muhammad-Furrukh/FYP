@@ -45,12 +45,11 @@ module ta_gen2 (
                         imm[oldest_idx];
             end
 
-            else
+            else begin
                 jump2 = 1'b0;
+                jta2  = '0;
+            end
         end
-
-        else
-            jump2 = 1'b0;
     end
 
 endmodule

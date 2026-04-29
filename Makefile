@@ -31,9 +31,8 @@ all: sim
 
 sim:
 	mkdir -p $(SIM_DIR)
-	$(VERILATOR) $(VFLAGS) $(ALL_RTL) $(TB_CPP) -o $(TOP)_sim
+	$(VERILATOR) $(VFLAGS) $(ALL_RTL) $(TB_CPP) -o $(TOP)_sim 2>&1 | tee $(SIM_DIR)/verilator.log
 	$(VERILATOR_DIR)/$(TOP)_sim
-
 waves:
 	gtkwave $(SIM_DIR)/tb_core.fst &
 

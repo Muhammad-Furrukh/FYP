@@ -219,11 +219,13 @@ module core
 
     flush_controller flush_controller
     (
-        .br_taken(br_taken),
-        .sqN(br_jalr_sqN),
-        .jump_type(jump_type),
-        .flush(flush),
-        .flush_sqN(flush_sqN)
+	.clk(clk),          // add this
+	.rst(rst),          // add this
+	.br_taken(br_taken),
+	.sqN(br_jalr_sqN),
+	.jump_type(jump_type),
+	.flush(flush),
+	.flush_sqN(flush_sqN)
     );
 
     agu_out_t  agu_out       [NUM_AGU_FU];
