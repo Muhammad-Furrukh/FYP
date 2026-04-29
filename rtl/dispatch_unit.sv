@@ -78,35 +78,38 @@ module dispatch_unit
     logic [$clog2(RENAME_WIDTH):0] prefix_alu [RENAME_WIDTH+1];
     logic [$clog2(RENAME_WIDTH):0] prefix_mul [RENAME_WIDTH+1];
     logic [$clog2(RENAME_WIDTH):0] prefix_lsu [RENAME_WIDTH+1];
-
-    assign prefix_alu[0] = '0;
-    assign prefix_mul[0] = '0;
-    assign prefix_lsu[0] = '0;
-
-    for (genvar s = 0; s < RENAME_WIDTH; s++) begin : g_slot_prefix
-        assign prefix_alu[s+1] = prefix_alu[s] + ($clog2(RENAME_WIDTH)+1)'(slot_is_alu[s]);
-        assign prefix_mul[s+1] = prefix_mul[s] + ($clog2(RENAME_WIDTH)+1)'(slot_is_mul[s]);
-        assign prefix_lsu[s+1] = prefix_lsu[s] + ($clog2(RENAME_WIDTH)+1)'(slot_is_lsu[s]);
-    end
-
+    
     // ── Port-side prefix sums ────────────────────────────
     logic [$clog2(NUM_ALU_FU):0]     prefix_ready_alu [NUM_ALU_FU+1];
     logic [$clog2(NUM_MUL_DIV_FU):0] prefix_ready_mul [NUM_MUL_DIV_FU+1];
     logic [$clog2(NUM_AGU_FU):0]     prefix_ready_lsu [NUM_AGU_FU+1];
 
-    assign prefix_ready_alu[0] = '0;
-    assign prefix_ready_mul[0] = '0;
-    assign prefix_ready_lsu[0] = '0;
+    always_comb begin
+	    // ── Slot prefix sums ─────────────────────────────
+	    prefix_alu[0] = '0;
+	    prefix_mul[0] = '0;
+	    prefix_lsu[0] = '0;
+	    for (int s = 0; s < RENAME_WIDTH; s++) begin
+		prefix_alu[s+1] = prefix_alu[s] + ($clog2(RENAME_WIDTH)+1)'(slot_is_alu[s]);
+		prefix_mul[s+1] = prefix_mul[s] + ($clog2(RENAME_WIDTH)+1)'(slot_is_mul[s]);
+		prefix_lsu[s+1] = prefix_lsu[s] + ($clog2(RENAME_WIDTH)+1)'(slot_is_lsu[s]);
+	    end
 
-    for (genvar p = 0; p < NUM_ALU_FU; p++) begin : g_alu_port_prefix
-        assign prefix_ready_alu[p+1] = prefix_ready_alu[p] + ($clog2(NUM_ALU_FU)+1)'(alu_ready[p]);
+	    // ── Port-ready prefix sums ───────────────────────
+	    prefix_ready_alu[0] = '0;
+	    prefix_ready_mul[0] = '0;
+	    prefix_ready_lsu[0] = '0;
+	    for (int p = 0; p < NUM_ALU_FU; p++)
+		prefix_ready_alu[p+1] = prefix_ready_alu[p]
+		                       + ($clog2(NUM_ALU_FU)+1)'(alu_ready[p]);
+	    for (int p = 0; p < NUM_MUL_DIV_FU; p++)
+		prefix_ready_mul[p+1] = prefix_ready_mul[p]
+		                       + ($clog2(NUM_MUL_DIV_FU)+1)'(mul_ready[p]);
+	    for (int p = 0; p < NUM_AGU_FU; p++)
+		prefix_ready_lsu[p+1] = prefix_ready_lsu[p]
+		                       + ($clog2(NUM_AGU_FU)+1)'(lsu_ready[p]);
     end
-    for (genvar p = 0; p < NUM_MUL_DIV_FU; p++) begin : g_mul_port_prefix
-        assign prefix_ready_mul[p+1] = prefix_ready_mul[p] + ($clog2(NUM_MUL_DIV_FU)+1)'(mul_ready[p]);
-    end
-    for (genvar p = 0; p < NUM_AGU_FU; p++) begin : g_lsu_port_prefix
-        assign prefix_ready_lsu[p+1] = prefix_ready_lsu[p] + ($clog2(NUM_AGU_FU)+1)'(lsu_ready[p]);
-    end
+
 
     // ── Port assignment ───────────────────────────────────
     logic [$clog2(RENAME_WIDTH)-1:0] alu_slot  [NUM_ALU_FU];

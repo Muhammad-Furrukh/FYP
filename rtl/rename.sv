@@ -86,8 +86,6 @@ module rename
         for (int i = 0; i < DECODE_WIDTH; i++)
             req_valid[i] = IN_instr[i].valid && (IN_instr[i].rd != 5'd0);
 
-    assign masked[0] = ftb;
-
     // Priority encoder as a function — fully combinational, no latch risk
     function automatic logic [REG_ADDR_WIDTH-1:0] onehot_to_bin(
         input logic [NUM_REG-1:0] oh
@@ -97,13 +95,14 @@ module rename
             if (oh[b]) onehot_to_bin = REG_ADDR_WIDTH'(b);
     endfunction
 
-
-    for (genvar i = 0; i < DECODE_WIDTH; i++) begin : g_alloc
-        assign onehot[i] = req_valid[i] ? (masked[i] & (~masked[i] + 1'b1)) : '0;
-        assign chosen[i] = onehot_to_bin(onehot[i]);  // pure assign, no always_comb
-        assign masked[i+1] = masked[i] & ~onehot[i];
+    always_comb begin
+	masked[0] = ftb;
+	for (int i = 0; i < DECODE_WIDTH; i++) begin
+	     onehot[i] = req_valid[i] ? (masked[i] & (~masked[i] + 1'b1)) : '0;
+	     chosen[i] = onehot_to_bin(onehot[i]);
+	     masked[i+1] = masked[i] & ~onehot[i];
+	end
     end
-
 
     // ════════════════════════════════════════════════════
     // 4. Stall
