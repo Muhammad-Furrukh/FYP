@@ -68,6 +68,9 @@ module tb_branch_checkpoint;
 
     // ── Main ───────────────────────────────────────────
     initial begin
+    	$dumpfile("tb_branch_checkpoint.fst");
+    	$dumpvars(0, tb_branch_checkpoint);
+        
         clk = 0; rst = 1;
         set_idle();
         tick_n(5);
