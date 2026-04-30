@@ -95,7 +95,7 @@ module MUL_DIV (
         // Stage 1: register inputs to DSP
         mul_result_ss <= $signed(mul_op1_s) * $signed(mul_op2_s);
         mul_result_uu <= mul_op1_u * mul_op2_u;
-        mul_result_su <= $signed(mul_op1_s) * $signed(mul_op2_u);
+        mul_result_su <= $signed(mul_op1_s) * mul_op2_u;
 	
 	
          // ── MUL pipeline flush ────────────────────────
