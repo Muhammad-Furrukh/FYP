@@ -28,7 +28,7 @@ module flush_controller #(
             for (int i = 0; i < NUM_PORTS; i++)
                 valid[i] = br_taken[i] || (jump_type[i] == 2'b10);
 
-            // find oldest (smallest) sqN among valid ports
+            // find oldest (smallest) sqN among ALL valid ports
             any_valid = 1'b0;
             best_sqN  = '0;
 
