@@ -38,7 +38,7 @@ module flush_controller #(
                         best_sqN  = sqN[i];
                         any_valid = 1'b1;
                     end else begin
-                        diff = best_sqN - sqN[i];   
+                        diff = sqN[i]-best_sqN;   
                         if (!diff[$bits(sqN_t)-1])
                             best_sqN = sqN[i];
                     end
