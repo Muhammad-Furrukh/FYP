@@ -38,9 +38,9 @@ module flush_controller #(
                         best_sqN  = sqN[i];
                         any_valid = 1'b1;
                     end else begin
-                        diff = sqN[i]-best_sqN;   
-                        if (!diff[$bits(sqN_t)-1])
-                            best_sqN = sqN[i];
+                        diff = sqN[i] - best_sqN;
+                        if (diff[$bits(sqN_t)-1])    // MSB=1 : sqN[i] is OLDER than best_sqN
+                            best_sqN = sqN[i];       // replace with older one
                     end
                 end else begin
                     diff = '0;   
