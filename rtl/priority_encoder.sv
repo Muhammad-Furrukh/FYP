@@ -1,5 +1,3 @@
-import include_pkg::*;
-
  
 module priority_encoder #(
     parameter int WIDTH = 8
