@@ -16,9 +16,8 @@ module decoder
 
     always_comb begin
         for (int i = 0; i < FETCH_WIDTH; i++) begin
-            OUT_instr[i].valid = IN_instr[i].valid;
-            OUT_instr[i].sqN = IN_instr[i].sqN;
             OUT_instr[i].pc  = IN_instr[i].pc;
+            OUT_instr[i].sqN = '0;  // sqN will be assigned by decode module
 
             opcode[i] = IN_instr[i].instr[6:0];
 
@@ -36,12 +35,30 @@ module decoder
                         OUT_instr[i].u_type      = NOT_U;
 
                         case(IN_instr[i].instr[14:12])
-                            3'd0: OUT_instr[i].oper.lsu_oper    = LSU_LB;
-                            3'd1: OUT_instr[i].oper.lsu_oper    = LSU_LH;
-                            3'd2: OUT_instr[i].oper.lsu_oper    = LSU_LW;
-                            3'd4: OUT_instr[i].oper.lsu_oper    = LSU_LBU;
-                            3'd5: OUT_instr[i].oper.lsu_oper    = LSU_LHU;
-                            default: OUT_instr[i].oper.lsu_oper = LSU_INVALID;
+                            3'd0: begin
+                                OUT_instr[i].oper.lsu_oper = LSU_LB;
+                                OUT_instr[i].valid         = IN_instr[i].valid;
+                            end
+                            3'd1: begin
+                                OUT_instr[i].oper.lsu_oper = LSU_LH;
+                                OUT_instr[i].valid         = IN_instr[i].valid;
+                            end
+                            3'd2: begin
+                                OUT_instr[i].oper.lsu_oper = LSU_LW;
+                                OUT_instr[i].valid         = IN_instr[i].valid;
+                            end
+                            3'd4: begin
+                                OUT_instr[i].oper.lsu_oper = LSU_LBU;
+                                OUT_instr[i].valid         = IN_instr[i].valid;
+                            end
+                            3'd5: begin
+                                OUT_instr[i].oper.lsu_oper = LSU_LHU;
+                                OUT_instr[i].valid         = IN_instr[i].valid;
+                            end
+                            default: begin
+                                OUT_instr[i].oper.lsu_oper = LSU_INVALID;
+                                OUT_instr[i].valid         = 1'b0;
+                            end
                         endcase
                     end
 
@@ -58,21 +75,50 @@ module decoder
                         OUT_instr[i].u_type      = NOT_U;
 
                         case(IN_instr[i].instr[14:12])
-                            3'd0: OUT_instr[i].oper.alu_oper = ADD;
-                            3'd1: OUT_instr[i].oper.alu_oper = SLL;
-                            3'd2: OUT_instr[i].oper.alu_oper = SLT;
-                            3'd3: OUT_instr[i].oper.alu_oper = SLTU;
-                            3'd4: OUT_instr[i].oper.alu_oper = XOR;
-                            3'd5: 
-                                begin
-                                    if (IN_instr[i].instr[31:25] == 7'b0)
-                                        OUT_instr[i].oper.alu_oper = SRL;
-                                    else
-                                        OUT_instr[i].oper.alu_oper = SRA;
+                            3'd0: begin
+                                OUT_instr[i].oper.alu_oper = ADD;
+                                OUT_instr[i].valid         = IN_instr[i].valid;
+                            end
+                            3'd1: begin
+                                OUT_instr[i].oper.alu_oper = SLL;
+                                OUT_instr[i].valid         = IN_instr[i].valid;
+                            end
+                            3'd2: begin
+                                OUT_instr[i].oper.alu_oper = SLT;
+                                OUT_instr[i].valid         = IN_instr[i].valid;
+                            end
+                            3'd3: begin
+                                OUT_instr[i].oper.alu_oper = SLTU;
+                                OUT_instr[i].valid         = IN_instr[i].valid;
+                            end
+                            3'd4: begin
+                                OUT_instr[i].oper.alu_oper = XOR;
+                                OUT_instr[i].valid         = IN_instr[i].valid;
+                            end
+                            3'd5: begin
+                                if (IN_instr[i].instr[31:25] == 7'h00) begin
+                                    OUT_instr[i].oper.alu_oper = SRL;
+                                    OUT_instr[i].valid         = IN_instr[i].valid;
                                 end
-                            3'd6: OUT_instr[i].oper.alu_oper = OR;
-                            3'd7: OUT_instr[i].oper.alu_oper = AND;
-                            default: OUT_instr[i].oper.alu_oper = ALU_INVALID;
+                                else if (IN_instr[i].instr[31:25] == 7'h20) begin
+                                    OUT_instr[i].oper.alu_oper = SRA;
+                                    OUT_instr[i].valid         = IN_instr[i].valid;
+                                end
+                                else
+                                    OUT_instr[i].valid         = 1'b0;
+                            end
+                            3'd6: begin
+                                OUT_instr[i].oper.alu_oper = OR;
+                                OUT_instr[i].valid         = IN_instr[i].valid;
+                            end
+                            3'd7: begin
+                                OUT_instr[i].oper.alu_oper = AND;
+                                OUT_instr[i].valid         = IN_instr[i].valid;
+                            end
+                            default: begin
+                                OUT_instr[i].oper.alu_oper = ALU_INVALID;
+                                OUT_instr[i].valid         = 1'b0;
+                            end
                         endcase
                     end
 
@@ -89,15 +135,28 @@ module decoder
                         OUT_instr[i].u_type      = NOT_U;
 
                         case(IN_instr[i].instr[14:12])
-                            3'd0: OUT_instr[i].oper.lsu_oper    = LSU_SB;
-                            3'd1: OUT_instr[i].oper.lsu_oper    = LSU_SH;
-                            3'd2: OUT_instr[i].oper.lsu_oper    = LSU_SW;
-                            default: OUT_instr[i].oper.lsu_oper = LSU_INVALID;
+                            3'd0: begin
+                                OUT_instr[i].oper.lsu_oper = LSU_SB;
+                                OUT_instr[i].valid         = IN_instr[i].valid;
+                            end
+                            3'd1: begin
+                                OUT_instr[i].oper.lsu_oper = LSU_SH;
+                                OUT_instr[i].valid         = IN_instr[i].valid;
+                            end
+                            3'd2: begin
+                                OUT_instr[i].oper.lsu_oper = LSU_SW;
+                                OUT_instr[i].valid         = IN_instr[i].valid;
+                            end
+                            default: begin
+                                OUT_instr[i].oper.lsu_oper = LSU_INVALID;
+                                OUT_instr[i].valid         = 1'b0;
+                            end
                         endcase
                     end
 
                 7'd23:  // AUIPC
                     begin
+                        OUT_instr[i].valid           = IN_instr[i].valid;
                         OUT_instr[i].f_unit          = ALU;
                         OUT_instr[i].rs1             = 5'b0;
                         OUT_instr[i].rs2             = 5'b0;
@@ -125,48 +184,108 @@ module decoder
                             OUT_instr[i].f_unit = MUL_DIV;
 
                             case(IN_instr[i].instr[14:12])
-                                3'd0: OUT_instr[i].oper.mul_div_oper = MUL;
-                                3'd1: OUT_instr[i].oper.mul_div_oper = MULH;
-                                3'd2: OUT_instr[i].oper.mul_div_oper = MULHSU;
-                                3'd3: OUT_instr[i].oper.mul_div_oper = MULHU;
-                                3'd4: OUT_instr[i].oper.mul_div_oper = DIV;
-                                3'd5: OUT_instr[i].oper.mul_div_oper = DIVU;
-                                3'd6: OUT_instr[i].oper.mul_div_oper = REM;
-                                3'd7: OUT_instr[i].oper.mul_div_oper = REMU;
-                                default: OUT_instr[i].oper.mul_div_oper = MUL_INVALID;
+                                3'd0: begin
+                                    OUT_instr[i].oper.mul_div_oper = MUL;
+                                    OUT_instr[i].valid = IN_instr[i].valid;
+                                end
+                                3'd1: begin
+                                    OUT_instr[i].oper.mul_div_oper = MULH;
+                                    OUT_instr[i].valid = IN_instr[i].valid;
+                                end
+                                3'd2: begin
+                                    OUT_instr[i].oper.mul_div_oper = MULHSU;
+                                    OUT_instr[i].valid = IN_instr[i].valid;
+                                end
+                                3'd3: begin
+                                    OUT_instr[i].oper.mul_div_oper = MULHU;
+                                    OUT_instr[i].valid = IN_instr[i].valid;
+                                end
+                                3'd4: begin
+                                    OUT_instr[i].oper.mul_div_oper = DIV;
+                                    OUT_instr[i].valid = IN_instr[i].valid;
+                                end
+                                3'd5: begin
+                                    OUT_instr[i].oper.mul_div_oper = DIVU;
+                                    OUT_instr[i].valid = IN_instr[i].valid;
+                                end
+                                3'd6: begin
+                                    OUT_instr[i].oper.mul_div_oper = REM;
+                                    OUT_instr[i].valid = IN_instr[i].valid;
+                                end
+                                3'd7: begin
+                                    OUT_instr[i].oper.mul_div_oper = REMU;
+                                    OUT_instr[i].valid = IN_instr[i].valid;
+                                end
+                                default: begin
+                                    OUT_instr[i].oper.mul_div_oper = MUL_INVALID;
+                                    OUT_instr[i].valid = 1'b0;
+                                end
                             endcase
                         end
                         else begin
                             OUT_instr[i].f_unit = ALU;
 
                             case(IN_instr[i].instr[14:12])
-                                3'd0: 
-                                    begin
-                                        if (IN_instr[i].instr[31:25] == 7'b0)
-                                            OUT_instr[i].oper.alu_oper = ADD;
-                                        else
-                                            OUT_instr[i].oper.alu_oper = SUB;
+                                3'd0: begin
+                                    if (IN_instr[i].instr[31:25] == 7'h0) begin
+                                        OUT_instr[i].oper.alu_oper = ADD;
+                                        OUT_instr[i].valid         = IN_instr[i].valid;
                                     end
-                                3'd1: OUT_instr[i].oper.alu_oper = SLL;
-                                3'd2: OUT_instr[i].oper.alu_oper = SLT;
-                                3'd3: OUT_instr[i].oper.alu_oper = SLTU;
-                                3'd4: OUT_instr[i].oper.alu_oper = XOR;
-                                3'd5: 
-                                    begin
-                                        if (IN_instr[i].instr[31:25] == 7'b0)
-                                            OUT_instr[i].oper.alu_oper = SRL;
-                                        else
-                                            OUT_instr[i].oper.alu_oper = SRA;
+                                    else if (IN_instr[i].instr[31:25] == 7'h20) begin
+                                        OUT_instr[i].oper.alu_oper = SUB;
+                                        OUT_instr[i].valid         = IN_instr[i].valid;
                                     end
-                                3'd6: OUT_instr[i].oper.alu_oper = OR;
-                                3'd7: OUT_instr[i].oper.alu_oper = AND;
-                                default: OUT_instr[i].oper.alu_oper = ALU_INVALID;
+                                    else 
+                                        OUT_instr[i].valid = 1'b0;
+                                end
+                                3'd1: begin
+                                    OUT_instr[i].oper.alu_oper = SLL;
+                                    OUT_instr[i].valid         = IN_instr[i].valid;
+                                end
+                                3'd2: begin
+                                    OUT_instr[i].oper.alu_oper = SLT;
+                                    OUT_instr[i].valid         = IN_instr[i].valid;
+                                end
+                                3'd3: begin
+                                    OUT_instr[i].oper.alu_oper = SLTU;
+                                    OUT_instr[i].valid         = IN_instr[i].valid;
+                                end
+                                3'd4: begin
+                                    OUT_instr[i].oper.alu_oper = XOR;
+                                    OUT_instr[i].valid         = IN_instr[i].valid;
+                                end
+                                3'd5: begin
+                                    if (IN_instr[i].instr[31:25] == 7'h0) begin
+                                        OUT_instr[i].oper.alu_oper = SRL;
+                                        OUT_instr[i].valid         = IN_instr[i].valid;
+                                    end
+                                    else if (IN_instr[i].instr[31:25] == 7'h20) begin
+                                        OUT_instr[i].oper.alu_oper = SRA;
+                                        OUT_instr[i].valid         = IN_instr[i].valid;
+                                    end
+                                    else begin
+                                        OUT_instr[i].valid = 1'b0;
+                                    end
+                                end
+                                3'd6: begin
+                                    OUT_instr[i].oper.alu_oper = OR;
+                                    OUT_instr[i].valid = IN_instr[i].valid;
+                                end
+                                3'd7: begin
+                                    OUT_instr[i].oper.alu_oper = AND;
+                                    OUT_instr[i].valid = IN_instr[i].valid;
+                                end
+                                default: begin
+                                    OUT_instr[i].oper.alu_oper = ALU_INVALID;
+                                    OUT_instr[i].valid = 1'b0;
+                                end
                             endcase
                         end  
                     end
 
                 7'd55: // LUI
                     begin
+                        OUT_instr[i].valid           = IN_instr[i].valid;
                         OUT_instr[i].f_unit          = ALU;
                         OUT_instr[i].rs1             = 5'b0;
                         OUT_instr[i].rs2             = 5'b0;
@@ -192,13 +311,34 @@ module decoder
                         OUT_instr[i].u_type          = NOT_U;
 
                         case(IN_instr[i].instr[14:12])
-                            3'd0: OUT_instr[i].br_type    = BEQ;
-                            3'd1: OUT_instr[i].br_type    = BNE; 
-                            3'd4: OUT_instr[i].br_type    = BLT;
-                            3'd5: OUT_instr[i].br_type    = BGE;
-                            3'd6: OUT_instr[i].br_type    = BLTU;
-                            3'd7: OUT_instr[i].br_type    = BGEU;
-                            default: OUT_instr[i].br_type = NOT_BRANCH;
+                            3'd0: begin
+                                OUT_instr[i].br_type = BEQ;
+                                OUT_instr[i].valid   = IN_instr[i].valid;
+                            end
+                            3'd1: begin
+                                OUT_instr[i].br_type = BNE;
+                                OUT_instr[i].valid   = IN_instr[i].valid;
+                            end
+                            3'd4: begin
+                                OUT_instr[i].br_type = BLT;
+                                OUT_instr[i].valid   = IN_instr[i].valid;
+                            end
+                            3'd5: begin
+                                OUT_instr[i].br_type = BGE;
+                                OUT_instr[i].valid   = IN_instr[i].valid;
+                            end
+                            3'd6: begin
+                                OUT_instr[i].br_type = BLTU;
+                                OUT_instr[i].valid   = IN_instr[i].valid;
+                            end
+                            3'd7: begin
+                                OUT_instr[i].br_type = BGEU;
+                                OUT_instr[i].valid   = IN_instr[i].valid;
+                            end
+                            default: begin
+                                OUT_instr[i].br_type = NOT_BRANCH;
+                                OUT_instr[i].valid   = 1'b0;
+                            end
                         endcase
                     end
 
@@ -214,11 +354,17 @@ module decoder
                         OUT_instr[i].br_type         = NOT_BRANCH;
                         OUT_instr[i].u_type          = NOT_U;
                         OUT_instr[i].oper.alu_oper   = ADD;
+
+                        if (IN_instr[i].instr[14:12] == 3'd0)
+                            OUT_instr[i].valid = IN_instr[i].valid;
+                        else
+                            OUT_instr[i].valid = 1'b0;
                     end
 
                 7'd111: // JAL
                     begin
-                        OUT_instr[i].f_unit = ALU;
+                        OUT_instr[i].valid           = IN_instr[i].valid;
+                        OUT_instr[i].f_unit          = ALU;
                         OUT_instr[i].rs1             = 5'b0;
                         OUT_instr[i].rs2             = 5'b0;
                         OUT_instr[i].rd              = IN_instr[i].instr[11:7];
@@ -231,6 +377,7 @@ module decoder
                     end
                 default: 
                     begin
+                        OUT_instr[i].valid           = 1'b0;
                         OUT_instr[i].f_unit          = ALU;
                         OUT_instr[i].rs1             = 5'b0;
                         OUT_instr[i].rs2             = 5'b0;

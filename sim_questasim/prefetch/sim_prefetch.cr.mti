@@ -1,0 +1,46 @@
+/home/muhammad/Documents/UET/FYP/rtl/IMEM.sv {1 {vlog -work work -vopt -sv -stats=none /home/muhammad/Documents/UET/FYP/rtl/IMEM.sv
+QuestaSim-64 vlog 2021.2_1 Compiler 2021.05 May 15 2021
+-- Compiling package IMEM_sv_unit
+-- Importing package include_pkg
+-- Compiling module IMEM
+
+Top level modules:
+	IMEM
+
+} {} {}} /home/muhammad/Documents/UET/FYP/rtl/instr_aligner.sv {1 {vlog -work work -vopt -sv -stats=none /home/muhammad/Documents/UET/FYP/rtl/instr_aligner.sv
+QuestaSim-64 vlog 2021.2_1 Compiler 2021.05 May 15 2021
+-- Compiling package instr_aligner_sv_unit
+-- Importing package include_pkg
+-- Compiling module instr_aligner
+
+Top level modules:
+	instr_aligner
+
+} {} {}} /home/muhammad/Documents/UET/FYP/rtl/prefetch.sv {1 {vlog -work work -vopt -sv -stats=none /home/muhammad/Documents/UET/FYP/rtl/prefetch.sv
+QuestaSim-64 vlog 2021.2_1 Compiler 2021.05 May 15 2021
+-- Compiling package prefetch_sv_unit
+-- Importing package include_pkg
+-- Compiling module prefetch
+
+Top level modules:
+	prefetch
+
+} {} {}} /home/muhammad/Documents/UET/FYP/sim_questasim/prefetch/testbench.sv {1 {vlog -work work -vopt -sv -stats=none /home/muhammad/Documents/UET/FYP/sim_questasim/prefetch/testbench.sv
+QuestaSim-64 vlog 2021.2_1 Compiler 2021.05 May 15 2021
+-- Compiling package testbench_sv_unit
+-- Importing package include_pkg
+-- Compiling module prefetch_tb
+
+Top level modules:
+	prefetch_tb
+
+} {} {}} /home/muhammad/Documents/UET/FYP/rtl/PC.sv {1 {vlog -work work -vopt -sv -stats=none /home/muhammad/Documents/UET/FYP/rtl/PC.sv
+QuestaSim-64 vlog 2021.2_1 Compiler 2021.05 May 15 2021
+-- Compiling package PC_sv_unit
+-- Importing package include_pkg
+-- Compiling module PC
+
+Top level modules:
+	PC
+
+} {} {}}

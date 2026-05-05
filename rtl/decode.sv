@@ -10,11 +10,40 @@ module decode
 );
 
     decode_instr_t  decoder_out [DECODE_WIDTH];
+    decode_instr_t  decode_out  [DECODE_WIDTH];
+    sqN_t           next_sqN;
+    logic [FETCH_WIDTH:0] valid_count;
+
     decoder Decoder
     (
         .IN_instr(IN_instr),
         .OUT_instr(decoder_out)
     );
+
+    always_comb begin
+        // Count valid instructions based on decoder output validity
+        valid_count = 0;
+        for (int i = 0; i < FETCH_WIDTH; i++) begin
+            if (decoder_out[i].valid)
+                valid_count = valid_count + 1'b1;
+        end
+
+        // Assign sqN to decode_out based on decoder_out validity
+        for (int i = 0; i < DECODE_WIDTH; i++) begin
+            decode_out[i] = decoder_out[i];
+            if (decoder_out[i].valid)
+                decode_out[i].sqN = next_sqN + i;
+            else
+                decode_out[i].sqN = '0;
+        end
+    end
+
+    always_ff @(posedge clk or posedge rst) begin
+        if (rst)
+            next_sqN <= '0;
+        else
+            next_sqN <= next_sqN + valid_count;
+    end
 
     always_ff @(posedge clk) begin
         for (int i = 0; i < DECODE_WIDTH; i++) begin
@@ -50,7 +79,7 @@ module decode
             end
 
             else
-                OUT_instr[i] <= decoder_out[i];
+                OUT_instr[i] <= decode_out[i];
         end
     end
 

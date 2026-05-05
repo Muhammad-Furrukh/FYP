@@ -1,0 +1,119 @@
+# //  Questa Sim-64
+# //  Version 2021.2_1 linux_x86_64 May 15 2021
+# //
+# //  Copyright 1991-2021 Mentor Graphics Corporation
+# //  All Rights Reserved.
+# //
+# //  QuestaSim and its associated documentation contain trade
+# //  secrets and commercial or financial information that are the property of
+# //  Mentor Graphics Corporation and are privileged, confidential,
+# //  and exempt from disclosure under the Freedom of Information Act,
+# //  5 U.S.C. Section 552. Furthermore, this information
+# //  is prohibited from disclosure under the Trade Secrets Act,
+# //  18 U.S.C. Section 1905.
+# //
+# Loading project sim_prefetch
+# Compile of include_pkg.sv was successful.
+# Compile of IMEM.sv was successful.
+# Compile of PC.sv was successful.
+# Compile of prefetch.sv was successful.
+# Compile of testbench.sv was successful.
+# Compile of instr_aligner.sv was successful.
+# 6 compiles, 0 failed with no errors.
+vsim -voptargs=+acc work.prefetch_tb
+# vsim -voptargs="+acc" work.prefetch_tb 
+# Start time: 23:22:58 on Apr 30,2026
+# ** Note: (vsim-3813) Design is being optimized due to module recompilation...
+# Loading sv_std.std
+# Loading work.include_pkg(fast)
+# Loading work.testbench_sv_unit(fast)
+# Loading work.prefetch_tb(fast)
+# Loading work.prefetch_sv_unit(fast)
+# Loading work.prefetch(fast)
+# Loading work.PC_sv_unit(fast)
+# Loading work.PC(fast)
+# Loading work.IMEM_sv_unit(fast)
+# Loading work.IMEM(fast)
+# Loading work.instr_aligner_sv_unit(fast)
+# Loading work.instr_aligner(fast)
+add wave sim:/prefetch_tb/*
+add wave -position insertpoint  \
+sim:/prefetch_tb/OUT_instr
+add wave -position insertpoint  \
+sim:/prefetch_tb/OUT_pc
+add wave -position insertpoint  \
+sim:/prefetch_tb/OUT_valid
+run
+# Time: 0 | rst: 1 | IN_busy: 0 | jump1: 0 | jump2: 0 | out_pc[0]: 00000000
+run
+run
+# Time: 20000 | rst: 0 | IN_busy: 0 | jump1: 0 | jump2: 0 | out_pc[0]: 00000000
+run
+run
+# Time: 40000 | rst: 0 | IN_busy: 1 | jump1: 0 | jump2: 0 | out_pc[0]: 00000008
+run
+# Time: 50000 | rst: 0 | IN_busy: 0 | jump1: 1 | jump2: 0 | out_pc[0]: 00000010
+run
+# Time: 60000 | rst: 0 | IN_busy: 0 | jump1: 0 | jump2: 1 | out_pc[0]: 00000010
+run
+# Time: 70000 | rst: 0 | IN_busy: 0 | jump1: 0 | jump2: 0 | out_pc[0]: 00400000
+run
+# Time: 80000 | rst: 0 | IN_busy: 0 | jump1: 0 | jump2: 0 | out_pc[0]: 00400010
+run
+# Time: 90000 | rst: 0 | IN_busy: 0 | jump1: 0 | jump2: 0 | out_pc[0]: 00400018
+run
+# Time: 100000 | rst: 0 | IN_busy: 0 | jump1: 0 | jump2: 0 | out_pc[0]: 00400020
+# [TB] Testbench completed successfully.
+# ** Note: $finish    : /home/muhammad/Documents/UET/FYP/sim_questasim/prefetch/testbench.sv(94)
+#    Time: 110 ns  Iteration: 1  Instance: /prefetch_tb
+# 1
+# Break in Module prefetch_tb at /home/muhammad/Documents/UET/FYP/sim_questasim/prefetch/testbench.sv line 94
+# Compile of include_pkg.sv was successful.
+# Compile of IMEM.sv was successful.
+# Compile of PC.sv was successful.
+# Compile of prefetch.sv was successful.
+# Compile of testbench.sv was successful.
+# Compile of instr_aligner.sv was successful.
+# 6 compiles, 0 failed with no errors.
+restart -f
+# ** Note: (vsim-12125) Error and warning message counts have been reset to '0' because of 'restart'.
+# ** Note: (vsim-3813) Design is being optimized due to module recompilation...
+# Loading sv_std.std
+# Loading work.include_pkg(fast)
+# Loading work.testbench_sv_unit(fast)
+# Loading work.prefetch_tb(fast)
+# Loading work.prefetch_sv_unit(fast)
+# Loading work.prefetch(fast)
+# Loading work.PC_sv_unit(fast)
+# Loading work.PC(fast)
+# Loading work.IMEM_sv_unit(fast)
+# Loading work.IMEM(fast)
+# Loading work.instr_aligner_sv_unit(fast)
+# Loading work.instr_aligner(fast)
+run
+# Time: 0 | rst: 1 | IN_busy: 0 | jump1: 0 | jump2: 0 | out_pc[0]: 00000000
+run
+run
+# Time: 20000 | rst: 0 | IN_busy: 0 | jump1: 0 | jump2: 0 | out_pc[0]: 00000000
+run
+run
+# Time: 40000 | rst: 0 | IN_busy: 1 | jump1: 0 | jump2: 0 | out_pc[0]: 00000008
+run
+# Time: 50000 | rst: 0 | IN_busy: 0 | jump1: 1 | jump2: 0 | out_pc[0]: 00000010
+run
+# Time: 60000 | rst: 0 | IN_busy: 0 | jump1: 0 | jump2: 1 | out_pc[0]: 00000010
+run
+# Time: 70000 | rst: 0 | IN_busy: 0 | jump1: 0 | jump2: 0 | out_pc[0]: 00000000
+run
+# Time: 80000 | rst: 0 | IN_busy: 0 | jump1: 0 | jump2: 0 | out_pc[0]: 00000010
+run
+# Time: 90000 | rst: 0 | IN_busy: 0 | jump1: 0 | jump2: 0 | out_pc[0]: 00000018
+run
+# Time: 100000 | rst: 0 | IN_busy: 0 | jump1: 0 | jump2: 0 | out_pc[0]: 00000020
+# [TB] Testbench completed successfully.
+# ** Note: $finish    : /home/muhammad/Documents/UET/FYP/sim_questasim/prefetch/testbench.sv(94)
+#    Time: 110 ns  Iteration: 1  Instance: /prefetch_tb
+# 1
+# Break in Module prefetch_tb at /home/muhammad/Documents/UET/FYP/sim_questasim/prefetch/testbench.sv line 94
+# End time: 09:20:27 on May 01,2026, Elapsed time: 9:57:29
+# Errors: 0, Warnings: 1

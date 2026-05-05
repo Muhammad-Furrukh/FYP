@@ -1,0 +1,1273 @@
+# //  Questa Sim-64
+# //  Version 2021.2_1 linux_x86_64 May 15 2021
+# //
+# //  Copyright 1991-2021 Mentor Graphics Corporation
+# //  All Rights Reserved.
+# //
+# //  QuestaSim and its associated documentation contain trade
+# //  secrets and commercial or financial information that are the property of
+# //  Mentor Graphics Corporation and are privileged, confidential,
+# //  and exempt from disclosure under the Freedom of Information Act,
+# //  5 U.S.C. Section 552. Furthermore, this information
+# //  is prohibited from disclosure under the Trade Secrets Act,
+# //  18 U.S.C. Section 1905.
+# //
+# Loading project fetch
+# Compile of include_pkg.sv was successful.
+# Compile of fetch.sv was successful with warnings.
+# Compile of fetch_buffer.sv was successful with warnings.
+# Compile of ta_gen1.sv was successful with warnings.
+# Compile of fetch_tb.sv was successful.
+# 5 compiles, 0 failed with no errors.
+vsim -voptargs=+acc work.fetch_tb
+# vsim -voptargs="+acc" work.fetch_tb 
+# Start time: 20:10:53 on May 04,2026
+# ** Note: (vsim-8009) Loading existing optimized design _opt
+# Loading sv_std.std
+# Loading work.include_pkg(fast)
+# Loading work.fetch_tb_sv_unit(fast)
+# Loading work.fetch_tb(fast)
+# Loading work.fetch_sv_unit(fast)
+# Loading work.fetch(fast)
+# Loading work.ta_gen1_sv_unit(fast)
+# Loading work.ta_gen1(fast)
+# Loading work.fetch_buffer_sv_unit(fast)
+# Loading work.fetch_buffer(fast)
+add wave sim:/fetch_tb/*
+add wave -position insertpoint  \
+sim:/fetch_tb/instr_pc
+add wave -position insertpoint  \
+sim:/fetch_tb/instr_valid
+add wave -position insertpoint  \
+sim:/fetch_tb/IN_instr
+add wave -position insertpoint  \
+sim:/fetch_tb/OUT_instr
+add wave -position insertpoint  \
+sim:/fetch_tb/uut/FB/head
+add wave -position insertpoint  \
+sim:/fetch_tb/uut/FB/tail
+add wave -position insertpoint  \
+sim:/fetch_tb/uut/FB/count
+add wave -position insertpoint  \
+sim:/fetch_tb/uut/FB/buffer
+run
+# Time:0 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+run
+# TC1: Normal Operation - Each instruction encodes its own PC
+run
+# Time:35 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000000000000093
+run
+# Time:45 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000000800800093
+run
+# Time:55 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000001001000093
+run
+# Time:65 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000001801800093
+run
+# Time:75 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000002002000093
+run
+# TC2: Single JAL arriving in Slot 0
+# Time:85 | OutBusy:0 | Jump1:1 | JTA1:00000140 | InstrOut0:10000002802800093
+run
+# Time:95 | OutBusy:1 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+# Time:105 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:100000100040000ef
+add wave -position insertpoint  \
+sim:/fetch_tb/uut/FB/non_jump_instrs
+restart -f
+# ** Note: (vsim-12125) Error and warning message counts have been reset to '0' because of 'restart'.
+# ** Note: (vsim-8009) Loading existing optimized design _opt
+# Loading work.include_pkg(fast)
+# Loading work.fetch_tb_sv_unit(fast)
+# Loading work.fetch_tb(fast)
+# Loading work.fetch_sv_unit(fast)
+# Loading work.fetch(fast)
+# Loading work.ta_gen1_sv_unit(fast)
+# Loading work.ta_gen1(fast)
+# Loading work.fetch_buffer_sv_unit(fast)
+# Loading work.fetch_buffer(fast)
+run
+# Time:0 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+run
+# TC1: Normal Operation - Each instruction encodes its own PC
+run
+# Time:35 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000000000000093
+run
+# Time:45 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000000800800093
+run
+# Time:55 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000001001000093
+run
+# Time:65 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000001801800093
+run
+# Time:75 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000002002000093
+run
+# TC2: Single JAL arriving in Slot 0
+# Time:85 | OutBusy:0 | Jump1:1 | JTA1:00000140 | InstrOut0:10000002802800093
+run
+# Time:95 | OutBusy:1 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+# Time:105 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:100000100040000ef
+# Compile of include_pkg.sv was successful.
+# Compile of fetch.sv was successful with warnings.
+# Compile of fetch_buffer.sv was successful with warnings.
+# Compile of ta_gen1.sv was successful with warnings.
+# Compile of fetch_tb.sv was successful.
+# 5 compiles, 0 failed with no errors.
+restart -f
+# ** Note: (vsim-12125) Error and warning message counts have been reset to '0' because of 'restart'.
+# ** Note: (vsim-3813) Design is being optimized due to module recompilation...
+# Loading sv_std.std
+# Loading work.include_pkg(fast)
+# Loading work.fetch_tb_sv_unit(fast)
+# Loading work.fetch_tb(fast)
+# Loading work.fetch_sv_unit(fast)
+# Loading work.fetch(fast)
+# Loading work.ta_gen1_sv_unit(fast)
+# Loading work.ta_gen1(fast)
+# Loading work.fetch_buffer_sv_unit(fast)
+# Loading work.fetch_buffer(fast)
+run
+# Time:0 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+run
+# TC1: Normal Operation - Each instruction encodes its own PC
+run
+# Time:35 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000000000000093
+run
+# Time:45 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000000800800093
+run
+# Time:55 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000001001000093
+run
+# Time:65 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000001801800093
+run
+# Time:75 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000002002000093
+run
+# TC2: Single JAL arriving in Slot 0
+# Time:85 | OutBusy:0 | Jump1:1 | JTA1:00000140 | InstrOut0:10000002802800093
+run
+# Time:95 | OutBusy:1 | Jump1:1 | JTA1:00000140 | InstrOut0:00000000000000000
+run
+# Time:105 | OutBusy:1 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+# Compile of include_pkg.sv was successful.
+# Compile of fetch.sv was successful with warnings.
+# Compile of fetch_buffer.sv was successful with warnings.
+# Compile of ta_gen1.sv was successful with warnings.
+# Compile of fetch_tb.sv was successful.
+# 5 compiles, 0 failed with no errors.
+restart -f
+# ** Note: (vsim-12125) Error and warning message counts have been reset to '0' because of 'restart'.
+# ** Note: (vsim-3813) Design is being optimized due to module recompilation...
+# ** Warning: /home/muhammad/Documents/UET/FYP/rtl/fetch_buffer.sv(9): (vopt-13314) Defaulting port 'IN_instr' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: /home/muhammad/Documents/UET/FYP/rtl/fetch_buffer.sv(10): (vopt-13314) Defaulting port 'IN_valid' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: /home/muhammad/Documents/UET/FYP/rtl/fetch_buffer.sv(11): (vopt-13314) Defaulting port 'IN_pc' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Note: (vsim-12126) Error and warning message counts have been restored: Errors=0, Warnings=3.
+# Loading sv_std.std
+# Loading work.include_pkg(fast)
+# Loading work.fetch_tb_sv_unit(fast)
+# Loading work.fetch_tb(fast)
+# Loading work.fetch_sv_unit(fast)
+# Loading work.fetch(fast)
+# Loading work.ta_gen1_sv_unit(fast)
+# Loading work.ta_gen1(fast)
+# Loading work.fetch_buffer_sv_unit(fast)
+# Loading work.fetch_buffer(fast)
+run
+# Time:0 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+run
+# TC1: Normal Operation - Each instruction encodes its own PC
+run
+# Time:35 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000000000000093
+run
+# Time:45 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000000800800093
+run
+# Time:55 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000001001000093
+run
+# Time:65 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000001801800093
+run
+# Time:75 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000002002000093
+run
+# TC2: Single JAL arriving in Slot 0
+# Time:85 | OutBusy:0 | Jump1:1 | JTA1:00000140 | InstrOut0:10000002802800093
+run
+# Time:95 | OutBusy:1 | Jump1:1 | JTA1:00000140 | InstrOut0:00000000000000000
+run
+# Time:105 | OutBusy:1 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+# Compile of include_pkg.sv was successful.
+# Compile of fetch.sv was successful with warnings.
+# Compile of fetch_buffer.sv was successful with warnings.
+# Compile of ta_gen1.sv was successful with warnings.
+# Compile of fetch_tb.sv was successful.
+# 5 compiles, 0 failed with no errors.
+restart -f
+# ** Note: (vsim-12125) Error and warning message counts have been reset to '0' because of 'restart'.
+# ** Note: (vsim-3813) Design is being optimized due to module recompilation...
+# ** Warning: /home/muhammad/Documents/UET/FYP/rtl/fetch_buffer.sv(9): (vopt-13314) Defaulting port 'IN_instr' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: /home/muhammad/Documents/UET/FYP/rtl/fetch_buffer.sv(10): (vopt-13314) Defaulting port 'IN_valid' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: /home/muhammad/Documents/UET/FYP/rtl/fetch_buffer.sv(11): (vopt-13314) Defaulting port 'IN_pc' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Note: (vsim-12126) Error and warning message counts have been restored: Errors=0, Warnings=3.
+# Loading sv_std.std
+# Loading work.include_pkg(fast)
+# Loading work.fetch_tb_sv_unit(fast)
+# Loading work.fetch_tb(fast)
+# Loading work.fetch_sv_unit(fast)
+# Loading work.fetch(fast)
+# Loading work.ta_gen1_sv_unit(fast)
+# Loading work.ta_gen1(fast)
+# Loading work.fetch_buffer_sv_unit(fast)
+# Loading work.fetch_buffer(fast)
+run
+# Time:0 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+run
+# TC1: Normal Operation - Each instruction encodes its own PC
+run
+# Time:35 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000000000000093
+run
+# Time:45 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000000800800093
+run
+# Time:55 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000001001000093
+run
+# Time:65 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000001801800093
+run
+# Time:75 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000002002000093
+run
+# TC2: Single JAL arriving in Slot 0
+# Time:85 | OutBusy:0 | Jump1:1 | JTA1:00000140 | InstrOut0:10000002802800093
+run
+# Time:95 | OutBusy:1 | Jump1:1 | JTA1:00000140 | InstrOut0:00000000000000000
+run
+# Time:105 | OutBusy:1 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+# Compile of include_pkg.sv was successful.
+# Compile of fetch.sv was successful with warnings.
+# Compile of fetch_buffer.sv was successful with warnings.
+# Compile of ta_gen1.sv was successful with warnings.
+# Compile of fetch_tb.sv was successful.
+# 5 compiles, 0 failed with no errors.
+restart -f
+# ** Note: (vsim-12125) Error and warning message counts have been reset to '0' because of 'restart'.
+# ** Note: (vsim-3813) Design is being optimized due to module recompilation...
+# Loading sv_std.std
+# Loading work.include_pkg(fast)
+# Loading work.fetch_tb_sv_unit(fast)
+# Loading work.fetch_tb(fast)
+# Loading work.fetch_sv_unit(fast)
+# Loading work.fetch(fast)
+# Loading work.ta_gen1_sv_unit(fast)
+# Loading work.ta_gen1(fast)
+# Loading work.fetch_buffer_sv_unit(fast)
+# Loading work.fetch_buffer(fast)
+run
+# Time:0 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+run
+# TC1: Normal Operation - Each instruction encodes its own PC
+run
+# Time:35 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000000000000093
+run
+# Time:45 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000000800800093
+run
+# Time:55 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000001001000093
+run
+# Time:65 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000001801800093
+run
+# Time:75 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000002002000093
+run
+# TC2: Single JAL arriving in Slot 0
+# Time:85 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000002802800093
+run
+# Time:95 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000010810800093
+run
+# TC3: Double JAL - JAL_A (x1) and JAL_B (x2)
+# Time:105 | OutBusy:0 | Jump1:1 | JTA1:00000210 | InstrOut0:10000011011000093
+run
+# TC4: Filling Buffer (IN_busy=1)
+# Time:115 | OutBusy:1 | Jump1:1 | JTA1:00000218 | InstrOut0:00000000000000000
+# Compile of include_pkg.sv was successful.
+# Compile of fetch.sv was successful with warnings.
+# Compile of fetch_buffer.sv was successful with warnings.
+# Compile of ta_gen1.sv was successful with warnings.
+# Compile of fetch_tb.sv was successful.
+# 5 compiles, 0 failed with no errors.
+restart -f
+# ** Note: (vsim-12125) Error and warning message counts have been reset to '0' because of 'restart'.
+# ** Note: (vsim-3813) Design is being optimized due to module recompilation...
+# Loading sv_std.std
+# Loading work.include_pkg(fast)
+# Loading work.fetch_tb_sv_unit(fast)
+# Loading work.fetch_tb(fast)
+# Loading work.fetch_sv_unit(fast)
+# Loading work.fetch(fast)
+# Loading work.ta_gen1_sv_unit(fast)
+# Loading work.ta_gen1(fast)
+# Loading work.fetch_buffer_sv_unit(fast)
+# Loading work.fetch_buffer(fast)
+run
+# Time:0 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+run
+# TC1: Normal Operation - Each instruction encodes its own PC
+run
+# Time:35 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000000000000093
+run
+# Time:45 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000000800800093
+run
+# Time:55 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000001001000093
+run
+# Time:65 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000001801800093
+run
+# Time:75 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000002002000093
+run
+# TC2: Single JAL arriving in Slot 0
+# Time:85 | OutBusy:0 | Jump1:1 | JTA1:00000140 | InstrOut0:10000002802800093
+run
+# Time:95 | OutBusy:1 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+# Time:105 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+# TC3: Double JAL - JAL_A (x1) and JAL_B (x2)
+# Time:115 | OutBusy:0 | Jump1:1 | JTA1:00000210 | InstrOut0:100000100040000ef
+run
+# TC4: Filling Buffer (IN_busy=1)
+# Time:125 | OutBusy:1 | Jump1:1 | JTA1:00000218 | InstrOut0:00000000000000000
+# Compile of include_pkg.sv was successful.
+# Compile of fetch.sv was successful with warnings.
+# Compile of fetch_buffer.sv was successful with warnings.
+# Compile of ta_gen1.sv was successful with warnings.
+# Compile of fetch_tb.sv was successful.
+# 5 compiles, 0 failed with no errors.
+restart -f
+# ** Note: (vsim-12125) Error and warning message counts have been reset to '0' because of 'restart'.
+# ** Note: (vsim-3813) Design is being optimized due to module recompilation...
+# ** Warning: /home/muhammad/Documents/UET/FYP/rtl/fetch.sv(8): (vopt-13314) Defaulting port 'instr_pc' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: /home/muhammad/Documents/UET/FYP/rtl/fetch.sv(9): (vopt-13314) Defaulting port 'instr_valid' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: /home/muhammad/Documents/UET/FYP/rtl/fetch.sv(10): (vopt-13314) Defaulting port 'IN_instr' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Note: (vsim-12126) Error and warning message counts have been restored: Errors=0, Warnings=3.
+# Loading sv_std.std
+# Loading work.include_pkg(fast)
+# Loading work.fetch_tb_sv_unit(fast)
+# Loading work.fetch_tb(fast)
+# Loading work.fetch_sv_unit(fast)
+# Loading work.fetch(fast)
+# Loading work.ta_gen1_sv_unit(fast)
+# Loading work.ta_gen1(fast)
+# Loading work.fetch_buffer_sv_unit(fast)
+# Loading work.fetch_buffer(fast)
+run
+# Time:0 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+run
+# TC1: Normal Operation - Each instruction encodes its own PC
+run
+# Time:35 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000000000000093
+run
+# Time:45 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000000800800093
+run
+# Time:55 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000001001000093
+run
+# Time:65 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000001801800093
+run
+# Time:75 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000002002000093
+run
+# TC2: Single JAL arriving in Slot 0
+# Time:85 | OutBusy:0 | Jump1:1 | JTA1:00000140 | InstrOut0:10000002802800093
+run
+# Time:95 | OutBusy:1 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+# Time:105 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:100000100040000ef
+run
+# TC3: Double JAL - JAL_A (x1) and JAL_B (x2)
+# Time:115 | OutBusy:0 | Jump1:1 | JTA1:00000210 | InstrOut0:10000011011000093
+run
+# TC4: Filling Buffer (IN_busy=1)
+# Time:125 | OutBusy:1 | Jump1:1 | JTA1:00000218 | InstrOut0:00000000000000000
+run
+# TC4: Buffer Full (OUT_busy=1). Staying full for 2 cycles.
+run
+run
+# TC4: Issuing Flush
+run
+# Compile of include_pkg.sv was successful.
+# Compile of fetch.sv was successful with warnings.
+# Compile of fetch_buffer.sv was successful with warnings.
+# Compile of ta_gen1.sv was successful with warnings.
+# Compile of fetch_tb.sv was successful.
+# 5 compiles, 0 failed with no errors.
+# Compile of include_pkg.sv was successful.
+# Compile of fetch.sv was successful with warnings.
+# Compile of fetch_buffer.sv was successful with warnings.
+# Compile of ta_gen1.sv was successful with warnings.
+# Compile of fetch_tb.sv was successful.
+# 5 compiles, 0 failed with no errors.
+restart -f
+# ** Note: (vsim-12125) Error and warning message counts have been reset to '0' because of 'restart'.
+# ** Note: (vsim-3813) Design is being optimized due to module recompilation...
+# Loading sv_std.std
+# Loading work.include_pkg(fast)
+# Loading work.fetch_tb_sv_unit(fast)
+# Loading work.fetch_tb(fast)
+# Loading work.fetch_sv_unit(fast)
+# Loading work.fetch(fast)
+# Loading work.ta_gen1_sv_unit(fast)
+# Loading work.ta_gen1(fast)
+# Loading work.fetch_buffer_sv_unit(fast)
+# Loading work.fetch_buffer(fast)
+run
+# Time:0 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+run
+# TC1: Normal Operation - Each instruction encodes its own PC
+run
+# Time:35 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000000000000093
+run
+# Time:45 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000000800800093
+run
+# Time:55 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000001001000093
+run
+# Time:65 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000001801800093
+run
+# Time:75 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000002002000093
+run
+# TC2: Single JAL arriving in Slot 0
+# Time:85 | OutBusy:0 | Jump1:1 | JTA1:00000140 | InstrOut0:10000002802800093
+run
+# Time:95 | OutBusy:1 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+# Time:105 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:100000100040000ef
+run
+# TC3: Double JAL - JAL_A (x1) and JAL_B (x2)
+# Time:115 | OutBusy:0 | Jump1:1 | JTA1:00000210 | InstrOut0:10000011011000093
+run
+# Time:125 | OutBusy:1 | Jump1:1 | JTA1:00000210 | InstrOut0:00000000000000000
+run
+# TC4: Filling Buffer (IN_busy=1)
+# TC4: Buffer Full (OUT_busy=1). Staying full for 2 cycles.
+run
+# Compile of include_pkg.sv was successful.
+# Compile of fetch.sv was successful with warnings.
+# Compile of fetch_buffer.sv was successful with warnings.
+# Compile of ta_gen1.sv was successful with warnings.
+# Compile of fetch_tb.sv was successful.
+# 5 compiles, 0 failed with no errors.
+restart -f
+# ** Note: (vsim-12125) Error and warning message counts have been reset to '0' because of 'restart'.
+# ** Note: (vsim-3813) Design is being optimized due to module recompilation...
+# Loading sv_std.std
+# Loading work.include_pkg(fast)
+# Loading work.fetch_tb_sv_unit(fast)
+# Loading work.fetch_tb(fast)
+# Loading work.fetch_sv_unit(fast)
+# Loading work.fetch(fast)
+# Loading work.ta_gen1_sv_unit(fast)
+# Loading work.ta_gen1(fast)
+# Loading work.fetch_buffer_sv_unit(fast)
+# Loading work.fetch_buffer(fast)
+run
+# Time:0 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+run
+# TC1: Normal Operation - Each instruction encodes its own PC
+run
+# Time:35 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000000000000093
+run
+# Time:45 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000000800800093
+run
+# Time:55 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000001001000093
+run
+# Time:65 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000001801800093
+run
+# Time:75 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000002002000093
+run
+# TC2: Single JAL arriving in Slot 0
+# Time:85 | OutBusy:0 | Jump1:1 | JTA1:00000140 | InstrOut0:10000002802800093
+run
+# Time:95 | OutBusy:1 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+# Time:105 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:100000100040000ef
+run
+# TC3: Double JAL - JAL_A (x1) and JAL_B (x2)
+# Time:115 | OutBusy:0 | Jump1:1 | JTA1:00000210 | InstrOut0:10000011011000093
+run
+# TC4: Filling Buffer (IN_busy=1)
+# Time:125 | OutBusy:1 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+# Time:135 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+run
+run
+run
+run
+run
+run
+run
+run
+# Compile of include_pkg.sv was successful.
+# Compile of fetch.sv was successful with warnings.
+# Compile of fetch_buffer.sv was successful with warnings.
+# Compile of ta_gen1.sv was successful with warnings.
+# Compile of fetch_tb.sv was successful.
+# 5 compiles, 0 failed with no errors.
+restart -f
+# ** Note: (vsim-12125) Error and warning message counts have been reset to '0' because of 'restart'.
+# ** Note: (vsim-3813) Design is being optimized due to module recompilation...
+# ** Warning: /home/muhammad/Documents/UET/FYP/rtl/fetch_buffer.sv(9): (vopt-13314) Defaulting port 'IN_instr' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: /home/muhammad/Documents/UET/FYP/rtl/fetch_buffer.sv(10): (vopt-13314) Defaulting port 'IN_valid' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: /home/muhammad/Documents/UET/FYP/rtl/fetch_buffer.sv(11): (vopt-13314) Defaulting port 'IN_pc' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Note: (vsim-12126) Error and warning message counts have been restored: Errors=0, Warnings=3.
+# Loading sv_std.std
+# Loading work.include_pkg(fast)
+# Loading work.fetch_tb_sv_unit(fast)
+# Loading work.fetch_tb(fast)
+# Loading work.fetch_sv_unit(fast)
+# Loading work.fetch(fast)
+# Loading work.ta_gen1_sv_unit(fast)
+# Loading work.ta_gen1(fast)
+# Loading work.fetch_buffer_sv_unit(fast)
+# Loading work.fetch_buffer(fast)
+run
+# Time:0 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+run
+# TC1: Normal Operation - Each instruction encodes its own PC
+run
+# Time:35 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000000000000093
+run
+# Time:45 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000000800800093
+run
+# Time:55 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000001001000093
+run
+# Time:65 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000001801800093
+run
+# Time:75 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000002002000093
+run
+# TC2: Single JAL arriving in Slot 0
+# Time:85 | OutBusy:0 | Jump1:1 | JTA1:00000140 | InstrOut0:10000002802800093
+run
+# Time:95 | OutBusy:1 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+# Time:105 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:100000100040000ef
+run
+# TC3: Double JAL - JAL_A (x1) and JAL_B (x2)
+# Time:115 | OutBusy:0 | Jump1:1 | JTA1:00000210 | InstrOut0:10000011011000093
+run
+# TC4: Filling Buffer (IN_busy=1)
+# Time:125 | OutBusy:1 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+# Time:135 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+run
+run
+run
+run
+run
+run
+# Time:205 | OutBusy:1 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+run
+# Compile of include_pkg.sv was successful.
+# Compile of fetch.sv was successful with warnings.
+# Compile of fetch_buffer.sv was successful with warnings.
+# Compile of ta_gen1.sv was successful with warnings.
+# Compile of fetch_tb.sv was successful.
+# 5 compiles, 0 failed with no errors.
+restart -f
+# ** Note: (vsim-12125) Error and warning message counts have been reset to '0' because of 'restart'.
+# ** Note: (vsim-3813) Design is being optimized due to module recompilation...
+# ** Warning: /home/muhammad/Documents/UET/FYP/rtl/fetch_buffer.sv(9): (vopt-13314) Defaulting port 'IN_instr' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: /home/muhammad/Documents/UET/FYP/rtl/fetch_buffer.sv(10): (vopt-13314) Defaulting port 'IN_valid' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: /home/muhammad/Documents/UET/FYP/rtl/fetch_buffer.sv(11): (vopt-13314) Defaulting port 'IN_pc' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Note: (vsim-12126) Error and warning message counts have been restored: Errors=0, Warnings=3.
+# Loading sv_std.std
+# Loading work.include_pkg(fast)
+# Loading work.fetch_tb_sv_unit(fast)
+# Loading work.fetch_tb(fast)
+# Loading work.fetch_sv_unit(fast)
+# Loading work.fetch(fast)
+# Loading work.ta_gen1_sv_unit(fast)
+# Loading work.ta_gen1(fast)
+# Loading work.fetch_buffer_sv_unit(fast)
+# Loading work.fetch_buffer(fast)
+run
+# Time:0 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+run
+# TC1: Normal Operation - Each instruction encodes its own PC
+run
+# Time:35 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000000000000093
+run
+# Time:45 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000000800800093
+run
+# Time:55 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000001001000093
+run
+# Time:65 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000001801800093
+run
+# Time:75 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000002002000093
+run
+# TC2: Single JAL arriving in Slot 0
+# Time:85 | OutBusy:0 | Jump1:1 | JTA1:00000140 | InstrOut0:10000002802800093
+run
+# Time:95 | OutBusy:1 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+# Time:105 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:100000100040000ef
+run
+# TC3: Double JAL - JAL_A (x1) and JAL_B (x2)
+# Time:115 | OutBusy:0 | Jump1:1 | JTA1:00000210 | InstrOut0:10000011011000093
+run
+# TC4: Filling Buffer (IN_busy=1)
+# Time:125 | OutBusy:1 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+# Time:135 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+run
+run
+run
+run
+run
+run
+# Time:205 | OutBusy:1 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+run
+run
+add wave -position insertpoint  \
+sim:/fetch_tb/uut/FB/can_write
+restart -f
+# ** Note: (vsim-12125) Error and warning message counts have been reset to '0' because of 'restart'.
+# ** Note: (vsim-8009) Loading existing optimized design _opt
+# ** Note: (vsim-12126) Error and warning message counts have been restored: Errors=0, Warnings=3.
+# Loading work.include_pkg(fast)
+# Loading work.fetch_tb_sv_unit(fast)
+# Loading work.fetch_tb(fast)
+# Loading work.fetch_sv_unit(fast)
+# Loading work.fetch(fast)
+# Loading work.ta_gen1_sv_unit(fast)
+# Loading work.ta_gen1(fast)
+# Loading work.fetch_buffer_sv_unit(fast)
+# Loading work.fetch_buffer(fast)
+run
+# Time:0 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+run
+# TC1: Normal Operation - Each instruction encodes its own PC
+run
+# Time:35 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000000000000093
+run
+# Time:45 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000000800800093
+run
+# Time:55 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000001001000093
+run
+# Time:65 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000001801800093
+run
+# Time:75 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000002002000093
+run
+# TC2: Single JAL arriving in Slot 0
+# Time:85 | OutBusy:0 | Jump1:1 | JTA1:00000140 | InstrOut0:10000002802800093
+run
+# Time:95 | OutBusy:1 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+# Time:105 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:100000100040000ef
+run
+# TC3: Double JAL - JAL_A (x1) and JAL_B (x2)
+# Time:115 | OutBusy:0 | Jump1:1 | JTA1:00000210 | InstrOut0:10000011011000093
+run
+# TC4: Filling Buffer (IN_busy=1)
+# Time:125 | OutBusy:1 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+# Time:135 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+run
+run
+run
+run
+run
+run
+# Time:205 | OutBusy:1 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+run
+run
+add wave -position insertpoint  \
+sim:/fetch_tb/uut/FB/instr_valid_count
+restart -f
+# ** Note: (vsim-12125) Error and warning message counts have been reset to '0' because of 'restart'.
+# ** Note: (vsim-8009) Loading existing optimized design _opt
+# ** Note: (vsim-12126) Error and warning message counts have been restored: Errors=0, Warnings=3.
+# Loading work.include_pkg(fast)
+# Loading work.fetch_tb_sv_unit(fast)
+# Loading work.fetch_tb(fast)
+# Loading work.fetch_sv_unit(fast)
+# Loading work.fetch(fast)
+# Loading work.ta_gen1_sv_unit(fast)
+# Loading work.ta_gen1(fast)
+# Loading work.fetch_buffer_sv_unit(fast)
+# Loading work.fetch_buffer(fast)
+run
+# Time:0 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+run
+# TC1: Normal Operation - Each instruction encodes its own PC
+run
+# Time:35 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000000000000093
+run
+# Time:45 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000000800800093
+run
+# Time:55 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000001001000093
+run
+# Time:65 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000001801800093
+run
+# Time:75 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000002002000093
+run
+# TC2: Single JAL arriving in Slot 0
+# Time:85 | OutBusy:0 | Jump1:1 | JTA1:00000140 | InstrOut0:10000002802800093
+run
+# Time:95 | OutBusy:1 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+# Time:105 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:100000100040000ef
+run
+# TC3: Double JAL - JAL_A (x1) and JAL_B (x2)
+# Time:115 | OutBusy:0 | Jump1:1 | JTA1:00000210 | InstrOut0:10000011011000093
+run
+# TC4: Filling Buffer (IN_busy=1)
+# Time:125 | OutBusy:1 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+# Time:135 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+run
+run
+run
+run
+run
+run
+# Time:205 | OutBusy:1 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+run
+run
+# Compile of include_pkg.sv was successful.
+# Compile of fetch.sv was successful with warnings.
+# Compile of fetch_buffer.sv was successful with warnings.
+# Compile of ta_gen1.sv was successful with warnings.
+# Compile of fetch_tb.sv was successful.
+# 5 compiles, 0 failed with no errors.
+restart -f
+# ** Note: (vsim-12125) Error and warning message counts have been reset to '0' because of 'restart'.
+# ** Note: (vsim-3813) Design is being optimized due to module recompilation...
+# ** Warning: /home/muhammad/Documents/UET/FYP/rtl/fetch_buffer.sv(9): (vopt-13314) Defaulting port 'IN_instr' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: /home/muhammad/Documents/UET/FYP/rtl/fetch_buffer.sv(10): (vopt-13314) Defaulting port 'IN_valid' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: /home/muhammad/Documents/UET/FYP/rtl/fetch_buffer.sv(11): (vopt-13314) Defaulting port 'IN_pc' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Note: (vsim-12126) Error and warning message counts have been restored: Errors=0, Warnings=3.
+# Loading sv_std.std
+# Loading work.include_pkg(fast)
+# Loading work.fetch_tb_sv_unit(fast)
+# Loading work.fetch_tb(fast)
+# Loading work.fetch_sv_unit(fast)
+# Loading work.fetch(fast)
+# Loading work.ta_gen1_sv_unit(fast)
+# Loading work.ta_gen1(fast)
+# Loading work.fetch_buffer_sv_unit(fast)
+# Loading work.fetch_buffer(fast)
+run
+# Time:0 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+run
+# TC1: Normal Operation - Each instruction encodes its own PC
+run
+# Time:35 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000000000000093
+run
+# Time:45 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000000800800093
+run
+# Time:55 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000001001000093
+run
+# Time:65 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000001801800093
+run
+# Time:75 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000002002000093
+run
+# TC2: Single JAL arriving in Slot 0
+# Time:85 | OutBusy:0 | Jump1:1 | JTA1:00000140 | InstrOut0:10000002802800093
+run
+# Time:95 | OutBusy:1 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+# Time:105 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:100000100040000ef
+run
+# TC3: Double JAL - JAL_A (x1) and JAL_B (x2)
+# Time:115 | OutBusy:0 | Jump1:1 | JTA1:00000210 | InstrOut0:10000011011000093
+run
+# TC4: Filling Buffer (IN_busy=1)
+# Time:125 | OutBusy:1 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+# Time:135 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+run
+run
+run
+run
+run
+run
+# Time:205 | OutBusy:1 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+run
+run
+run
+# Compile of include_pkg.sv was successful.
+# Compile of fetch.sv was successful with warnings.
+# Compile of fetch_buffer.sv was successful with warnings.
+# Compile of ta_gen1.sv was successful with warnings.
+# Compile of fetch_tb.sv was successful.
+# 5 compiles, 0 failed with no errors.
+restart -f
+# ** Note: (vsim-12125) Error and warning message counts have been reset to '0' because of 'restart'.
+# ** Note: (vsim-8009) Loading existing optimized design _opt
+# ** Note: (vsim-12126) Error and warning message counts have been restored: Errors=0, Warnings=3.
+# Loading work.include_pkg(fast)
+# Loading work.fetch_tb_sv_unit(fast)
+# Loading work.fetch_tb(fast)
+# Loading work.fetch_sv_unit(fast)
+# Loading work.fetch(fast)
+# Loading work.ta_gen1_sv_unit(fast)
+# Loading work.ta_gen1(fast)
+# Loading work.fetch_buffer_sv_unit(fast)
+# Loading work.fetch_buffer(fast)
+run
+# Time:0 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+run
+# TC1: Normal Operation - Each instruction encodes its own PC
+run
+# Time:35 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000000000000093
+run
+# Time:45 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000000800800093
+run
+# Time:55 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000001001000093
+run
+# Time:65 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000001801800093
+run
+# Time:75 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000002002000093
+run
+# TC2: Single JAL arriving in Slot 0
+# Time:85 | OutBusy:0 | Jump1:1 | JTA1:00000140 | InstrOut0:10000002802800093
+run
+# Time:95 | OutBusy:1 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+# Time:105 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:100000100040000ef
+run
+# TC3: Double JAL - JAL_A (x1) and JAL_B (x2)
+# Time:115 | OutBusy:0 | Jump1:1 | JTA1:00000210 | InstrOut0:10000011011000093
+run
+# TC4: Filling Buffer (IN_busy=1)
+# Time:125 | OutBusy:1 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+# Time:135 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+run
+run
+run
+run
+run
+run
+# Time:205 | OutBusy:1 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+run
+run
+# Compile of include_pkg.sv was successful.
+# Compile of fetch.sv was successful with warnings.
+# Compile of fetch_buffer.sv was successful with warnings.
+# Compile of ta_gen1.sv was successful with warnings.
+# Compile of fetch_tb.sv was successful.
+# 5 compiles, 0 failed with no errors.
+run
+restart -f
+# ** Note: (vsim-12125) Error and warning message counts have been reset to '0' because of 'restart'.
+# ** Note: (vsim-3813) Design is being optimized due to module recompilation...
+# ** Warning: /home/muhammad/Documents/UET/FYP/rtl/fetch_buffer.sv(9): (vopt-13314) Defaulting port 'IN_instr' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: /home/muhammad/Documents/UET/FYP/rtl/fetch_buffer.sv(10): (vopt-13314) Defaulting port 'IN_valid' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: /home/muhammad/Documents/UET/FYP/rtl/fetch_buffer.sv(11): (vopt-13314) Defaulting port 'IN_pc' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Note: (vsim-12126) Error and warning message counts have been restored: Errors=0, Warnings=3.
+# Loading sv_std.std
+# Loading work.include_pkg(fast)
+# Loading work.fetch_tb_sv_unit(fast)
+# Loading work.fetch_tb(fast)
+# Loading work.fetch_sv_unit(fast)
+# Loading work.fetch(fast)
+# Loading work.ta_gen1_sv_unit(fast)
+# Loading work.ta_gen1(fast)
+# Loading work.fetch_buffer_sv_unit(fast)
+# Loading work.fetch_buffer(fast)
+run
+# Time:0 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+run
+# TC1: Normal Operation - Each instruction encodes its own PC
+run
+# Time:35 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000000000000093
+run
+# Time:45 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000000800800093
+run
+# Time:55 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000001001000093
+run
+# Time:65 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000001801800093
+run
+# Time:75 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000002002000093
+run
+# TC2: Single JAL arriving in Slot 0
+# Time:85 | OutBusy:0 | Jump1:1 | JTA1:00000140 | InstrOut0:10000002802800093
+run
+# Time:95 | OutBusy:1 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+# Time:105 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:100000100040000ef
+run
+# TC3: Double JAL - JAL_A (x1) and JAL_B (x2)
+# Time:115 | OutBusy:0 | Jump1:1 | JTA1:00000210 | InstrOut0:10000011011000093
+run
+# TC4: Filling Buffer (IN_busy=1)
+# Time:125 | OutBusy:1 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+# Time:135 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+run
+run
+run
+run
+run
+# Time:195 | OutBusy:1 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+run
+run
+run
+# Compile of include_pkg.sv was successful.
+# Compile of fetch.sv was successful with warnings.
+# Compile of fetch_buffer.sv was successful with warnings.
+# Compile of ta_gen1.sv was successful with warnings.
+# Compile of fetch_tb.sv was successful.
+# 5 compiles, 0 failed with no errors.
+restart -f
+# ** Note: (vsim-12125) Error and warning message counts have been reset to '0' because of 'restart'.
+# ** Note: (vsim-3813) Design is being optimized due to module recompilation...
+# ** Warning: /home/muhammad/Documents/UET/FYP/rtl/fetch_buffer.sv(9): (vopt-13314) Defaulting port 'IN_instr' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: /home/muhammad/Documents/UET/FYP/rtl/fetch_buffer.sv(10): (vopt-13314) Defaulting port 'IN_valid' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: /home/muhammad/Documents/UET/FYP/rtl/fetch_buffer.sv(11): (vopt-13314) Defaulting port 'IN_pc' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Note: (vsim-12126) Error and warning message counts have been restored: Errors=0, Warnings=3.
+# Loading sv_std.std
+# Loading work.include_pkg(fast)
+# Loading work.fetch_tb_sv_unit(fast)
+# Loading work.fetch_tb(fast)
+# Loading work.fetch_sv_unit(fast)
+# Loading work.fetch(fast)
+# Loading work.ta_gen1_sv_unit(fast)
+# Loading work.ta_gen1(fast)
+# Loading work.fetch_buffer_sv_unit(fast)
+# Loading work.fetch_buffer(fast)
+run
+# Time:0 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+run
+# TC1: Normal Operation - Each instruction encodes its own PC
+run
+# Time:35 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000000000000093
+run
+# Time:45 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000000800800093
+run
+# Time:55 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000001001000093
+run
+# Time:65 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000001801800093
+run
+# Time:75 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000002002000093
+run
+# TC2: Single JAL arriving in Slot 0
+# Time:85 | OutBusy:0 | Jump1:1 | JTA1:00000140 | InstrOut0:10000002802800093
+run
+# Time:95 | OutBusy:1 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+# Time:105 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:100000100040000ef
+run
+# TC3: Double JAL - JAL_A (x1) and JAL_B (x2)
+# Time:115 | OutBusy:0 | Jump1:1 | JTA1:00000210 | InstrOut0:10000011011000093
+run
+# TC4: Filling Buffer (IN_busy=1)
+# Time:125 | OutBusy:1 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+# Time:135 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+run
+run
+run
+run
+run
+run
+# Time:205 | OutBusy:1 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+run
+run
+run
+# Compile of include_pkg.sv was successful.
+# Compile of fetch.sv was successful with warnings.
+# Compile of fetch_buffer.sv was successful with warnings.
+# Compile of ta_gen1.sv was successful with warnings.
+# Compile of fetch_tb.sv was successful.
+# 5 compiles, 0 failed with no errors.
+restart -f
+# ** Note: (vsim-12125) Error and warning message counts have been reset to '0' because of 'restart'.
+# ** Note: (vsim-3813) Design is being optimized due to module recompilation...
+# ** Warning: /home/muhammad/Documents/UET/FYP/rtl/fetch_buffer.sv(9): (vopt-13314) Defaulting port 'IN_instr' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: /home/muhammad/Documents/UET/FYP/rtl/fetch_buffer.sv(10): (vopt-13314) Defaulting port 'IN_valid' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: /home/muhammad/Documents/UET/FYP/rtl/fetch_buffer.sv(11): (vopt-13314) Defaulting port 'IN_pc' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Note: (vsim-12126) Error and warning message counts have been restored: Errors=0, Warnings=3.
+# Loading sv_std.std
+# Loading work.include_pkg(fast)
+# Loading work.fetch_tb_sv_unit(fast)
+# Loading work.fetch_tb(fast)
+# Loading work.fetch_sv_unit(fast)
+# Loading work.fetch(fast)
+# Loading work.ta_gen1_sv_unit(fast)
+# Loading work.ta_gen1(fast)
+# Loading work.fetch_buffer_sv_unit(fast)
+# Loading work.fetch_buffer(fast)
+run
+# Time:0 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+run
+# TC1: Normal Operation - Each instruction encodes its own PC
+run
+# Time:35 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000000000000093
+run
+# Time:45 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000000800800093
+run
+# Time:55 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000001001000093
+run
+# Time:65 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000001801800093
+run
+# Time:75 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000002002000093
+run
+# TC2: Single JAL arriving in Slot 0
+# Time:85 | OutBusy:0 | Jump1:1 | JTA1:00000140 | InstrOut0:10000002802800093
+run
+# Time:95 | OutBusy:1 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+# Time:105 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:100000100040000ef
+run
+# TC3: Double JAL - JAL_A (x1) and JAL_B (x2)
+# Time:115 | OutBusy:0 | Jump1:1 | JTA1:00000210 | InstrOut0:10000011011000093
+run
+# TC4: Filling Buffer (IN_busy=1)
+# Time:125 | OutBusy:1 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+# Time:135 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+run
+run
+run
+run
+run
+run
+run
+run
+run
+run
+# Compile of include_pkg.sv was successful.
+# Compile of fetch.sv was successful with warnings.
+# Compile of fetch_buffer.sv was successful with warnings.
+# Compile of ta_gen1.sv was successful with warnings.
+# Compile of fetch_tb.sv was successful.
+# 5 compiles, 0 failed with no errors.
+restart -f
+# ** Note: (vsim-12125) Error and warning message counts have been reset to '0' because of 'restart'.
+# ** Note: (vsim-3813) Design is being optimized due to module recompilation...
+# ** Warning: /home/muhammad/Documents/UET/FYP/rtl/fetch_buffer.sv(9): (vopt-13314) Defaulting port 'IN_instr' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: /home/muhammad/Documents/UET/FYP/rtl/fetch_buffer.sv(10): (vopt-13314) Defaulting port 'IN_valid' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: /home/muhammad/Documents/UET/FYP/rtl/fetch_buffer.sv(11): (vopt-13314) Defaulting port 'IN_pc' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Note: (vsim-12126) Error and warning message counts have been restored: Errors=0, Warnings=3.
+# Loading sv_std.std
+# Loading work.include_pkg(fast)
+# Loading work.fetch_tb_sv_unit(fast)
+# Loading work.fetch_tb(fast)
+# Loading work.fetch_sv_unit(fast)
+# Loading work.fetch(fast)
+# Loading work.ta_gen1_sv_unit(fast)
+# Loading work.ta_gen1(fast)
+# Loading work.fetch_buffer_sv_unit(fast)
+# Loading work.fetch_buffer(fast)
+run
+# Time:0 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+run
+# TC1: Normal Operation - Each instruction encodes its own PC
+run
+# Time:35 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000000000000093
+run
+# Time:45 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000000800800093
+run
+# Time:55 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000001001000093
+run
+# Time:65 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000001801800093
+run
+# Time:75 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000002002000093
+run
+# TC2: Single JAL arriving in Slot 0
+# Time:85 | OutBusy:0 | Jump1:1 | JTA1:00000140 | InstrOut0:10000002802800093
+run
+# Time:95 | OutBusy:1 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+# Time:105 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:100000100040000ef
+run
+# TC3: Double JAL - JAL_A (x1) and JAL_B (x2)
+# Time:115 | OutBusy:0 | Jump1:1 | JTA1:00000210 | InstrOut0:10000011011000093
+run
+# TC4: Filling Buffer (IN_busy=1)
+# Time:125 | OutBusy:1 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+# Time:135 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+run
+run
+run
+run
+run
+run
+# Time:205 | OutBusy:1 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+run
+run
+run
+run
+run
+run
+# TC4: Buffer Full (OUT_busy=1). Staying full for 2 cycles.
+# Compile of include_pkg.sv was successful.
+# Compile of fetch.sv was successful with warnings.
+# Compile of fetch_buffer.sv was successful with warnings.
+# Compile of ta_gen1.sv was successful with warnings.
+# Compile of fetch_tb.sv was successful.
+# 5 compiles, 0 failed with no errors.
+restart -f
+# ** Note: (vsim-12125) Error and warning message counts have been reset to '0' because of 'restart'.
+# ** Note: (vsim-3813) Design is being optimized due to module recompilation...
+# Loading sv_std.std
+# Loading work.include_pkg(fast)
+# Loading work.fetch_tb_sv_unit(fast)
+# Loading work.fetch_tb(fast)
+# Loading work.fetch_sv_unit(fast)
+# Loading work.fetch(fast)
+# Loading work.ta_gen1_sv_unit(fast)
+# Loading work.ta_gen1(fast)
+# Loading work.fetch_buffer_sv_unit(fast)
+# Loading work.fetch_buffer(fast)
+run
+# Time:0 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+run
+# TC1: Normal Operation - Each instruction encodes its own PC
+run
+# Time:35 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000000000000093
+run
+# Time:45 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000000800800093
+run
+# Time:55 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000001001000093
+run
+# Time:65 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000001801800093
+run
+# Time:75 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000002002000093
+run
+# TC2: Single JAL arriving in Slot 0
+# Time:85 | OutBusy:0 | Jump1:1 | JTA1:00000140 | InstrOut0:10000002802800093
+run
+# Time:95 | OutBusy:1 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+# Time:105 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:100000100040000ef
+run
+# TC3: Double JAL - JAL_A (x1) and JAL_B (x2)
+# Time:115 | OutBusy:0 | Jump1:1 | JTA1:00000210 | InstrOut0:10000011011000093
+run
+# TC4: Filling Buffer (IN_busy=1)
+# Time:125 | OutBusy:1 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+# Time:135 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+run
+# TC4: Buffer Full (OUT_busy=1). Staying full for 2 cycles.
+run
+run
+# TC4: Issuing Flush
+# Time:175 | OutBusy:1 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+# Time:185 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+# Time:195 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000021822800093
+run
+run
+run
+run
+# All Test Cases Completed.
+# ** Note: $finish    : /home/muhammad/Documents/UET/FYP/sim_questasim/fetch/fetch_tb.sv(130)
+#    Time: 235 ns  Iteration: 1  Instance: /fetch_tb
+# 1
+# Break in Module fetch_tb at /home/muhammad/Documents/UET/FYP/sim_questasim/fetch/fetch_tb.sv line 130
+# Compile of include_pkg.sv was successful.
+# Compile of fetch.sv was successful with warnings.
+# Compile of fetch_buffer.sv was successful with warnings.
+# Compile of ta_gen1.sv was successful with warnings.
+# Compile of fetch_tb.sv was successful.
+# 5 compiles, 0 failed with no errors.
+restart -f
+# ** Note: (vsim-12125) Error and warning message counts have been reset to '0' because of 'restart'.
+# ** Note: (vsim-3813) Design is being optimized due to module recompilation...
+# Loading sv_std.std
+# Loading work.include_pkg(fast)
+# Loading work.fetch_tb_sv_unit(fast)
+# Loading work.fetch_tb(fast)
+# Loading work.fetch_sv_unit(fast)
+# Loading work.fetch(fast)
+# Loading work.ta_gen1_sv_unit(fast)
+# Loading work.ta_gen1(fast)
+# Loading work.fetch_buffer_sv_unit(fast)
+# Loading work.fetch_buffer(fast)
+run
+# Time:0 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+run
+# TC1: Normal Operation - Each instruction encodes its own PC
+run
+# Time:35 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000000000000093
+run
+# Time:45 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000000800800093
+run
+# Time:55 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000001001000093
+run
+# Time:65 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000001801800093
+run
+# Time:75 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000002002000093
+run
+# TC2: Single JAL arriving in Slot 0
+# Time:85 | OutBusy:0 | Jump1:1 | JTA1:00000140 | InstrOut0:10000002802800093
+run
+# Time:95 | OutBusy:1 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+# Time:105 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:100000100040000ef
+run
+# TC3: Double JAL - JAL_A (x1) and JAL_B (x2)
+# Time:115 | OutBusy:0 | Jump1:1 | JTA1:00000210 | InstrOut0:10000011011000093
+run
+# TC4: Filling Buffer (IN_busy=1)
+# Time:125 | OutBusy:1 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+# Time:135 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+run
+run
+run
+run
+run
+# TC4: Buffer Full (OUT_busy=1). Staying full for 2 cycles.
+run
+# Time:205 | OutBusy:1 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+# TC4: Issuing Flush
+run
+# Time:225 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:00000000000000000
+run
+# Time:235 | OutBusy:0 | Jump1:0 | JTA1:00000000 | InstrOut0:10000023826800093
+run
+run
+run
+run
+# All Test Cases Completed.
+# ** Note: $finish    : /home/muhammad/Documents/UET/FYP/sim_questasim/fetch/fetch_tb.sv(130)
+#    Time: 275 ns  Iteration: 1  Instance: /fetch_tb
+# 1
+# Break in Module fetch_tb at /home/muhammad/Documents/UET/FYP/sim_questasim/fetch/fetch_tb.sv line 130

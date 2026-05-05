@@ -11,7 +11,7 @@ module PC
 
     pc_t pc_reg;
 
-    always_ff @(posedge clk) begin
+    always_ff @(posedge clk or posedge rst) begin
         if (rst)
             pc_reg <= '0;
         else if (wr_en)

@@ -1,0 +1,24 @@
+// RV32I ALU Instructions
+00100093  // addi x1, x0, 1
+00200113  // addi x2, x0, 2
+00300193  // addi x3, x0, 3
+00208233  // add x4, x1, x2
+401202b3  // sub x5, x4, x1
+0030f333  // and x6, x1, x3
+0020e3b3  // or x7, x1, x2
+0030c433  // xor x8, x1, x3
+002094b3  // sll x9, x1, x2
+00125533  // srl x10, x4, x1
+401255b3  // sra x11, x4, x1
+0020a633  // slt x12, x1, x2
+0020b6b3  // sltu x13, x1, x2
+0050a713  // slti x14, x1, 5
+0050b793  // sltiu x15, x1, 5
+0010f813  // andi x16, x1, 1
+0010e893  // ori x17, x1, 1
+0010c913  // xori x18, x1, 1
+00109993  // slli x19, x1, 1
+00125a13  // srli x20, x4, 1
+40125a93  // srai x21, x4, 1
+00001b37  // lui x22, 1
+00001bb7  // auipc x23, 1

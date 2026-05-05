@@ -8,10 +8,10 @@ module core
     logic                     fb_busy;
     logic                     jump1;
     logic                     jump2;
-    logic               [1:0] consumed;
     pc_t                      jta1;
     pc_t                      jta2;
-    pc_t                      pc;
+    pc_t                      prefetch_pc    [FETCH_WIDTH];
+    logic                     prefetch_valid [FETCH_WIDTH];
     prefetch_instr_t          prefetch_instr [FETCH_WIDTH];
 
     prefetch prefetch
@@ -23,9 +23,9 @@ module core
         .jta2(jta2),
         .jump1(jump1),
         .jump2(jump2),
-        .consumed(consumed),
         .OUT_instr(prefetch_instr),
-        .out_pc(pc)
+        .OUT_pc(prefetch_pc),
+        .OUT_valid(prefetch_valid)
     );
 
     logic         rename_busy;
@@ -37,14 +37,12 @@ module core
         .clk(clk),
         .rst(rst),
         .IN_busy(rename_busy),
-        .jump2(jump2),
         .flush(flush),
-        .flush_sqN(flush_sqN),
-        .pc(pc),
+        .instr_pc(prefetch_pc),
+        .instr_valid(prefetch_valid),
         .IN_instr(prefetch_instr),
         .OUT_busy(fb_busy),
         .jump1(jump1),
-        .consumed(consumed),
         .jta1(jta1),
         .OUT_instr(fetch_instr)
     );

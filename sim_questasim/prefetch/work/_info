@@ -1,0 +1,331 @@
+m255
+K4
+z2
+Z0 !s99 nomlopt
+R0
+R0
+R0
+R0
+R0
+R0
+R0
+R0
+R0
+R0
+R0
+R0
+R0
+R0
+R0
+R0
+!s11f vlog 2021.2_1 2021.05, May 15 2021
+13
+!s112 1.1
+!i10d 8192
+!i10e 25
+!i10f 100
+cModel Technology
+d/home/muhammad/Documents/UET/FYP/build
+T_opt
+!s110 1777573939
+VWj9hW2`]2KCTSQ7Y6Q@433
+04 11 4 work prefetch_tb fast 0
+=2-000ae431a4f1-69f3a033-c6a4e-6c492
+!s124 OEM100
+o-quiet -auto_acc_if_foreign -work work +acc
+Z1 tCvgOpt 0
+n@_opt
+OL;O;2021.2_1;73
+vIMEM
+Z2 DXx6 sv_std 3 std 0 22 9oUSJO;AeEaW`l:M@^WG92
+Z3 DXx4 work 11 include_pkg 0 22 @W4`<m>T=b_D0In6@m8j^3
+DXx4 work 12 IMEM_sv_unit 0 22 2WNCoYe^gh4hjGd:7kQ5N3
+Z4 !s110 1777573936
+Z5 VDg1SIo80bB@j0V0VzS_@n1
+r1
+!s85 0
+!i10b 1
+!s100 bc_GDhX^NWQBFZU4RB[1N2
+I0WDEN5XIi5FF2Il?0Kz?l0
+!s105 IMEM_sv_unit
+S1
+Z6 d/home/muhammad/Documents/UET/FYP/sim_questasim/prefetch
+Z7 w1777560946
+Z8 8/home/muhammad/Documents/UET/FYP/rtl/IMEM.sv
+Z9 F/home/muhammad/Documents/UET/FYP/rtl/IMEM.sv
+!i122 163
+L0 3 42
+Z10 OL;L;2021.2_1;73
+31
+Z11 !s108 1777573936.000000
+Z12 !s107 /home/muhammad/Documents/UET/FYP/rtl/IMEM.sv|
+Z13 !s90 -reportprogress|300|-work|work|-vopt|-sv|-stats=none|/home/muhammad/Documents/UET/FYP/rtl/IMEM.sv|
+!i113 0
+Z14 o-work work -sv -L mtiAvm -L mtiRnm -L mtiOvm -L mtiUvm -L mtiUPF -L infact
+R1
+n@i@m@e@m
+XIMEM_sv_unit
+R2
+R3
+R4
+V2WNCoYe^gh4hjGd:7kQ5N3
+r1
+!s85 0
+!i10b 1
+!s100 8_8kl@688ozn7d`hi1L6a1
+I2WNCoYe^gh4hjGd:7kQ5N3
+!i103 1
+S1
+R6
+R7
+R8
+R9
+!i122 163
+Z15 L0 1 0
+R10
+31
+R11
+R12
+R13
+!i113 0
+R14
+R1
+n@i@m@e@m_sv_unit
+Xinclude_pkg
+R2
+R4
+!i10b 1
+!s100 <2[38gjR2P<_<U4@NJECl0
+I@W4`<m>T=b_D0In6@m8j^3
+S1
+R6
+w1777566920
+8/home/muhammad/Documents/UET/FYP/include/include_pkg.sv
+F/home/muhammad/Documents/UET/FYP/include/include_pkg.sv
+!i122 162
+L0 4 0
+V@W4`<m>T=b_D0In6@m8j^3
+R10
+r1
+!s85 0
+31
+R11
+!s107 /home/muhammad/Documents/UET/FYP/include/include_pkg.sv|
+!s90 -reportprogress|300|-work|work|-vopt|-sv|-stats=none|/home/muhammad/Documents/UET/FYP/include/include_pkg.sv|
+!i113 0
+R14
+R1
+vinstr_aligner
+R2
+R3
+DXx4 work 21 instr_aligner_sv_unit 0 22 <1nE]D66LG9m5`N1g:m5?3
+R4
+R5
+r1
+!s85 0
+!i10b 1
+!s100 ]UP;c;k0HAN84T2[T2Aa:0
+Ij`chG27B9]HBf4bJHETnN3
+!s105 instr_aligner_sv_unit
+S1
+R6
+Z16 w1777573358
+Z17 8/home/muhammad/Documents/UET/FYP/rtl/instr_aligner.sv
+Z18 F/home/muhammad/Documents/UET/FYP/rtl/instr_aligner.sv
+!i122 167
+L0 3 46
+R10
+31
+R11
+Z19 !s107 /home/muhammad/Documents/UET/FYP/rtl/instr_aligner.sv|
+Z20 !s90 -reportprogress|300|-work|work|-vopt|-sv|-stats=none|/home/muhammad/Documents/UET/FYP/rtl/instr_aligner.sv|
+!i113 0
+R14
+R1
+Xinstr_aligner_sv_unit
+R2
+R3
+R4
+V<1nE]D66LG9m5`N1g:m5?3
+r1
+!s85 0
+!i10b 1
+!s100 A?RA]M:cMMhB;mh]bJ`dF1
+I<1nE]D66LG9m5`N1g:m5?3
+!i103 1
+S1
+R6
+R16
+R17
+R18
+!i122 167
+R15
+R10
+31
+R11
+R19
+R20
+!i113 0
+R14
+R1
+vPC
+R2
+R3
+DXx4 work 10 PC_sv_unit 0 22 `nNWzmo>g_hF2mFb<e1:N0
+R4
+R5
+r1
+!s85 0
+!i10b 1
+!s100 dWj^Gio]fU4Z3Do[6?7C01
+IAXL2X=bfnDG]OeFTR:3Bz2
+!s105 PC_sv_unit
+S1
+R6
+Z21 w1777560362
+Z22 8/home/muhammad/Documents/UET/FYP/rtl/PC.sv
+Z23 F/home/muhammad/Documents/UET/FYP/rtl/PC.sv
+!i122 164
+L0 3 21
+R10
+31
+R11
+Z24 !s107 /home/muhammad/Documents/UET/FYP/rtl/PC.sv|
+Z25 !s90 -reportprogress|300|-work|work|-vopt|-sv|-stats=none|/home/muhammad/Documents/UET/FYP/rtl/PC.sv|
+!i113 0
+R14
+R1
+n@p@c
+XPC_sv_unit
+R2
+R3
+R4
+V`nNWzmo>g_hF2mFb<e1:N0
+r1
+!s85 0
+!i10b 1
+!s100 6FAi>E=`k8?H<Y;Vk@<_m0
+I`nNWzmo>g_hF2mFb<e1:N0
+!i103 1
+S1
+R6
+R21
+R22
+R23
+!i122 164
+R15
+R10
+31
+R11
+R24
+R25
+!i113 0
+R14
+R1
+n@p@c_sv_unit
+vprefetch
+R2
+R3
+DXx4 work 16 prefetch_sv_unit 0 22 X[ajc8h:WmU]QVl8Sd4za2
+R4
+R5
+r1
+!s85 0
+!i10b 1
+!s100 J5L`P]MeInoMm=o:z@c0n1
+I7KE<;FB^mJGAOg^:LDf4=0
+!s105 prefetch_sv_unit
+S1
+R6
+Z26 w1777572646
+Z27 8/home/muhammad/Documents/UET/FYP/rtl/prefetch.sv
+Z28 F/home/muhammad/Documents/UET/FYP/rtl/prefetch.sv
+!i122 165
+L0 2 70
+R10
+31
+R11
+Z29 !s107 /home/muhammad/Documents/UET/FYP/rtl/prefetch.sv|
+Z30 !s90 -reportprogress|300|-work|work|-vopt|-sv|-stats=none|/home/muhammad/Documents/UET/FYP/rtl/prefetch.sv|
+!i113 0
+R14
+R1
+Xprefetch_sv_unit
+R2
+R3
+R4
+VX[ajc8h:WmU]QVl8Sd4za2
+r1
+!s85 0
+!i10b 1
+!s100 iocGUgmbE:338:hV;Rc;g2
+IX[ajc8h:WmU]QVl8Sd4za2
+!i103 1
+S1
+R6
+R26
+R27
+R28
+!i122 165
+R15
+R10
+31
+R11
+R29
+R30
+!i113 0
+R14
+R1
+vprefetch_tb
+R2
+R3
+DXx4 work 17 testbench_sv_unit 0 22 XSYJ2CQ?FLAJfCbOdjFOR1
+R4
+R5
+r1
+!s85 0
+!i10b 1
+!s100 gcQ4QzP705QVHE<`GT:bE0
+Ic=^aF?@?[gZP:jh@aRg]A3
+!s105 testbench_sv_unit
+S1
+R6
+Z31 w1777573926
+Z32 8/home/muhammad/Documents/UET/FYP/sim_questasim/prefetch/testbench.sv
+Z33 F/home/muhammad/Documents/UET/FYP/sim_questasim/prefetch/testbench.sv
+!i122 166
+L0 5 99
+R10
+31
+R11
+Z34 !s107 /home/muhammad/Documents/UET/FYP/sim_questasim/prefetch/testbench.sv|
+Z35 !s90 -reportprogress|300|-work|work|-vopt|-sv|-stats=none|/home/muhammad/Documents/UET/FYP/sim_questasim/prefetch/testbench.sv|
+!i113 0
+R14
+R1
+Xtestbench_sv_unit
+R2
+R3
+R4
+VXSYJ2CQ?FLAJfCbOdjFOR1
+r1
+!s85 0
+!i10b 1
+!s100 DcJniIh5?[YElU2:n:KC73
+IXSYJ2CQ?FLAJfCbOdjFOR1
+!i103 1
+S1
+R6
+R31
+R32
+R33
+!i122 166
+L0 3 0
+R10
+31
+R11
+R34
+R35
+!i113 0
+R14
+R1

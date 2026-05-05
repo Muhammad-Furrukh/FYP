@@ -1,0 +1,34 @@
+/home/muhammad/Documents/UET/FYP/sim_questasim/fetch/fetch_tb.sv {1 {vlog -work work -vopt -sv -stats=none /home/muhammad/Documents/UET/FYP/sim_questasim/fetch/fetch_tb.sv
+QuestaSim-64 vlog 2021.2_1 Compiler 2021.05 May 15 2021
+-- Compiling package fetch_tb_sv_unit
+-- Importing package include_pkg
+-- Compiling module fetch_tb
+
+Top level modules:
+	fetch_tb
+
+} {} {}} /home/muhammad/Documents/UET/FYP/rtl/ta_gen1.sv {2 {vlog -work work -vopt -sv -stats=none /home/muhammad/Documents/UET/FYP/rtl/ta_gen1.sv
+QuestaSim-64 vlog 2021.2_1 Compiler 2021.05 May 15 2021
+** Warning: /home/muhammad/Documents/UET/FYP/rtl/ta_gen1.sv(5): (vlog-13314) Defaulting port 'IN_pc' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+** Warning: /home/muhammad/Documents/UET/FYP/rtl/ta_gen1.sv(6): (vlog-13314) Defaulting port 'valid' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+** Warning: /home/muhammad/Documents/UET/FYP/rtl/ta_gen1.sv(7): (vlog-13314) Defaulting port 'opcode' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+** Warning: /home/muhammad/Documents/UET/FYP/rtl/ta_gen1.sv(8): (vlog-13314) Defaulting port 'imm' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+-- Compiling package ta_gen1_sv_unit
+-- Importing package include_pkg
+-- Compiling module ta_gen1
+** Warning: /home/muhammad/Documents/UET/FYP/rtl/ta_gen1.sv(5): (vlog-13314) Defaulting port 'IN_pc' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+** Warning: /home/muhammad/Documents/UET/FYP/rtl/ta_gen1.sv(6): (vlog-13314) Defaulting port 'valid' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+** Warning: /home/muhammad/Documents/UET/FYP/rtl/ta_gen1.sv(7): (vlog-13314) Defaulting port 'opcode' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+** Warning: /home/muhammad/Documents/UET/FYP/rtl/ta_gen1.sv(8): (vlog-13314) Defaulting port 'imm' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+
+Top level modules:
+	ta_gen1
+
+} {} {}} /home/muhammad/Documents/UET/FYP/include/include_pkg.sv {1 {vlog -work work -vopt -sv -stats=none /home/muhammad/Documents/UET/FYP/include/include_pkg.sv
+QuestaSim-64 vlog 2021.2_1 Compiler 2021.05 May 15 2021
+-- Compiling package include_pkg
+
+Top level modules:
+	--none--
+
+} {} {}}
