@@ -194,7 +194,6 @@ module core
         .tag_ready(reg_ready),
         .RF_data(RF_read_data),
         .IN_busy(mul_div_fu_busy),
-        .CDB_result(CDB_result),
         .CDB_tag(CDB_tag),
         .CDB_valid(CDB_valid),
         .OUT_instr(int_issue_instr),
