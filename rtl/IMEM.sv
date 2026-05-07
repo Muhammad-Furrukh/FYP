@@ -18,7 +18,7 @@ module IMEM
         for (int i = 0; i < MEM_WORDS; i++)
             mem[i] = 32'b0;
 
-        $readmemh("/home/muhammad/Documents/UET/FYP/imem.hex", mem);
+        $readmemh("./imem.hex", mem);
     end
     
     logic [IMEM_ADDR_WIDTH-1:0] block_idx;

@@ -66,7 +66,7 @@ module branch_checkpoint
         end else begin
             // Commit: free entries
             for (int i = 0; i < COMMIT_WIDTH; i++) begin
-            	if (comm_valid) valid[commit_sqN[i][CHKPT_BITS-1:0]] <= 1'b0;
+            	if (comm_valid[i]) valid[commit_sqN[i][CHKPT_BITS-1:0]] <= 1'b0;
             end
 
             if (flush) begin
