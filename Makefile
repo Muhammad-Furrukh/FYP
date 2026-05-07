@@ -5,114 +5,105 @@ TB_DIR        = tb
 UNIT_DIR      = $(TB_DIR)/modules
 SIM_DIR       = sim_verilator
 
-# Package must be first — all other files import it
+# Package must be first
 PKG_FILE  = $(INC_DIR)/include_pkg.sv
 RTL_FILES = $(filter-out $(PKG_FILE), \
               $(shell find $(RTL_DIR) -name "*.sv" -o -name "*.v"))
 
 # ════════════════════════════════════════════════════
-# Common Verilator flags
+# Common Verilator flags (for unit tests)
 # ════════════════════════════════════════════════════
-COMMON_VFLAGS  = --cc --exe --build --trace-fst
-COMMON_VFLAGS += --timing
-COMMON_VFLAGS += -Wall -Wno-fatal
-COMMON_VFLAGS += -Wno-UNUSED -Wno-UNDRIVEN -Wno-DECLFILENAME
-COMMON_VFLAGS += +incdir+$(RTL_DIR) +incdir+$(INC_DIR)
+UNIT_VFLAGS  = --cc --exe --build --trace-fst --trace --timing --main
+UNIT_VFLAGS += -Wall -Wno-fatal
+UNIT_VFLAGS += -Wno-UNUSED -Wno-UNDRIVEN -Wno-DECLFILENAME
+UNIT_VFLAGS += +incdir+$(RTL_DIR) +incdir+$(INC_DIR)
 
 # ════════════════════════════════════════════════════
-# Full core simulation
+# Phony targets
 # ════════════════════════════════════════════════════
-TOP           = core
-TB_CPP        = $(TB_DIR)/tb_core.cpp
-ALL_RTL       = $(PKG_FILE) $(RTL_FILES)
-CORE_DIR      = $(SIM_DIR)/V$(TOP)
+.PHONY: all clean test_mul_div test_rename test_dispatch_unit \
+        test_branch_checkpoint test_core test_all
 
-VFLAGS  = $(COMMON_VFLAGS)
-VFLAGS += --public-depth 0
-VFLAGS += --public-flat-rw
-VFLAGS += --top-module $(TOP)
-VFLAGS += --Mdir $(CORE_DIR)
-
-# ════════════════════════════════════════════════════
-# Targets
-# ════════════════════════════════════════════════════
-.PHONY: all sim waves clean test_mul_div test_all
-
-all: sim
-
-sim:
-	mkdir -p $(SIM_DIR)
-	$(VERILATOR) $(VFLAGS) $(ALL_RTL) $(TB_CPP) -o $(TOP)_sim 2>&1 | tee $(SIM_DIR)/verilator.log
-	$(CORE_DIR)/$(TOP)_sim
+all: test_core
 
 # ════════════════════════════════════════════════════
 # MUL_DIV unit test
 # ════════════════════════════════════════════════════
-MUL_DIV_TOP = MUL_DIV
-MUL_DIV_SRC = rtl/mul_div.sv $(UNIT_DIR)/tb_mul_div.cpp
-MUL_DIV_DIR = $(SIM_DIR)/V$(MUL_DIV_TOP)
+MUL_DIV_DIR = $(SIM_DIR)/Vtb_mul_div
 
 test_mul_div:
 	mkdir -p $(SIM_DIR)
-	$(VERILATOR) --cc --exe --build --trace-fst --trace --timing --main \
-		-Wall -Wno-fatal -Wno-UNUSED -Wno-UNDRIVEN -Wno-DECLFILENAME \
-		+incdir+$(RTL_DIR) +incdir+$(INC_DIR) \
+	$(VERILATOR) $(UNIT_VFLAGS) \
 		--top-module tb_mul_div \
-		--Mdir $(SIM_DIR)/Vtb_mul_div \
+		--Mdir $(MUL_DIV_DIR) \
 		$(PKG_FILE) rtl/mul_div.sv $(UNIT_DIR)/tb_mul_div.sv \
 		-o tb_mul_div_sim
-	cd $(SIM_DIR)/Vtb_mul_div && ./tb_mul_div_sim
+	cd $(MUL_DIV_DIR) && ./tb_mul_div_sim
 
 # ════════════════════════════════════════════════════
 # RENAME unit test
 # ════════════════════════════════════════════════════
-RENAME_TOP = rename
-RENAME_SRC = rtl/rename.sv $(UNIT_DIR)/tb_rename.sv
-RENAME_DIR = $(SIM_DIR)/V$(RENAME_TOP)
+RENAME_DIR = $(SIM_DIR)/Vtb_rename
 
 test_rename:
 	mkdir -p $(SIM_DIR)
-	$(VERILATOR) --cc --exe --build --trace-fst --trace --timing --main \
-		-Wall -Wno-fatal -Wno-UNUSED -Wno-UNDRIVEN -Wno-DECLFILENAME \
-		+incdir+$(RTL_DIR) +incdir+$(INC_DIR) \
+	$(VERILATOR) $(UNIT_VFLAGS) \
 		--top-module tb_rename \
 		--Mdir $(RENAME_DIR) \
-		$(PKG_FILE) $(RENAME_SRC) \
+		$(PKG_FILE) rtl/rename.sv $(UNIT_DIR)/tb_rename.sv \
 		-o tb_rename_sim
 	cd $(RENAME_DIR) && ./tb_rename_sim
 
-
-DISPATCH_UNIT_TOP = dispatch_unit
-DISPATCH_UNIT_SRC = rtl/dispatch_unit.sv $(UNIT_DIR)/tb_dispatch_unit.sv
-DISPATCH_UNIT_DIR = $(SIM_DIR)/V$(DISPATCH_UNIT_TOP)
+# ════════════════════════════════════════════════════
+# DISPATCH_UNIT test
+# ════════════════════════════════════════════════════
+DISPATCH_UNIT_DIR = $(SIM_DIR)/Vtb_dispatch_unit
 
 test_dispatch_unit:
 	mkdir -p $(SIM_DIR)
-	$(VERILATOR) --cc --exe --build --trace-fst --trace --timing --main \
-		-Wall -Wno-fatal -Wno-UNUSED -Wno-UNDRIVEN -Wno-DECLFILENAME \
-		+incdir+$(RTL_DIR) +incdir+$(INC_DIR) \
+	$(VERILATOR) $(UNIT_VFLAGS) \
 		--top-module tb_dispatch_unit \
 		--Mdir $(DISPATCH_UNIT_DIR) \
-		$(PKG_FILE) $(DISPATCH_UNIT_SRC) \
+		$(PKG_FILE) rtl/dispatch_unit.sv $(UNIT_DIR)/tb_dispatch_unit.sv \
 		-o tb_dispatch_unit_sim
 	cd $(DISPATCH_UNIT_DIR) && ./tb_dispatch_unit_sim
 
-BRCHKPT_TOP = branch_checkpoint
-BRCHKPT_SRC = rtl/branch_checkpoint.sv $(UNIT_DIR)/tb_branch_checkpoint.sv
-BRCHKPT_DIR = $(SIM_DIR)/V$(BRCHKPT_TOP)
+# ════════════════════════════════════════════════════
+# BRANCH_CHECKPOINT test
+# ════════════════════════════════════════════════════
+BRCHKPT_DIR = $(SIM_DIR)/Vtb_branch_checkpoint
 
 test_branch_checkpoint:
 	mkdir -p $(SIM_DIR)
-	$(VERILATOR) --cc --exe --build --trace-fst --trace --timing --main \
-		-Wall -Wno-fatal -Wno-UNUSED -Wno-UNDRIVEN -Wno-DECLFILENAME \
-		+incdir+$(RTL_DIR) +incdir+$(INC_DIR) \
+	$(VERILATOR) $(UNIT_VFLAGS) \
 		--top-module tb_branch_checkpoint \
 		--Mdir $(BRCHKPT_DIR) \
-		$(PKG_FILE) $(BRCHKPT_SRC) \
+		$(PKG_FILE) rtl/branch_checkpoint.sv $(UNIT_DIR)/tb_branch_checkpoint.sv \
 		-o tb_branch_checkpoint_sim
 	cd $(BRCHKPT_DIR) && ./tb_branch_checkpoint_sim
 
-test_all: test_mul_div test_rename test_dispatch_unit test_branch_checkpoint
+# ════════════════════════════════════════════════════
+# FULL CORE test
+# ════════════════════════════════════════════════════
+CORE_DIR = $(SIM_DIR)/Vtb_core
 
+test_core:
+	mkdir -p $(SIM_DIR)
+	$(VERILATOR) $(UNIT_VFLAGS) \
+		--public-depth 0 --public-flat-rw \
+		--top-module tb_core \
+		--Mdir $(CORE_DIR) \
+		$(PKG_FILE) $(RTL_FILES) $(TB_DIR)/tb_core.sv \
+		-o tb_core_sim
+	cd $(CORE_DIR) && ./tb_core_sim
+
+# ════════════════════════════════════════════════════
+# All unit tests
+# ════════════════════════════════════════════════════
+test_all: test_mul_div test_rename test_dispatch_unit test_branch_checkpoint test_core
+	@echo ""
+	@echo "=== All unit tests complete ==="
+
+# ════════════════════════════════════════════════════
 clean:
 	rm -rf $(SIM_DIR)
