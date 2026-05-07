@@ -227,4 +227,4 @@ module tb_branch_checkpoint;
         $finish;
     end
 
-endmodule
+

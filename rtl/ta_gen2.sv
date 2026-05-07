@@ -51,5 +51,4 @@ module ta_gen2 (
             end
         end
     end
-
 endmodule

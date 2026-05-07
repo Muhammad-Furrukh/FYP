@@ -114,7 +114,6 @@ module MUL_DIV (
         mul_stage2_result = mul_pipe[2].neg_result ? (~upper + 32'd1) : upper;
     end
 
-    // ── MUL Pipeline sequential logic ────────────────
     always_ff @(posedge clk or posedge rst) begin
         if (rst) begin
             if (rst) begin

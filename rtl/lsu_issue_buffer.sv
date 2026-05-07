@@ -86,7 +86,7 @@ module lsu_issue_buffer #(
     // --- Ready Mask Logic ---
     logic r1 [DEPTH];
     logic r2 [DEPTH];
-
+    
     always_comb begin
         for (int i = 0; i < DEPTH; i++) begin
             r1[i] = queue[i].ready_1;
