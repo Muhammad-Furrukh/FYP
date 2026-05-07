@@ -130,6 +130,7 @@ module core
     logic                    dispatch_unit_busy;
     logic                    lsu_busy;
     sqN_t                    flush_sqN;
+    logic		     comm_valid		    [COMMIT_WIDTH];	
     sqN_t                    commit_sqN             [COMMIT_WIDTH];
     alu_dispatch_instr_t     alu_dispatch_instr     [NUM_ALU_FU];
     mul_div_dispatch_instr_t mul_div_dispatch_instr [NUM_MUL_DIV_FU];
@@ -138,7 +139,8 @@ module core
 
     always_comb begin
         for (int i = 0; i < COMMIT_WIDTH; i++) begin
-            commit_sqN[i] = commit_packet[i].sqN;
+            commit_sqN[i]   = commit_packet[i].sqN;
+            comm_valid[i]   = commit_packet[i].valid; 
         end
 
         for (int i = 0; i < ISSUE_WIDTH; i++) begin
@@ -161,6 +163,7 @@ module core
         .LSU_busy(lsu_busy),
         .flush(flush),
         .flush_sqN(flush_sqN),
+        .comm_valid(comm_valid),
         .commit_sqN(commit_sqN),
         .instr_sqN(chkpt_sqN),
         .IN_instr(rename_instr),

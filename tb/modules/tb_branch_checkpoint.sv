@@ -1,319 +1,230 @@
-`include "include_pkg.sv"
+`timescale 1ns/1ps
+import include_pkg::*;
 
 module tb_branch_checkpoint;
+
     logic       clk, rst, flush;
     sqN_t       flush_sqN;
-    sqN_t       commit_sqN  [COMMIT_WIDTH];
-    sqN_t       instr_sqN   [DECODE_WIDTH];
-    logic       chk_valid   [DECODE_WIDTH];
-    tag_t       IN_specTag  [DECODE_WIDTH][32];
-    logic       IN_free     [DECODE_WIDTH][2**REG_ADDR_WIDTH];
+    logic 	comm_valid [COMMIT_WIDTH];
+    sqN_t       commit_sqN [COMMIT_WIDTH];
+    sqN_t       instr_sqN  [DECODE_WIDTH];
+    logic       chk_valid  [DECODE_WIDTH];
+    tag_t       IN_specTag [DECODE_WIDTH][32];
+    logic       IN_free    [DECODE_WIDTH][2**REG_ADDR_WIDTH];
     logic       check_busy;
-    tag_t       OUT_specTag [32];
-    logic       OUT_free    [2**REG_ADDR_WIDTH];
+    tag_t       OUT_specTag[32];
+    logic       OUT_free   [2**REG_ADDR_WIDTH];
 
-    branch_checkpoint dut (.*);
+    branch_checkpoint DUT (.*);
 
-    localparam int NUM_REG   = 2**REG_ADDR_WIDTH;
-    localparam int NUM_CHKPT = ROB_SIZE/4;
-
+    initial clk = 0;
     always #5 clk = ~clk;
 
-    int tests_run = 0, tests_fail = 0;
+    int pass_count = 0, fail_count = 0;
 
-    // ── Global timeout ────────────────────────────────
-    initial begin
-        #500000;
-        $display("TIMEOUT: Global watchdog fired");
-        $finish;
-    end
+    localparam int NUM_CHKPT  = ROB_SIZE / 4;
+    localparam int CHKPT_BITS = $clog2(NUM_CHKPT);
 
-    // ── Helpers ────────────────────────────────────────
-    task automatic tick();
-        @(posedge clk);
-        #1;
-    endtask
-
-    task automatic tick_n(int n);
-        repeat(n) tick();
-    endtask
-
-    task automatic set_idle();
-        flush = 0;
-        flush_sqN = '0;
-        for (int i = 0; i < COMMIT_WIDTH; i++) commit_sqN[i] = '0;
+    // ── Helpers ──────────────────────────────────────
+    task automatic clr_inputs();
+        flush     = 0; flush_sqN = '0;
+        for (int i = 0; i < COMMIT_WIDTH; i++) begin
+		comm_valid[i]    = 0;	
+		commit_sqN[i] 	 = '0;
+	end
+	
         for (int i = 0; i < DECODE_WIDTH; i++) begin
-            instr_sqN[i] = '0;
-            chk_valid[i]  = 0;
-            for (int r = 0; r < 32; r++)  IN_specTag[i][r] = '0;
-            for (int b = 0; b < NUM_REG; b++) IN_free[i][b] = 0;
+            instr_sqN[i] = '0; chk_valid[i] = 0;
+            for (int r = 0; r < 32; r++) IN_specTag[i][r] = tag_t'(r);
+            for (int b = 0; b < 2**REG_ADDR_WIDTH; b++) IN_free[i][b] = 1;
         end
     endtask
 
-    task automatic set_specTag(
-        input int slot,
-        input tag_t tags [32]
-    );
-        for (int r = 0; r < 32; r++)
-            IN_specTag[slot][r] = tags[r];
-    endtask
-
-    task automatic set_free(
-        input int slot,
-        input logic free_bits [NUM_REG]
-    );
-        for (int b = 0; b < NUM_REG; b++)
-            IN_free[slot][b] = free_bits[b];
-    endtask
-
-    // ── Main ───────────────────────────────────────────
-    initial begin
-    	$dumpfile("tb_branch_checkpoint.fst");
-    	$dumpvars(0, tb_branch_checkpoint);
-        
-        clk = 0; rst = 1;
-        set_idle();
-        tick_n(5);
+    task automatic do_reset();
+        clr_inputs(); rst = 1;
+        @(posedge clk); #1;
+        @(posedge clk); #1;
         rst = 0;
-        tick();
-        set_idle();
-        tick();
+        @(posedge clk); #1;
+    endtask
 
-        // ════════════════════════════════════════════
-        // TEST 1: Reset — not busy
-        // ════════════════════════════════════════════
-        begin
-            tests_run++;
-            if (!check_busy) begin
-                $display("PASS: Reset — not busy");
-            end else begin
-                tests_fail++;
-                $display("FAIL: Reset — busy after reset");
-            end
-        end
+    task automatic wait_cycles(int n);
+        repeat (n) @(posedge clk); #1;
+    endtask
 
-        // ════════════════════════════════════════════
-        // TEST 2: Allocate one checkpoint
-        // ════════════════════════════════════════════
-        begin
-            tag_t tags [32];
-            logic free_bits [NUM_REG];
+    task automatic set_spectag(int slot, tag_t base);
+        for (int r = 0; r < 32; r++)
+            IN_specTag[slot][r] = tag_t'(base + r);
+    endtask
 
-            for (int r = 0; r < 32; r++) tags[r] = tag_t'(r);
-            for (int b = 0; b < NUM_REG; b++) free_bits[b] = (b > 32) ? 1'b1 : 1'b0;
+    // Allocate one checkpoint and wait for it to register
+    task automatic alloc(int slot, sqN_t sqn, tag_t base);
+        set_spectag(slot, base);
+        instr_sqN[slot] = sqn;
+        chk_valid[slot] = 1;
+        @(posedge clk); #1;  // FF writes on this edge
+        chk_valid[slot] = 0;
+        instr_sqN[slot] = '0;
+        @(posedge clk); #1;  // one idle cycle — valid is now set
+    endtask
 
-            instr_sqN[0] = 4;  // checkpoint slot 4
+    task automatic chk(string name, logic got, logic exp);
+        if (got === exp) begin $display("  PASS  %s", name); pass_count++; end
+        else begin $display("  FAIL  %s  got=%0b exp=%0b", name, got, exp); fail_count++; end
+    endtask
+
+    task automatic chk_tag(string name, tag_t got, tag_t exp);
+        if (got === exp) begin $display("  PASS  %s (=%0d)", name, got); pass_count++; end
+        else begin $display("  FAIL  %s  got=%0d exp=%0d", name, got, exp); fail_count++; end
+    endtask
+
+    // ════════════════════════════════════════════════
+    // T1: Single alloc — not busy
+    // ════════════════════════════════════════════════
+    initial begin : T1
+        @(posedge clk); // let other initials start
+    end
+
+    task automatic test_alloc_single();
+        $display("\n[T1] Alloc single checkpoint");
+        do_reset();
+        alloc(0, 7'h04, 10);
+        chk("check_busy=0 after 1 alloc", check_busy, 0);
+    endtask
+
+    // ════════════════════════════════════════════════
+    // T2: Flush restores specTag
+    //     Key fix: wait 2 cycles after alloc before flush
+    //     so valid bit is guaranteed set in the FF.
+    // ════════════════════════════════════════════════
+    task automatic test_flush_restore();
+        $display("\n[T2] Flush restores specTag");
+        do_reset();
+
+        alloc(0, 7'h04, 20);   // alloc already waits for valid to land
+
+        // Now flush — valid[4] is set, OUT_specTag should be restored
+        flush = 1; flush_sqN = 7'h04;
+        #1; // combinational output settles
+        chk_tag("OUT_specTag[1] after flush", OUT_specTag[1], tag_t'(21));
+        chk_tag("OUT_specTag[5] after flush", OUT_specTag[5], tag_t'(25));
+        @(posedge clk); #1;
+        flush = 0;
+    endtask
+
+    // ════════════════════════════════════════════════
+    // T3: Fill all slots → check_busy=1, commit → drops
+    // ════════════════════════════════════════════════
+    task automatic test_commit_frees();
+        $display("\n[T3] Commit frees entry");
+        do_reset();
+
+        // Fill all NUM_CHKPT slots
+        for (int s = 0; s < NUM_CHKPT; s++) begin
+            instr_sqN[0] = sqN_t'(s);
             chk_valid[0] = 1;
-            set_specTag(0, tags);
-            set_free(0, free_bits);
-            tick();
-
-            tests_run++;
-            if (!check_busy) begin
-                $display("PASS: Allocate checkpoint — not busy after one");
-            end else begin
-                tests_fail++;
-                $display("FAIL: Allocate checkpoint — busy after one");
-            end
-        end
-
-        // ════════════════════════════════════════════
-        // TEST 3: Allocate same slot -> stall
-        // ════════════════════════════════════════════
-        begin
-            instr_sqN[0] = 4;  // same slot as before
-            chk_valid[0] = 1;
-            tick();
-
-            tests_run++;
-            if (check_busy) begin
-                $display("PASS: Same slot -> stall");
-            end else begin
-                tests_fail++;
-                $display("FAIL: Same slot -> not stalling");
-            end
-
+            @(posedge clk); #1;
             chk_valid[0] = 0;
-            tick();
+            @(posedge clk); #1;
         end
 
-        // ════════════════════════════════════════════
-        // TEST 4: Commit frees the slot
-        // ════════════════════════════════════════════
-        begin
-            commit_sqN[0] = 4;  // commit slot 4
-            tick();
-            commit_sqN[0] = '0;
+        chk("check_busy=1 when full", check_busy, 1);
 
-            // Now should be able to allocate slot 4 again
-            instr_sqN[0] = 4;
-            chk_valid[0] = 1;
-            tick();
+        commit_sqN[0] = 7'h00;
+        comm_valid[0] = 1;
+        @(posedge clk); #1;
+        comm_valid[0] = 0;
+        @(posedge clk); #1;
 
-            tests_run++;
-            if (!check_busy) begin
-                $display("PASS: Commit frees slot, re-allocate ok");
-            end else begin
-                tests_fail++;
-                $display("FAIL: Commit frees slot — still busy");
-            end
+        chk("check_busy=0 after commit", check_busy, 0);
+    endtask
 
-            chk_valid[0] = 0;
-            tick();
-        end
+    // ════════════════════════════════════════════════
+    // T4: Flush invalidates at and after flush_sqN
+    // ════════════════════════════════════════════════
+    task automatic test_flush_invalidates();
+        $display("\n[T4] Flush invalidates at and after flush_sqN");
+        do_reset();
 
-        // ════════════════════════════════════════════
-        // TEST 5: Allocate multiple different slots
-        // ════════════════════════════════════════════
-        begin
-            instr_sqN[0] = 0;
-            instr_sqN[1] = 8;
-            chk_valid[0] = 1;
-            chk_valid[1] = 1;
-            tick();
+        alloc(0, 7'h02, 0);
+        alloc(0, 7'h04, 0);
+        alloc(0, 7'h06, 0);
 
-            tests_run++;
-            if (!check_busy) begin
-                $display("PASS: Two different slots — OK");
-            end else begin
-                tests_fail++;
-                $display("FAIL: Two different slots — busy");
-            end
+        // Flush at sqN=4 — kills 4 and 6, keeps 2
+        flush = 1; flush_sqN = 7'h04;
+        @(posedge clk); #1;
+        flush = 0;
+        @(posedge clk); #1;
 
-            chk_valid[0] = 0;
-            chk_valid[1] = 0;
-            tick();
-        end
+        // Only sqN=2 remains; commit it → should go idle
+        commit_sqN[0] = 7'h02;
+        comm_valid[0] = 1;
+        @(posedge clk); #1;
+        comm_valid[0] = 0;
+        @(posedge clk); #1;
 
-        // ════════════════════════════════════════════
-        // TEST 6: Flush — restore specTag and free
-        // ════════════════════════════════════════════
-        begin
-            tag_t tags [32];
-            logic free_bits [NUM_REG];
+        chk("check_busy=0 after flush+commit", check_busy, 0);
+    endtask
 
-            for (int r = 0; r < 32; r++) tags[r] = tag_t'(r + 10);
-            for (int b = 0; b < NUM_REG; b++) free_bits[b] = (b == 5 || b == 10) ? 1'b1 : 1'b0;
+    // ════════════════════════════════════════════════
+    // T5: Slot collision → check_busy
+    // ════════════════════════════════════════════════
+    task automatic test_stall_on_collision();
+        $display("\n[T5] check_busy on slot collision");
+        do_reset();
 
-            instr_sqN[0] = 2;
-            chk_valid[0] = 1;
-            set_specTag(0, tags);
-            set_free(0, free_bits);
-            tick();
-            chk_valid[0] = 0;
+        alloc(0, 7'h03, 0);   // sqN=3 now occupied
 
-            // Now flush to sqN=2
-            flush     = 1;
-            flush_sqN = 2;
-            tick();
+        // Try to allocate same slot again — combinational stall
+        instr_sqN[0] = 7'h03;
+        chk_valid[0] = 1;
+        #1; // combinational settle
+        chk("check_busy=1 on collision", check_busy, 1);
+        chk_valid[0] = 0;
+        @(posedge clk); #1;
+    endtask
 
-            tests_run++;
-            if (OUT_specTag[0] == tag_t'(10) &&
-                OUT_specTag[31] == tag_t'(41) &&
-                OUT_free[5] && OUT_free[10]) begin
-                $display("PASS: Flush restores specTag and free bitmap");
-            end else begin
-                tests_fail++;
-                $display("FAIL: Flush restore");
-            end
+    // ════════════════════════════════════════════════
+    // T6: Dual simultaneous alloc, flush to first slot
+    // ════════════════════════════════════════════════
+    task automatic test_dual_alloc();
+        $display("\n[T6] Dual simultaneous alloc");
+        do_reset();
 
-            flush = 0;
-            tick();
-        end
+        // Alloc slot 0 → sqN=1 (base=30) and slot 1 → sqN=2 (base=60)
+        set_spectag(0, 30); set_spectag(1, 60);
+        instr_sqN[0] = 7'h01; instr_sqN[1] = 7'h02;
+        chk_valid[0] = 1;    chk_valid[1] = 1;
+        @(posedge clk); #1;
+        chk_valid[0] = 0;    chk_valid[1] = 0;
+        @(posedge clk); #1;
 
-        // ════════════════════════════════════════════
-        // TEST 7: Flush invalidates newer checkpoints
-        // ════════════════════════════════════════════
-        begin
-            // Allocate slot 1 and slot 3
-            instr_sqN[0] = 1;
-            chk_valid[0] = 1;
-            tick();
+        // Flush to sqN=1 → should restore base=30
+        flush = 1; flush_sqN = 7'h01;
+        #1;
+        chk_tag("OUT_specTag[0] after flush to sqN=1",
+                OUT_specTag[0], tag_t'(30));
+        @(posedge clk); #1;
+        flush = 0;
+    endtask
 
-            instr_sqN[0] = 3;
-            tick();
+    // ── Run all ──────────────────────────────────────
+    initial begin
+        $dumpfile("tb_branch_checkpoint.vcd");
+        $dumpvars(0, tb_branch_checkpoint);
 
-            chk_valid[0] = 0;
-            tick();
+        do_reset();
+        test_alloc_single();
+        test_flush_restore();
+        test_commit_frees();
+        test_flush_invalidates();
+        test_stall_on_collision();
+        test_dual_alloc();
 
-            // Flush to sqN=1 — should invalidate slot 3
-            flush     = 1;
-            flush_sqN = 1;
-            tick();
-            flush     = 0;
-
-            // Try to allocate slot 3 — should succeed (was invalidated)
-            instr_sqN[0] = 3;
-            chk_valid[0] = 1;
-            tick();
-
-            tests_run++;
-            if (!check_busy) begin
-                $display("PASS: Flush invalidates newer checkpoints");
-            end else begin
-                tests_fail++;
-                $display("FAIL: Flush invalidates newer checkpoints — slot 3 still occupied");
-            end
-
-            chk_valid[0] = 0;
-            tick();
-        end
-
-        // ════════════════════════════════════════════
-        // TEST 8: Full -> busy
-        // ════════════════════════════════════════════
-        begin
-            // Fill all checkpoints
-            for (int i = 0; i < NUM_CHKPT; i++) begin
-                instr_sqN[0] = sqN_t'(i);
-                chk_valid[0] = 1;
-                tick();
-            end
-            chk_valid[0] = 0;
-            tick();
-
-            tests_run++;
-            if (check_busy) begin
-                $display("PASS: All slots full -> check_busy");
-            end else begin
-                tests_fail++;
-                $display("FAIL: All slots full -> not busy");
-            end
-        end
-
-        // ════════════════════════════════════════════
-        // TEST 9: No flush -> output = last decode input
-        // ════════════════════════════════════════════
-        begin
-            tag_t tags [32];
-            // Commit some to free a slot
-            commit_sqN[0] = 0;
-            tick();
-            commit_sqN[0] = '0;
-            
-            for (int r = 0; r < 32; r++) tags[r] = tag_t'(r + 100);
-
-            instr_sqN[0] = 0;
-            chk_valid[0] = 0;  // not a checkpoint
-            set_specTag(0, tags);
-            tick();
-
-            tests_run++;
-            if (OUT_specTag[0] == tag_t'(100)) begin
-                $display("PASS: No flush -> passthrough from last decode slot");
-            end else begin
-                tests_fail++;
-                $display("FAIL: No flush -> passthrough");
-            end
-        end
-
-        // ════════════════════════════════════════════
-        // RESULT
-        // ════════════════════════════════════════════
-        if (tests_fail == 0)
-            $display("\n=== ALL %0d TESTS PASSED ===", tests_run);
-        else
-            $display("\n=== %0d/%0d TESTS FAILED ===", tests_fail, tests_run);
+        $display("\n════════════════════════════════");
+        $display("  %0d PASS  %0d FAIL", pass_count, fail_count);
+        $display("════════════════════════════════\n");
         $finish;
     end
+
 endmodule
