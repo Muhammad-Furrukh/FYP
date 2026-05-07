@@ -60,7 +60,6 @@ module core
     );
 
     logic                        ROB_busy;
-    logic                        dispatch_busy;
     logic                        chkpt_busy;
     tag_t                        restore_specTag [32];
     logic                        restore_free    [2**REG_ADDR_WIDTH];
@@ -103,7 +102,7 @@ module core
         .clk(clk),
         .rst(rst),
         .ROB_busy(ROB_busy),
-        .dispatch_busy(dispatch_busy),
+        .dispatch_busy(dispatch_unit_busy),
         .flush(flush), .OUT_busy(rename_busy),
         .chkpt_busy(chkpt_busy),
         .IN_specTag(restore_specTag),

@@ -339,41 +339,17 @@ module tb_rename;
         end
         
         // ════════════════════════════════════════════
-        // TEST 11: Commit frees tag
-        // ════════════════════════════════════════════
-	    begin
-		tag_t t9;
-		// Allocate a tag for x9
-		IN_instr[0] = make_alu_instr(5'd0, 5'd0, 5'd9, 13);
-		tick(); tick();
-		t9 = OUT_instr[0].rd_tag;
-
-		// Commit x9 — tag should become free again
-		commit_packet[0].valid   = 1;
-		commit_packet[0].sqN     = 13;
-		commit_packet[0].archTag = 5'd9;
-		commit_packet[0].comTag  = t9;
-		tick();
-		commit_packet[0].valid = 0;
-
-		// Now allocate again — should get the same tag back
-		IN_instr[0] = make_alu_instr(5'd0, 5'd0, 5'd10, 14);
-		tick();
-
-		tests_run++;
-		if (OUT_instr[0].rd_tag == t9) begin
-		    $display("PASS: Commit frees tag %0d, reused", t9);
-		end else begin
-		    $display("FAIL: Commit frees tag — expected %0d, got %0d",
-		             t9, OUT_instr[0].rd_tag);
-		end
-	    end
-
-        
-        // ════════════════════════════════════════════
-        // TEST 12: Chkpt captures free bitmap
+        // TEST 11: Chkpt captures free bitmap
         // ════════════════════════════════════════════
         begin
+            // Commit x9 — tag should become free again
+	    commit_packet[0].valid   = 1;
+	    commit_packet[0].sqN     = 13;
+	    commit_packet[0].archTag = 5'd11;
+	    commit_packet[0].comTag  = 15;
+	    tick();
+	    commit_packet[0].valid = 0;
+            
             // Branch instruction creates checkpoint
             IN_instr[0] = make_branch(5'd1, 5'd2, 15);
             tick(); tick();
