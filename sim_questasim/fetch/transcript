@@ -1271,3 +1271,5 @@ run
 #    Time: 275 ns  Iteration: 1  Instance: /fetch_tb
 # 1
 # Break in Module fetch_tb at /home/muhammad/Documents/UET/FYP/sim_questasim/fetch/fetch_tb.sv line 130
+# End time: 11:44:42 on May 05,2026, Elapsed time: 15:33:49
+# Errors: 0, Warnings: 1
