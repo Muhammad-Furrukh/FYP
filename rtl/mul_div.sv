@@ -117,25 +117,27 @@ module MUL_DIV (
     // ── MUL Pipeline sequential logic ────────────────
     always_ff @(posedge clk or posedge rst) begin
         if (rst) begin
-            for (int s = 0; s < 3; s++) begin
-        	mul_pipe[s].valid  	<= 0;
-		mul_pipe[s].sqN    	<= 0;
-		mul_pipe[s].tag    	<= 0;
-		mul_pipe[s].oper   	<= 0;
-		mul_pipe[s].a_lo   	<= 0;
-		mul_pipe[s].a_hi   	<= 0;
-		mul_pipe[s].b_lo   	<= 0;
-		mul_pipe[s].b_hi   	<= 0;
-		mul_pipe[s].pp_ll  	<= 0;
-		mul_pipe[s].pp_lh  	<= 0;
-		mul_pipe[s].pp_hl  	<= 0;
-		mul_pipe[s].pp_hh  	<= 0;
-		mul_pipe[s].neg_result 	<= 0;
-            end
-            mul_cdb_valid  <= 1'b0;
-            mul_cdb_sqN    <= '0;
-            mul_cdb_tag    <= '0;
-            mul_cdb_result <= 32'd0;
+            if (rst) begin
+	    for (int s = 0; s < 3; s++) begin
+		mul_pipe[s].valid      <= '0;
+		mul_pipe[s].sqN        <= '0;
+		mul_pipe[s].tag        <= '0;
+		mul_pipe[s].oper       <= MUL_INVALID;
+		mul_pipe[s].a_lo       <= '0;
+		mul_pipe[s].a_hi       <= '0;
+		mul_pipe[s].b_lo       <= '0;
+		mul_pipe[s].b_hi       <= '0;
+		mul_pipe[s].pp_ll      <= '0;
+		mul_pipe[s].pp_lh      <= '0;
+		mul_pipe[s].pp_hl      <= '0;
+		mul_pipe[s].pp_hh      <= '0;
+		mul_pipe[s].neg_result <= '0;
+	    end
+	    mul_cdb_valid  <= 1'b0;
+	    mul_cdb_sqN    <= '0;
+	    mul_cdb_tag    <= '0;
+	    mul_cdb_result <= 32'd0;
+	end
         end else begin
             // ── Default: clear MUL CDB valid ──────
             mul_cdb_valid <= 1'b0;

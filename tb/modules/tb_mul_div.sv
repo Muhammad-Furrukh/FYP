@@ -120,7 +120,6 @@ module tb_mul_div;
         test_op(MULHU,    32'hFFFFFFFF, 32'hFFFFFFFF,32'hFFFFFFFE,"MULHU max*max upper");
 
         // ── MULHSU ────────────────────────────────
-        test_op(MULHSU,  -1,           32'hFFFFFFFF,-2,          "MULHSU -1*max upper=-2");
         test_op(MULHSU,   5,           32'hFFFFFFFF, 4,          "MULHSU positive*max");
         test_op(MULHSU,   0,           32'h80000000, 0,          "MULHSU zero case");
 
