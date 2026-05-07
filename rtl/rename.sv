@@ -86,8 +86,6 @@ module rename
         for (int i = 0; i < DECODE_WIDTH; i++)
             req_valid[i] = IN_instr[i].valid && (IN_instr[i].rd != 5'd0);
 
-    assign masked[0] = ftb;
-
     // Priority encoder as a function — fully combinational, no latch risk
     function automatic logic [REG_ADDR_WIDTH-1:0] onehot_to_bin(
         input logic [NUM_REG-1:0] oh
@@ -97,13 +95,14 @@ module rename
             if (oh[b]) onehot_to_bin = REG_ADDR_WIDTH'(b);
     endfunction
 
-
-    for (genvar i = 0; i < DECODE_WIDTH; i++) begin : g_alloc
-        assign onehot[i] = req_valid[i] ? (masked[i] & (~masked[i] + 1'b1)) : '0;
-        assign chosen[i] = onehot_to_bin(onehot[i]);  // pure assign, no always_comb
-        assign masked[i+1] = masked[i] & ~onehot[i];
+    always_comb begin
+	masked[0] = ftb;
+	for (int i = 0; i < DECODE_WIDTH; i++) begin
+	     onehot[i] = req_valid[i] ? (masked[i] & (~masked[i] + 1'b1)) : '0;
+	     chosen[i] = onehot_to_bin(onehot[i]);
+	     masked[i+1] = masked[i] & ~onehot[i];
+	end
     end
-
 
     // ════════════════════════════════════════════════════
     // 4. Stall
@@ -111,8 +110,8 @@ module rename
     //    tags, or a checkpoint is needed but slots are full.
     // ════════════════════════════════════════════════════
 
-    logic [$clog2(NUM_REG+1)-1:0]      free_count 	[NUM_REG]; // Gonna take a lot of resources, i fear.
-    logic [$clog2(DECODE_WIDTH+1)-1:0] req_count 	[DECODE_WIDTH];
+    logic [$clog2(NUM_REG+1)-1:0]      free_count 	[NUM_REG]; 
+    logic [$clog2(NUM_REG+1)-1:0]      req_count 	[DECODE_WIDTH];
     logic                              chkpt_need;
 
     always_comb begin
@@ -132,7 +131,7 @@ module rename
 
     logic stall;
     assign stall    = ROB_busy || dispatch_busy
-                      || (free_count[NUM_REG-1] < NUM_REG'(req_count[DECODE_WIDTH-1]))
+                      || (free_count[NUM_REG-1] < req_count[DECODE_WIDTH-1])
                       || (chkpt_busy && chkpt_need);
     assign OUT_busy = stall;
 
@@ -180,7 +179,7 @@ module rename
 
     // ── 6b. Renamed instructions (registered) ────────────
     // Cleared on rst/flush. Held on stall. Written otherwise.
-    always_ff @(posedge clk) begin
+    always_ff @(posedge clk or posedge rst) begin
         if (rst || flush) begin
             for (int i = 0; i < DECODE_WIDTH; i++) begin
                 OUT_instr[i] <= '0;
@@ -214,7 +213,7 @@ module rename
     // registered so downstream (branch predictor / ROB) sees
     // stable signals aligned with the renamed instruction.
     // Cleared on rst/flush. Held on stall. Written otherwise.
-    always_ff @(posedge clk) begin
+    always_ff @(posedge clk or posedge rst) begin
         if (rst || flush) begin
             for (int i = 0; i < DECODE_WIDTH; i++) begin
                 chkpt[i]     <= 1'b0;
@@ -263,7 +262,7 @@ module rename
     end
 
     // ── 7a. tag_buffer ────────────────────────────────────
-    always_ff @(posedge clk) begin
+    always_ff @(posedge clk or posedge rst) begin
         if (rst) begin
             for (int i = 0; i < 32; i++)
                 tag_buffer[i] <= '{freeComm: 1'b0, ready: 1'b0, free: 1'b0};
@@ -306,7 +305,7 @@ module rename
     end
 
     // ── 7b. rename_table ──────────────────────────────────
-    always_ff @(posedge clk) begin
+    always_ff @(posedge clk or posedge rst) begin
         if (rst) begin
             for (int r = 0; r < 32; r++) begin
                 rename_table[r].specTag <= REG_ADDR_WIDTH'(r);

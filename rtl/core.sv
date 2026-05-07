@@ -128,6 +128,7 @@ module core
     logic                    dispatch_unit_busy;
     logic                    lsu_busy;
     sqN_t                    flush_sqN;
+    logic		     comm_valid		    [COMMIT_WIDTH];	
     sqN_t                    commit_sqN             [COMMIT_WIDTH];
     alu_dispatch_instr_t     alu_dispatch_instr     [NUM_ALU_FU];
     mul_div_dispatch_instr_t mul_div_dispatch_instr [NUM_MUL_DIV_FU];
@@ -136,7 +137,8 @@ module core
 
     always_comb begin
         for (int i = 0; i < COMMIT_WIDTH; i++) begin
-            commit_sqN[i] = commit_packet[i].sqN;
+            commit_sqN[i]   = commit_packet[i].sqN;
+            comm_valid[i]   = commit_packet[i].valid; 
         end
 
         for (int i = 0; i < ISSUE_WIDTH; i++) begin
@@ -159,6 +161,7 @@ module core
         .LSU_busy(lsu_busy),
         .flush(flush),
         .flush_sqN(flush_sqN),
+        .comm_valid(comm_valid),
         .commit_sqN(commit_sqN),
         .instr_sqN(chkpt_sqN),
         .IN_instr(rename_instr),
@@ -216,11 +219,13 @@ module core
 
     flush_controller flush_controller
     (
-        .br_taken(br_taken),
-        .sqN(br_jalr_sqN),
-        .jump_type(jump_type),
-        .flush(flush),
-        .flush_sqN(flush_sqN)
+	.clk(clk),          // add this
+	.rst(rst),          // add this
+	.br_taken(br_taken),
+	.sqN(br_jalr_sqN),
+	.jump_type(jump_type),
+	.flush(flush),
+	.flush_sqN(flush_sqN)
     );
 
     agu_out_t  agu_out       [NUM_AGU_FU];
@@ -269,13 +274,20 @@ module core
     tag_t              rs1_addr [ISSUE_WIDTH];
     tag_t              rs2_addr [ISSUE_WIDTH];
 
+    // Block 1: addr — purely driven by RF_raddr (output of issue)
     always_comb begin
-        for (int i = 0; i < ISSUE_WIDTH; i++) begin
-            rs1_addr[i]        = RF_raddr[i][0];
-            rs2_addr[i]        = RF_raddr[i][1];
-            RF_read_data[i][0] = rs1_data[i];
-            RF_read_data[i][1] = rs2_data[i];
-        end
+	    for (int i = 0; i < ISSUE_WIDTH; i++) begin
+		rs1_addr[i] = RF_raddr[i][0];
+		rs2_addr[i] = RF_raddr[i][1];
+	    end 
+    end
+
+    // Block 2: data — purely driven by register_file outputs
+    always_comb begin
+	    for (int i = 0; i < ISSUE_WIDTH; i++) begin
+		RF_read_data[i][0] = rs1_data[i];
+		RF_read_data[i][1] = rs2_data[i];
+	    end
     end
 
     register_file register_file

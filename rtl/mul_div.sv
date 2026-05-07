@@ -11,288 +11,403 @@ module MUL_DIV (
 );
 
     // ════════════════════════════════════════════════════
-    // 0. Types
+    // 0. Types and Parameters
     // ════════════════════════════════════════════════════
 
-    typedef enum logic [2:0] {
-        IDLE,
-        MUL_EXEC,   // waiting for DSP pipeline
-        DIV_EXEC,   // iterative division
-        COMPLETE    // result ready, waiting for CDB
-    } state_t;
+    typedef enum logic [1:0] {
+        DIV_IDLE,
+        DIV_EXEC,
+        DIV_COMPLETE
+    } div_state_t;
 
-
-    // ════════════════════════════════════════════════════
-    // 1. State
-    // ════════════════════════════════════════════════════
-
-    state_t          state;
-    issue_instr_t    instr_r;       // latched instruction
-    logic [31:0]     result;
-
-    // ── MUL pipeline registers ───────────────────────────
-    // 3-stage DSP pipeline: input → stage1 → stage2 → result
-    logic [63:0]     mul_pipe [3];
-    logic [2:0]      mul_pipe_valid;
-    sqN_t            mul_pipe_sqN  [3];
-    tag_t            mul_pipe_tag  [3];
-    mul_div_oper_t   mul_pipe_oper [3];
-
-    // ── DIV state ────────────────────────────────────────
-    logic [31:0]     div_dividend;  // unsigned working dividend
-    logic [31:0]     div_divisor;   // unsigned divisor
-    logic [31:0]     div_quotient;
-    logic [31:0]     div_remainder;
-    logic [63:0]     div_partial;   // {remainder, dividend} shift register
-    logic [5:0]      div_count;     // counts 0..31
-    logic            div_quot_sign; // result sign correction
-    logic            div_rem_sign;
-    logic            div_by_zero;
-
+    typedef struct packed {
+        logic          valid;
+        sqN_t          sqN;
+        tag_t          tag;
+        mul_div_oper_t oper;
+        logic [15:0]   a_lo, a_hi;
+        logic [15:0]   b_lo, b_hi;
+        logic [31:0]   pp_ll;
+        logic [31:0]   pp_lh;
+        logic [31:0]   pp_hl;
+        logic [31:0]   pp_hh;
+        logic          neg_result;
+    } mul_pipe_t;
 
     // ════════════════════════════════════════════════════
-    // 2. Sign helpers
+    // 1. State Declarations
+    // ════════════════════════════════════════════════════
+
+    // ── MUL Pipeline ───────────────────────────────────
+    mul_pipe_t    mul_pipe [3];
+    logic         mul_stall;
+    
+    // ── MUL CDB Output Register ───────────────────────
+    logic         mul_cdb_valid;
+    sqN_t         mul_cdb_sqN;
+    tag_t         mul_cdb_tag;
+    logic [31:0]  mul_cdb_result;
+    
+    // ── DIV State ────────────────────────────────────
+    div_state_t   div_state;
+    issue_instr_t div_instr_r;
+    logic [63:0]  div_partial;
+    logic [31:0]  div_divisor;
+    logic [5:0]   div_count;
+    logic         div_quot_sign;
+    logic         div_rem_sign;
+    logic         div_by_zero;
+    
+    // ── DIV CDB Output Register ─────────────────────
+    logic         div_cdb_valid;
+    sqN_t         div_cdb_sqN;
+    tag_t         div_cdb_tag;
+    logic [31:0]  div_cdb_result;
+
+    // ════════════════════════════════════════════════════
+    // 2. Helper Functions
     // ════════════════════════════════════════════════════
 
     function automatic logic [31:0] abs32(input logic [31:0] x);
         abs32 = x[31] ? (~x + 32'd1) : x;
     endfunction
 
+    function automatic logic is_squashed(input sqN_t fsqn, input sqN_t isqn);
+        logic [SQN_W:0] diff;
+        diff = {1'b0, fsqn} - {1'b0, isqn};
+        is_squashed = (diff[SQN_W-1:0] < ROB_SIZE) && !diff[SQN_W];
+    endfunction
 
     // ════════════════════════════════════════════════════
-    // 3. MUL: 3-stage DSP pipeline
-    //
-    //    Stage 0→1: sign-extend / zero-extend operands
-    //    Stage 1→2: 32x32 multiply (DSP48 inferred)
-    //    Stage 2→3: select upper/lower half
-    //
-    //    (* use_dsp = "yes" *) hints Vivado to use DSP48.
-    //    All stages shift in parallel — fully pipelined,
-    //    but we only accept one instruction at a time
-    //    (OUT_busy held) so no structural hazard.
+    // 3. MUL Pipeline Datapath
+    //    - 3-stage pipeline: stages 0, 1, 2
+    //    - Stage 1 produces MUL result (lower 32 bits)
+    //    - Stage 2 produces MULH/MULHU/MULHSU result (upper 32 bits)
+    //    - All stages shift every cycle unless stalled
+    //    - Stall occurs only on CDB conflict with DIV
     // ════════════════════════════════════════════════════
 
-    // Sign-extended operands for multiply
-    logic signed [32:0] mul_op1_s, mul_op2_s; // 33-bit signed
-    logic        [32:0] mul_op1_u, mul_op2_u; // 33-bit unsigned (zero-ext)
-
+    // ── Combinational result computation ──────────────
+    logic [31:0] mul_stage1_result;
+    logic [31:0] mul_stage2_result;
+    
     always_comb begin
-        mul_op1_s = {instr_r.operand1[31], instr_r.operand1}; // sign-extend
-        mul_op2_s = {instr_r.operand2[31], instr_r.operand2};
-        mul_op1_u = {1'b0, instr_r.operand1};                 // zero-extend
-        mul_op2_u = {1'b0, instr_r.operand2};
+    	logic [63:0] full;
+        logic [31:0] upper;
+        logic [63:0] partial;
+    
+        // Stage 1: MUL result (lower 32 bits)        
+        partial = 64'(mul_pipe[1].pp_ll) +
+                 (64'(mul_pipe[1].pp_lh) << 16) +
+                 (64'(mul_pipe[1].pp_hl) << 16);
+        mul_stage1_result = partial[31:0];
+        
+        // Stage 2: MULH result (upper 32 bits)
+        
+        full = 64'(mul_pipe[2].pp_ll) +
+              (64'(mul_pipe[2].pp_lh) << 16) +
+              (64'(mul_pipe[2].pp_hl) << 16) +
+              (64'(mul_pipe[2].pp_hh) << 32);
+              
+        upper = full[63:32];
+        
+        mul_stage2_result = mul_pipe[2].neg_result ? (~upper + 32'd1) : upper;
     end
 
-    // ── DSP multiply ───────────
-    (* use_dsp = "yes" *)
-    logic signed [65:0] mul_result_ss; // signed × signed
-    (* use_dsp = "yes" *)
-    logic        [65:0] mul_result_uu; // unsigned × unsigned
-    (* use_dsp = "yes" *)
-    logic signed [65:0] mul_result_su; // signed × unsigned (MULHSU)
-
-    always_ff @(posedge clk) begin
-        // Stage 1: register inputs to DSP
-        mul_result_ss <= $signed(mul_op1_s) * $signed(mul_op2_s);
-        mul_result_uu <= mul_op1_u * mul_op2_u;
-        mul_result_su <= $signed(mul_op1_s) * $signed(mul_op2_u);
-
-        // Shift valid/tag/oper through pipeline
-        mul_pipe_valid <= {mul_pipe_valid[1:0],
-                           (state == IDLE && IN_instr.valid &&
-                            IN_instr.oper.mul_div_oper inside
-                            {MUL, MULH, MULHU, MULHSU})};
-        for (int s = 1; s < 3; s++) begin
-            mul_pipe_sqN[s]  <= mul_pipe_sqN[s-1];
-            mul_pipe_tag[s]  <= mul_pipe_tag[s-1];
-            mul_pipe_oper[s] <= mul_pipe_oper[s-1];
-        end
-        mul_pipe_sqN[0]  <= IN_instr.sqN;
-        mul_pipe_tag[0]  <= IN_instr.rd_tag;
-        mul_pipe_oper[0] <= IN_instr.oper.mul_div_oper;
-    end
-
-
-    // ════════════════════════════════════════════════════
-    // 4. Main FSM
-    // ════════════════════════════════════════════════════
-
-    always_ff @(posedge clk) begin
+    always_ff @(posedge clk or posedge rst) begin
         if (rst) begin
-            state           <= IDLE;
-            instr_r         <= '{default: '0};
-            result          <= '0;
-            div_count       <= '0;
-            div_partial     <= '0;
-            div_divisor     <= '0;
-            div_quot_sign   <= '0;
-            div_rem_sign    <= '0;
-            div_by_zero     <= '0;
-            OUT_cdb         <= '{default: '0};
-
+            if (rst) begin
+	    for (int s = 0; s < 3; s++) begin
+		mul_pipe[s].valid      <= '0;
+		mul_pipe[s].sqN        <= '0;
+		mul_pipe[s].tag        <= '0;
+		mul_pipe[s].oper       <= MUL_INVALID;
+		mul_pipe[s].a_lo       <= '0;
+		mul_pipe[s].a_hi       <= '0;
+		mul_pipe[s].b_lo       <= '0;
+		mul_pipe[s].b_hi       <= '0;
+		mul_pipe[s].pp_ll      <= '0;
+		mul_pipe[s].pp_lh      <= '0;
+		mul_pipe[s].pp_hl      <= '0;
+		mul_pipe[s].pp_hh      <= '0;
+		mul_pipe[s].neg_result <= '0;
+	    end
+	    mul_cdb_valid  <= 1'b0;
+	    mul_cdb_sqN    <= '0;
+	    mul_cdb_tag    <= '0;
+	    mul_cdb_result <= 32'd0;
+	end
         end else begin
-
-            // ── Flush ────────────────────────────────────
-            // If in-flight instruction is squashed, abort.
-            if (flush && state != IDLE
-                && (flush_sqN - instr_r.sqN) & SQN_MASK < ROB_SIZE) begin
-                state   <= IDLE;
-                OUT_cdb <= '{default: '0};
-            end
-
-            // ── MUL pipeline flush ────────────────────────
-            // Also need to invalidate MUL pipeline stages
+            // ── Default: clear MUL CDB valid ──────
+            mul_cdb_valid <= 1'b0;
+            
+            // ── Flush handling ─────────────────────
             if (flush) begin
                 for (int s = 0; s < 3; s++) begin
-                    if (mul_pipe_valid[s] && (flush_sqN - mul_pipe_sqN[s]) & SQN_MASK < ROB_SIZE)
-                        mul_pipe_valid[s] <= 1'b0;
+                    if (mul_pipe[s].valid && 
+                        is_squashed(flush_sqN, mul_pipe[s].sqN)) begin
+                        mul_pipe[s].valid <= 1'b0;
+                    end
                 end
             end
+            
+            // ── Pipeline control ────────────────────
+            if (!mul_stall) begin
+                // Pipeline advances normally
+                
+                // Stage 2 → CDB (MULH group)
+                if (mul_pipe[2].valid && 
+                    mul_pipe[2].oper inside {MULH, MULHU, MULHSU}) begin
+                    mul_cdb_valid  <= 1'b1;
+                    mul_cdb_sqN    <= mul_pipe[2].sqN;
+                    mul_cdb_tag    <= mul_pipe[2].tag;
+                    mul_cdb_result <= mul_stage2_result;
+                    mul_pipe[2].valid <= 1'b0;
+                end
+                
+                // Stage 2 → 3 (shift out)
+                // Stage 2 receives from Stage 1
+                mul_pipe[2] <= mul_pipe[1];
+                if (mul_pipe[1].valid && 
+                    mul_pipe[1].oper inside {MULH, MULHU, MULHSU}) begin
+                    mul_pipe[2].pp_hh <= 32'(mul_pipe[1].a_hi) * 
+                                        32'(mul_pipe[1].b_hi);
+                end
+                
+                // Stage 1 → CDB (MUL)
+                if (mul_pipe[1].valid && mul_pipe[1].oper == MUL) begin
+                    mul_cdb_valid  <= 1'b1;
+                    mul_cdb_sqN    <= mul_pipe[1].sqN;
+                    mul_cdb_tag    <= mul_pipe[1].tag;
+                    mul_cdb_result <= mul_stage1_result;
+                    mul_pipe[1].valid <= 1'b0;
+                end
+                
+                // Stage 1 → 2 (shift)
+                // Already handled by mul_pipe[2] <= mul_pipe[1] above
+                
+                // Stage 0 → 1
+                mul_pipe[1] <= mul_pipe[0];
+                if (mul_pipe[0].valid) begin
+                    mul_pipe[1].pp_lh <= 32'(mul_pipe[0].a_lo) * 
+                                        32'(mul_pipe[0].b_hi);
+                    mul_pipe[1].pp_hl <= 32'(mul_pipe[0].a_hi) * 
+                                        32'(mul_pipe[0].b_lo);
+                end
+                
+                // Stage 0: Accept new MUL instruction
+                if (IN_instr.valid && 
+                    IN_instr.oper.mul_div_oper inside {MUL, MULH, MULHU, MULHSU}) begin
+                    logic [31:0] op1, op2;
+                    
+                    unique case (IN_instr.oper.mul_div_oper)
+                        MULH: begin
+                            op1 = abs32(IN_instr.operand1);
+                            op2 = abs32(IN_instr.operand2);
+                        end
+                        MULHSU: begin
+                            op1 = abs32(IN_instr.operand1);
+                            op2 = IN_instr.operand2;
+                        end
+                        default: begin
+                            op1 = IN_instr.operand1;
+                            op2 = IN_instr.operand2;
+                        end
+                    endcase
+                    
+                    mul_pipe[0].valid  <= 1'b1;
+                    mul_pipe[0].sqN    <= IN_instr.sqN;
+                    mul_pipe[0].tag    <= IN_instr.rd_tag;
+                    mul_pipe[0].oper   <= IN_instr.oper.mul_div_oper;
+                    mul_pipe[0].a_lo   <= op1[15:0];
+                    mul_pipe[0].a_hi   <= op1[31:16];
+                    mul_pipe[0].b_lo   <= op2[15:0];
+                    mul_pipe[0].b_hi   <= op2[31:16];
+                    mul_pipe[0].pp_ll  <= 32'(op1[15:0]) * 32'(op2[15:0]);
+                    mul_pipe[0].pp_lh  <= 32'd0;
+                    mul_pipe[0].pp_hl  <= 32'd0;
+                    mul_pipe[0].pp_hh  <= 32'd0;
+                    mul_pipe[0].neg_result <= 
+                        (IN_instr.oper.mul_div_oper == MULH) ? 
+                        (IN_instr.operand1[31] ^ IN_instr.operand2[31]) :
+                        (IN_instr.oper.mul_div_oper == MULHSU) ? 
+                        IN_instr.operand1[31] : 1'b0;
+                end else begin
+                    mul_pipe[0].valid <= 1'b0;
+                end
+            end else begin
+                // Pipeline stalled - freeze all stages
+                // Do not accept new instructions
+                // Do not clear valid bits
+                // Do not shift stages
+            end
+        end
+    end
 
-            else begin
-                case (state)
+    // ════════════════════════════════════════════════════
+    // 4. DIV FSM - Restoring Division
+    //    - 32 iterations, one per cycle
+    //    - Produces quotient and remainder
+    //    - CDB output registered in DIV_COMPLETE state
+    // ════════════════════════════════════════════════════
 
-                    // ── IDLE ─────────────────────────────
-                    IDLE: begin
-                        OUT_cdb <= '{default: '0};
-
-                        if (IN_instr.valid) begin
-                            instr_r <= IN_instr;
-
-                            case (IN_instr.oper.mul_div_oper)
-                                // ── MUL: kick off DSP pipeline ──
-                                MUL, MULH, MULHU, MULHSU: begin
-                                    state <= MUL_EXEC;
-                                end
-
-                                // ── DIV/REM: setup iterative ─────
-                                DIV, DIVU, REM, REMU: begin
-                                    begin
-                                        logic [31:0] op1, op2;
-                                        logic        s1, s2;
-                                        op1 = IN_instr.operand1;
-                                        op2 = IN_instr.operand2;
-
-                                        // Division by zero
-                                        div_by_zero <= (op2 == 32'd0);
-
-                                        // Signed: track sign and work with abs values
-                                        if (IN_instr.oper.mul_div_oper inside {DIV, REM}) begin
-                                            s1 = op1[31]; s2 = op2[31];
-                                            div_quot_sign <= s1 ^ s2;
-                                            div_rem_sign  <= s1;
-                                            div_dividend  <= abs32(op1);
-                                            div_divisor   <= abs32(op2);
-                                        end else begin
-                                            // DIVU, REMU: unsigned, no sign correction
-                                            div_quot_sign <= 1'b0;
-                                            div_rem_sign  <= 1'b0;
-                                            div_dividend  <= op1;
-                                            div_divisor   <= op2;
-                                        end
-                                    end
-
-                                    // Initialise shift register:
-                                    // {remainder=0, dividend} packed into 64 bits
-                                    div_partial <= {32'd0,
-                                                    IN_instr.operand1[31]
-                                                    ? abs32(IN_instr.operand1)
-                                                    : IN_instr.operand1};
-                                    div_count   <= 6'd0;
-                                    state       <= DIV_EXEC;
-                                end
-
-                                default: state <= IDLE;
-                            endcase
+    always_ff @(posedge clk or posedge rst) begin
+        if (rst) begin
+            div_state      <= DIV_IDLE;
+            div_instr_r    <= '{default: '0};
+            div_partial    <= 64'd0;
+            div_divisor    <= 32'd0;
+            div_count      <= 6'd0;
+            div_quot_sign  <= 1'b0;
+            div_rem_sign   <= 1'b0;
+            div_by_zero    <= 1'b0;
+            div_cdb_valid  <= 1'b0;
+            div_cdb_sqN    <= '0;
+            div_cdb_tag    <= '0;
+            div_cdb_result <= 32'd0;
+        end else begin
+            // ── Default: clear DIV CDB valid ─────
+            div_cdb_valid <= 1'b0;
+            
+            // ── Flush check ──────────────────────
+            if (flush && div_state != DIV_IDLE && 
+                is_squashed(flush_sqN, div_instr_r.sqN)) begin
+                div_state <= DIV_IDLE;
+            end else begin
+                case (div_state)
+                    DIV_IDLE: begin
+                        if (IN_instr.valid && 
+                            IN_instr.oper.mul_div_oper inside {DIV, DIVU, REM, REMU}) begin
+                            logic [31:0] op1, op2;
+                            logic        s1, s2;
+                            
+                            div_instr_r <= IN_instr;
+                            op1 = IN_instr.operand1;
+                            op2 = IN_instr.operand2;
+                            
+                            div_by_zero <= (op2 == 32'd0);
+                            
+                            if (IN_instr.oper.mul_div_oper inside {DIV, REM}) begin
+                                s1 = op1[31];
+                                s2 = op2[31];
+                                div_quot_sign <= s1 ^ s2;
+                                div_rem_sign  <= s1;
+                                div_divisor   <= abs32(op2);
+                                div_partial   <= {32'd0, abs32(op1)};
+                            end else begin
+                                div_quot_sign <= 1'b0;
+                                div_rem_sign  <= 1'b0;
+                                div_divisor   <= op2;
+                                div_partial   <= {32'd0, op1};
+                            end
+                            
+                            div_count <= 6'd0;
+                            div_state <= DIV_EXEC;
                         end
                     end
-
-                    // ── MUL_EXEC ─────────────────────────
-                    // Wait for the 3-stage DSP pipeline to flush.
-                    // mul_pipe_valid[2] goes high when result is ready.
-                    MUL_EXEC: begin
-                        if (mul_pipe_valid[2]) begin
-                            // Select result word based on operation
-                            case (mul_pipe_oper[2])
-                                MUL:    result <= mul_result_ss[31:0];
-                                MULH:   result <= mul_result_ss[63:32];
-                                MULHU:  result <= mul_result_uu[63:32];
-                                MULHSU: result <= mul_result_su[63:32];
-                                default:result <= '0;
-                            endcase
-                            state <= COMPLETE;
-                        end
-                    end
-
-                    // ── DIV_EXEC ─────────────────────────
-                    // Non-restoring division: each cycle shifts
-                    // div_partial left by 1, subtracts divisor
-                    // from upper 32 bits. If result ≥ 0, quotient
-                    // bit = 1 and keep subtracted value.
-                    // If result < 0, quotient bit = 0 and restore.
+                    
                     DIV_EXEC: begin
                         if (div_by_zero) begin
-                            // RISC-V spec: div by zero → quotient = -1, rem = dividend
-                            result <= (instr_r.oper.mul_div_oper inside {DIV, DIVU})
-                                      ? 32'hFFFFFFFF
-                                      : instr_r.operand1;
-                            state  <= COMPLETE;
-
+                            div_cdb_valid  <= 1'b1;
+                            div_cdb_sqN    <= div_instr_r.sqN;
+                            div_cdb_tag    <= div_instr_r.rd_tag;
+                            div_cdb_result <= (div_instr_r.oper.mul_div_oper inside {DIV, DIVU}) ?
+                                              32'hFFFFFFFF : div_instr_r.operand1;
+                            div_state <= DIV_IDLE;
                         end else if (div_count == 6'd32) begin
-                            // Division complete — apply sign correction
-                            begin
-                                logic [31:0] q, r;
-                                q = div_partial[31:0];   // quotient accumulated
-                                r = div_partial[63:32];  // remainder in upper half
-
-                                // Sign correction
-                                if (div_quot_sign) q = ~q + 32'd1;
-                                if (div_rem_sign)  r = ~r + 32'd1;
-
-                                result <= (instr_r.oper.mul_div_oper inside {DIV, DIVU})
-                                          ? q : r;
-                            end
-                            state <= COMPLETE;
-
+                            logic [31:0] q, r;
+                            q = div_partial[31:0];
+                            r = div_partial[63:32];
+                            
+                            if (div_quot_sign) q = ~q + 32'd1;
+                            if (div_rem_sign)  r = ~r + 32'd1;
+                            
+                            div_cdb_valid  <= 1'b1;
+                            div_cdb_sqN    <= div_instr_r.sqN;
+                            div_cdb_tag    <= div_instr_r.rd_tag;
+                            div_cdb_result <= (div_instr_r.oper.mul_div_oper inside {DIV, DIVU}) ?
+                                              q : r;
+                            div_state <= DIV_IDLE;
                         end else begin
-                            // One iteration of restoring division
-                            begin
-                                logic [32:0] partial_high;
-                                logic [32:0] sub_result;
-
-                                // Shift left and trial subtract
-                                partial_high = {1'b0, div_partial[62:31]}; // shift left (Check it if lsb should be 0 & div_partial[62:32]?).
-                                sub_result   = partial_high - {1'b0, div_divisor};
-
-                                if (sub_result[32]) begin
-                                    // Subtraction went negative → restore, quotient bit = 0
-                                    div_partial <= {partial_high[31:0],
-                                                    div_partial[30:0], 1'b0};
-                                end else begin
-                                    // Subtraction positive → keep, quotient bit = 1
-                                    div_partial <= {sub_result[31:0],
-                                                    div_partial[30:0], 1'b1};
-                                end
+                            logic [32:0] partial_high, sub_result;
+                            
+                            partial_high = {1'b0, div_partial[62:31]};
+                            sub_result   = partial_high - {1'b0, div_divisor};
+                            
+                            if (sub_result[32]) begin
+                                div_partial <= {partial_high[31:0], 
+                                               div_partial[30:0], 1'b0};
+                            end else begin
+                                div_partial <= {sub_result[31:0], 
+                                               div_partial[30:0], 1'b1};
                             end
                             div_count <= div_count + 6'd1;
                         end
                     end
-
-                    // ── COMPLETE ─────────────────────────
-                    // Broadcast result on CDB for one cycle.
-                    COMPLETE: begin
-                        OUT_cdb.valid  <= 1'b1;
-                        OUT_cdb.sqN    <= instr_r.sqN;
-                        OUT_cdb.tag    <= instr_r.rd_tag;
-                        OUT_cdb.result <= result;
-                        state          <= IDLE;
+                    
+                    default: begin
+                        div_state <= DIV_IDLE;
                     end
-
                 endcase
             end
         end
     end
 
-    assign OUT_busy = (state != IDLE);
+    // ════════════════════════════════════════════════════
+    // 5. Stall Generation
+    //    MUL pipeline stalls when:
+    //    - MUL result would be produced this cycle AND
+    //    - DIV is also producing a result this cycle
+    //    (CDB can only accept one write per cycle)
+    // ════════════════════════════════════════════════════
+
+    always_comb begin
+        logic mul_result_ready;
+        logic div_result_ready;
+        
+        // MUL result ready this cycle?
+        mul_result_ready = (mul_pipe[2].valid && 
+                            mul_pipe[2].oper inside {MULH, MULHU, MULHSU}) ||
+                           (mul_pipe[1].valid && 
+                            mul_pipe[1].oper == MUL);
+        
+        // DIV result ready this cycle?
+        div_result_ready = (div_state == DIV_EXEC) && 
+                           (div_by_zero || (div_count == 6'd32));
+        
+        // Stall MUL if both want CDB simultaneously
+        mul_stall = mul_result_ready && div_result_ready;
+    end
+
+    // ════════════════════════════════════════════════════
+    // 6. CDB Output Arbitration
+    //    DIV has priority over MUL
+    //    Both outputs are registered, so no timing path
+    //    from pipeline stages to CDB output
+    // ════════════════════════════════════════════════════
+
+    always_comb begin
+        if (div_cdb_valid) begin
+            OUT_cdb.valid  = 1'b1;
+            OUT_cdb.sqN    = div_cdb_sqN;
+            OUT_cdb.tag    = div_cdb_tag;
+            OUT_cdb.result = div_cdb_result;
+        end else if (mul_cdb_valid) begin
+            OUT_cdb.valid  = 1'b1;
+            OUT_cdb.sqN    = mul_cdb_sqN;
+            OUT_cdb.tag    = mul_cdb_tag;
+            OUT_cdb.result = mul_cdb_result;
+        end else begin
+            OUT_cdb = '{default: '0};
+        end
+    end
+
+    // ════════════════════════════════════════════════════
+    // 7. Busy Output
+    //    DIV busy: stall new DIV instructions
+    //    MUL stall: indicate pipeline is frozen
+    // ════════════════════════════════════════════════════
+
+    assign OUT_busy = (div_state != DIV_IDLE) || mul_stall;
 
 endmodule

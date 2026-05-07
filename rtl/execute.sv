@@ -41,7 +41,7 @@ module execute
         );
     end
 
-    always_ff @(posedge clk) begin
+    always_ff @(posedge clk or posedge rst) begin
         if (rst) begin
             for (int i = 0; i < NUM_INT_FU; i++) begin
                 CDB_line[i] <= '0;

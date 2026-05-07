@@ -1,4 +1,3 @@
- 
 import include_pkg::*;
 
 module flush_controller #(
@@ -9,7 +8,6 @@ module flush_controller #(
     input  logic         br_taken  [NUM_PORTS],
     input  sqN_t         sqN       [NUM_PORTS],
     input  jump_type_t   jump_type [NUM_PORTS],
-
     output logic         flush,
     output sqN_t         flush_sqN
 );
@@ -51,5 +49,4 @@ module flush_controller #(
             flush_sqN <= best_sqN;
         end
     end
-
 endmodule
