@@ -14,7 +14,7 @@ module execute
 );
 
     CDB_line_t int_fu_out [NUM_INT_FU];
-    for (genvar i = 0; i < NUM_ALU_FU; i++) begin
+    for (genvar i = 0; i < NUM_ALU_FU; i++) begin : gen_alu_fu
         ALU ALU_i
         (
             .IN_instr(int_issue_instr[i]),
@@ -22,17 +22,18 @@ module execute
         );
     end
 
-    for (genvar i = 0; i < NUM_MUL_DIV_FU; i++) begin
+    for (genvar i = 0; i < NUM_MUL_DIV_FU; i++) begin : gen_mul_div_fu
         MUL_DIV MUL_DIV_i
         (
+            .clk(clk), .rst(rst), .flush(flush), .flush_sqN(flush_sqN),	
             .IN_instr(int_issue_instr[i + NUM_ALU_FU]),
-            .OUT(int_fu_out[i + NUM_ALU_FU]),
+            .OUT_cdb(int_fu_out[i + NUM_ALU_FU]),
             .OUT_busy(mul_div_busy[i])
         );
     end
 
     agu_out_t next_agu_out [NUM_AGU_FU];
-    for (genvar i = 0; i < NUM_AGU_FU; i++) begin
+    for (genvar i = 0; i < NUM_AGU_FU; i++) begin : gen_agu_fu
         AGU AGU_i
         (
             .IN_instr(lsu_issue_instr[i]),
@@ -53,12 +54,12 @@ module execute
 
         else if (flush) begin
             for (int i = 0; i < NUM_INT_FU; i++) begin
-                if (((flush_sqN - int_fu_out[i].sqN) && SQN_MASK) > ROB_SIZE)
+                if (((flush_sqN - int_fu_out[i].sqN) & SQN_MASK) > ROB_SIZE)
                     CDB_line[i].valid <= 1'b0;
             end
 
             for (int i = 0; i < NUM_AGU_FU; i++) begin
-                if (((flush_sqN - next_agu_out[i].sqN) && SQN_MASK) > ROB_SIZE)
+                if (((flush_sqN - next_agu_out[i].sqN) & SQN_MASK) > ROB_SIZE)
                     agu_out[i].valid <= 1'b0;
             end
         end

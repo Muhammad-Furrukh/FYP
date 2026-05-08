@@ -1,38 +1,56 @@
 import include_pkg::*;
 
 module ta_gen2 ( 
-    input  logic            br_taken [2],
-    input  jump_type_t      jump_type [2],
-    input  pc_t             pc [2],
-    input  logic [XLEN-1:0] alu_rs1_result [2],
-    input  imm_t            imm [2], 
+    input  logic            IN_valid [NUM_ALU_FU],
+    input  logic            br_taken [NUM_ALU_FU],
+    input  jump_type_t      jump_type [NUM_ALU_FU],
+    input  sqN_t            instr_sqN [NUM_ALU_FU],
+    input  pc_t             pc [NUM_ALU_FU],
+    input  logic [XLEN-1:0] alu_rs1_result [NUM_ALU_FU],
+    input  imm_t            imm [NUM_ALU_FU], 
 
-    output pc_t             jta2 [2],
-    output logic            jump2 [2]
+    output pc_t             jta2,
+    output logic            jump2
 );
 
-    integer i;
+    logic [$clog2(NUM_ALU_FU)-1:0] oldest_idx;
+    sqN_t oldest_sqN;
 
     always_comb begin
 
-        for (i = 0; i < 2; i++) begin
-
-            jta2[i]  = '0;
-            jump2[i] = 1'b0;
-
-            // JALR
-            if (jump_type[i] == 2'b10) begin
-                jta2[i]  = (alu_rs1_result[i] + imm[i]) & ~32'b1;
-                jump2[i] = 1'b1;
+        oldest_idx = '0;
+        oldest_sqN = '1;
+        jump2 = 1'b0;
+        jta2  = '0;
+        
+        for (int i = 0; i < NUM_ALU_FU; i++) begin
+            if (IN_valid[i] && 
+            (br_taken[i] || (jump_type[i] == 2'b10)) &&
+            instr_sqN[i] < oldest_sqN) begin
+                oldest_sqN = instr_sqN[i];
+                oldest_idx = $clog2(NUM_ALU_FU)'(i);  // ← line 31
             end
-
-            // Branch
-            else if (br_taken[i]) begin
-                jta2[i]  = pc[i] + imm[i];
-                jump2[i] = 1'b1;
-            end
-
         end
+
+        if (IN_valid[oldest_idx]) begin
+            if (br_taken[oldest_idx]) begin
+                jump2 = 1'b1;
+                jta2  = pc[oldest_idx] + 
+                        imm[oldest_idx];
+            end
+
+            else if (jump_type[oldest_idx] == 2'b10) begin
+                jump2 = 1'b1;
+                jta2  = alu_rs1_result[oldest_idx] + 
+                        imm[oldest_idx];
+            end
+
+            else
+                jump2 = 1'b0;
+        end
+
+        else
+            jump2 = 1'b0;
     end
 
 endmodule

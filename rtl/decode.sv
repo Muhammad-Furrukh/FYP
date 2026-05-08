@@ -19,12 +19,34 @@ module decode
     always_ff @(posedge clk) begin
         for (int i = 0; i < DECODE_WIDTH; i++) begin
             if (rst)
-                OUT_instr[i] <= '{default: '0};
+                OUT_instr[i] <= '{valid: 1'b0,
+                                  sqN: '0,
+                                  pc: '0,
+                                  f_unit: NO_UNIT,
+                                  oper: COPY,
+                                  rs1: '0,
+                                  rs2: '0,
+                                  rd: '0,
+                                  imm: '0,
+                                  is_imm: 1'b0,
+                                  jump_type: NOT_JUMP,
+                                  br_type: NOT_BRANCH,
+                                  u_type: NOT_U};
 
             else if (flush) begin
-                OUT_instr[i] <= '{
-                    valid: 1'b0
-                };
+                OUT_instr[i] <= '{valid: 1'b0,
+                                  sqN: '0,
+                                  pc: '0,
+                                  f_unit: NO_UNIT,
+                                  oper: COPY,
+                                  rs1: '0,
+                                  rs2: '0,
+                                  rd: '0,
+                                  imm: '0,
+                                  is_imm: 1'b0,
+                                  jump_type: NOT_JUMP,
+                                  br_type: NOT_BRANCH,
+                                  u_type: NOT_U};
             end
 
             else

@@ -11,14 +11,15 @@ module issue
     input       sqN_t                               flush_sqN,
     input  var  logic                               tag_ready         [ISSUE_WIDTH][2],
     input  var  logic                    [31:0]     RF_data           [ISSUE_WIDTH][2],
-    input  var  logic                               IN_busy           [ISSUE_WIDTH],
+    input  var  logic                               IN_busy           [NUM_MUL_DIV_FU],
     input  var  logic                    [XLEN-1:0] CDB_result        [ISSUE_WIDTH],
     input  var  tag_t                               CDB_tag           [ISSUE_WIDTH],
     input  var  logic                               CDB_valid         [ISSUE_WIDTH],
     output      issue_instr_t                       OUT_instr         [NUM_INT_FU],
-    output      lsu_issue_instr_t                   OUT_lsu_instr,
+    output      lsu_issue_instr_t                   OUT_lsu_instr     [NUM_AGU_FU],
     output      logic                               OUT_br_taken      [NUM_ALU_FU],
     output      jump_type_t                         OUT_jump_type     [NUM_ALU_FU],
+    output      logic                               OUT_busy          [ISSUE_WIDTH],
     output      tag_t                               check_ready       [ISSUE_WIDTH][2],
     output      tag_t                               read_tag          [ISSUE_WIDTH][2],
     output      pc_t                                jta2,
@@ -27,10 +28,11 @@ module issue
 
     pc_t             pc             [NUM_ALU_FU];
     sqN_t            instr_sqN      [NUM_ALU_FU];
+    logic            instr_valid    [NUM_ALU_FU];
     logic [XLEN-1:0] alu_rs1_result [NUM_ALU_FU];
     logic [XLEN-1:0] alu_imm        [NUM_ALU_FU];
 
-    for (genvar i = 0; i < NUM_ALU_FU; i++) begin
+    for (genvar i = 0; i < NUM_ALU_FU; i++) begin : gen_alu_buffer
         alu_issue_buffer alu_issue_buffer_i
         (
             .clk(clk),
@@ -40,7 +42,6 @@ module issue
             .flush_sqN(flush_sqN),
             .tag_ready(tag_ready[i]),
             .RF_data(RF_data[i]),
-            .IN_busy(IN_busy[i]),
             .CDB_result(CDB_result),
             .CDB_tag(CDB_tag),
             .CDB_valid(CDB_valid),
@@ -48,6 +49,7 @@ module issue
             .OUT_br_taken(OUT_br_taken[i]),
             .OUT_jump_type(OUT_jump_type[i]),
             .OUT_pc(pc[i]),
+            .OUT_busy(OUT_busy[i]),
             .rs1_result(alu_rs1_result[i]),
             .imm(alu_imm[i]),
             .check_ready(check_ready[i]),
@@ -58,51 +60,53 @@ module issue
     always_comb begin 
         for (int i = 0; i < NUM_ALU_FU; i++) begin
             instr_sqN[i] = OUT_instr[i].sqN;
+            instr_valid[i] = OUT_instr[i].valid;
         end
     end
 
-    for (genvar i = 0; i < NUM_MUL_DIV_FU; i++) begin
+    for (genvar i = 0; i < NUM_MUL_DIV_FU; i++) begin : gen_mul_div_buffer
         mul_div_issue_buffer mul_div_issue_buffer_i
         (
             .clk(clk),
             .rst(rst),
-            .IN_instr(IN_mul_div_instr),
+            .IN_instr(IN_mul_div_instr[i]),
             .flush(flush),
             .flush_sqN(flush_sqN),
             .tag_ready(tag_ready[NUM_ALU_FU + i]),
             .RF_data(RF_data[NUM_ALU_FU + i]),
-            .IN_busy(IN_busy[NUM_ALU_FU + i]),
+            .IN_busy(IN_busy[i]),
             .CDB_result(CDB_result),
             .CDB_tag(CDB_tag),
             .CDB_valid(CDB_valid),
             .OUT_instr(OUT_instr[NUM_ALU_FU + i]),
+            .OUT_busy(OUT_busy[NUM_ALU_FU + i]),
             .check_ready(check_ready[NUM_ALU_FU + i]),
             .read_tag(read_tag[NUM_ALU_FU + i])
         );
     end
 
-    for (genvar i = 0; i < NUM_AGU_FU; i++) begin
+    for (genvar i = 0; i < NUM_AGU_FU; i++) begin : gen_agu_buffer
         lsu_issue_buffer lsu_issue_buffer_i
         (
             .clk(clk),
             .rst(rst),
-            .IN_instr(IN_lsu_instr),
+            .IN_instr(IN_lsu_instr[i]),
             .flush(flush),
             .flush_sqN(flush_sqN),
             .tag_ready(tag_ready[NUM_INT_FU + i]),
             .RF_data(RF_data[NUM_INT_FU + i]),
-            .IN_busy(IN_busy[NUM_INT_FU + i]),
             .CDB_result(CDB_result),
             .CDB_tag(CDB_tag),
             .CDB_valid(CDB_valid),
-            .OUT_instr(OUT_lsu_instr),
+            .OUT_instr(OUT_lsu_instr[i]),
+            .OUT_busy(OUT_busy[NUM_INT_FU + i]),
             .check_ready(check_ready[NUM_INT_FU + i]),
             .read_tag(read_tag[NUM_INT_FU + i])
         );
     end
 
     ta_gen2 ta_gen2
-    (
+    (   .IN_valid(instr_valid),
         .br_taken(OUT_br_taken),
         .jump_type(OUT_jump_type),
         .instr_sqN(instr_sqN),

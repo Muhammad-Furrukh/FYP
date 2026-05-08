@@ -8,24 +8,9 @@ module ROB
     input  sqN_t           flush_sqN,
     input  logic           CDB_valid  [NUM_CDB_LINES],
     input  sqN_t           CDB_sqN    [NUM_CDB_LINES],
-<<<<<<< HEAD
-    input  logic           clk,
-    input  logic           rst,
-    input  rename_rob_t    rename_rob [RENAME_WIDTH],
-    input  logic           flush,
-    input  sqN_t           flush_sqN,
-    input  logic           CDB_valid  [NUM_CDB_LINES],
-    input  sqN_t           CDB_sqN    [NUM_CDB_LINES],
 
     output logic           OUT_busy,
     output commit_packet_t OUT_commit [COMMIT_WIDTH]
-    output logic           OUT_busy,
-    output commit_packet_t OUT_commit [COMMIT_WIDTH]
-=======
-
-    output logic           OUT_busy,
-    output commit_packet_t OUT_commit [COMMIT_WIDTH]
->>>>>>> lsu
 );
 
     logic [COMMIT_WIDTH-1:0] commit;
@@ -46,7 +31,6 @@ module ROB
 
     // ---------------- COMBINATIONAL ----------------
     always_comb begin
-        logic [$clog2(ROB_SIZE)-1:0] next_head, next_tail;
         OUT_busy = (count > ROB_SIZE - RENAME_WIDTH);
 
         full  = (count == 64);

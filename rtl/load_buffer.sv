@@ -131,9 +131,11 @@ module load_buffer (
         else if (flush) begin
             automatic int num_flush = 0;
             for (int i = 0; i < LOADB_SIZE; i++) begin
-                if (((flush_sqN - entries[i].sqN) & SQN_MASK) > ROB_SIZE)
+                if (entries[i].valid &&
+                    ((flush_sqN - entries[i].sqN) & SQN_MASK) > ROB_SIZE) begin
                     entries[i].valid <= 1'b0;
                     num_flush++;
+                end
             end
             count <= count - num_flush;
         end

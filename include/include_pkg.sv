@@ -44,12 +44,14 @@ typedef logic [XLEN - 1:0]              prefetch_instr_t;
 // Enums
 //------------------------------------------------------------------
 typedef enum logic [1:0] {
+    NO_UNIT,
     ALU,
     MUL_DIV,
     LSU
 } f_unit_t;
 
 typedef enum logic [3:0] {
+    ALU_INVALID,
     ADD,
     SUB,
     SLL,
@@ -65,6 +67,7 @@ typedef enum logic [3:0] {
 } alu_oper_t;
 
 typedef enum logic [3:0] {
+    MUL_INVALID,
     MUL,
     MULH,
     MULHSU,
@@ -76,6 +79,7 @@ typedef enum logic [3:0] {
 } mul_div_oper_t;
 
 typedef enum logic [3:0] {
+    LSU_INVALID,
     LSU_LB,
     LSU_LH,
     LSU_LW,

@@ -111,19 +111,19 @@ module rename
     //    tags, or a checkpoint is needed but slots are full.
     // ════════════════════════════════════════════════════
 
-    logic [$clog2(NUM_REG+1)-1:0]      free_count;
-    logic [$clog2(DECODE_WIDTH+1)-1:0] req_count;
+    logic [$clog2(NUM_REG+1)-1:0]      free_count 	[NUM_REG]; // Gonna take a lot of resources, i fear.
+    logic [$clog2(DECODE_WIDTH+1)-1:0] req_count 	[DECODE_WIDTH];
     logic                              chkpt_need;
 
     always_comb begin
-        free_count = '0;
+        free_count = '{default: '0};
         for (int b = 0; b < NUM_REG; b++)
-            free_count += ftb[b];
+            free_count[b+1] = free_count[b] + ftb[b];
 
-        req_count  = '0;
+        req_count  = '{default: '0};
         chkpt_need = 1'b0;
         for (int i = 0; i < DECODE_WIDTH; i++) begin
-            req_count += req_valid[i];
+            req_count[i+1] = req_count[i] + req_valid[i];
             if (IN_instr[i].valid)
                 chkpt_need |= (IN_instr[i].br_type  != NOT_BRANCH)
                            || (IN_instr[i].jump_type == JALR);
@@ -132,7 +132,7 @@ module rename
 
     logic stall;
     assign stall    = ROB_busy || dispatch_busy
-                      || (free_count < NUM_REG'(req_count))
+                      || (free_count[NUM_REG-1] < NUM_REG'(req_count[DECODE_WIDTH-1]))
                       || (chkpt_busy && chkpt_need);
     assign OUT_busy = stall;
 
@@ -173,7 +173,7 @@ module rename
     // ════════════════════════════════════════════════════
 
     // ── 6a. reg_ready (combinational — exception to rule) ─
-    for (genvar i = 0; i < ISSUE_WIDTH; i++) begin
+    for (genvar i = 0; i < ISSUE_WIDTH; i++) begin : gen_reg_ready
         assign reg_ready[i][0] = tag_buffer[read_tag[i][0]].ready;
         assign reg_ready[i][1] = tag_buffer[read_tag[i][1]].ready;
     end
@@ -258,8 +258,9 @@ module rename
     // ════════════════════════════════════════════════════
 
     logic [REG_ADDR_WIDTH-1:0] free_CommTag [COMMIT_WIDTH];
-    for (genvar i = 0; i < COMMIT_WIDTH; i++)
+    for (genvar i = 0; i < COMMIT_WIDTH; i++) begin : gen_freeCom
         assign free_CommTag[i] = rename_table[commit_packet[i].archTag].commTag;
+    end
 
     // ── 7a. tag_buffer ────────────────────────────────────
     always_ff @(posedge clk) begin

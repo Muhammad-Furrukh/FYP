@@ -2,8 +2,8 @@ import include_pkg::*;
 
 module core
 (
-    input logic clk,
-    input logic rst
+    input logic clk, clk_m,
+    input logic rst, rst_m
 );
     logic                     fb_busy;
     logic                     jump1;
@@ -39,6 +39,7 @@ module core
         .IN_busy(rename_busy),
         .jump2(jump2),
         .flush(flush),
+        .flush_sqN(flush_sqN),
         .pc(pc),
         .IN_instr(prefetch_instr),
         .OUT_busy(fb_busy),
@@ -71,8 +72,8 @@ module core
     rename_instr_t               rename_instr    [DECODE_WIDTH];
     logic                        chkpt           [DECODE_WIDTH];
     sqN_t                        chkpt_sqN       [DECODE_WIDTH];
-    tag_t                        store_specTag   [32];
-    logic                        store_free      [2**REG_ADDR_WIDTH];
+    tag_t                        store_specTag   [DECODE_WIDTH][32];
+    logic                        store_free      [DECODE_WIDTH][2**REG_ADDR_WIDTH];
     CDB_line_t                   CDB             [NUM_CDB_LINES];
     tag_t                        CDB_tag         [NUM_CDB_LINES];
     logic                        CDB_valid       [NUM_CDB_LINES];
@@ -105,7 +106,7 @@ module core
         .rst(rst),
         .ROB_busy(ROB_busy),
         .dispatch_busy(dispatch_busy),
-        .flush(flush),
+        .flush(flush), .OUT_busy(rename_busy),
         .chkpt_busy(chkpt_busy),
         .IN_specTag(restore_specTag),
         .IN_free(restore_free),
@@ -133,10 +134,20 @@ module core
     alu_dispatch_instr_t     alu_dispatch_instr     [NUM_ALU_FU];
     mul_div_dispatch_instr_t mul_div_dispatch_instr [NUM_MUL_DIV_FU];
     lsu_dispatch_instr_t     lsu_dispatch_instr     [NUM_AGU_FU];
+    logic                    issue_buffer_busy      [ISSUE_WIDTH];
 
     always_comb begin
         for (int i = 0; i < COMMIT_WIDTH; i++) begin
             commit_sqN[i] = commit_packet[i].sqN;
+        end
+
+        for (int i = 0; i < ISSUE_WIDTH; i++) begin
+            if (i < NUM_ALU_FU) 
+                alu_buffer_busy[i]     = issue_buffer_busy[i];
+            else if (i < NUM_INT_FU)
+                mul_div_buffer_busy[i] = issue_buffer_busy[i];
+            else
+                lsu_buffer_busy[i]     = issue_buffer_busy[i];
         end
     end
 
@@ -151,7 +162,7 @@ module core
         .flush(flush),
         .flush_sqN(flush_sqN),
         .commit_sqN(commit_sqN),
-        .chkpt_sqN(chkpt_sqN),
+        .instr_sqN(chkpt_sqN),
         .IN_instr(rename_instr),
         .checkpoint(chkpt),
         .IN_specTag(store_specTag),
@@ -192,6 +203,7 @@ module core
         .OUT_lsu_instr(lsu_issue_instr),
         .OUT_br_taken(br_taken),
         .OUT_jump_type(jump_type),
+        .OUT_busy(issue_buffer_busy),
         .check_ready(read_ready),
         .read_tag(RF_raddr),
         .jta2(jta2),
@@ -243,20 +255,23 @@ module core
     lsu lsu
     (
         .clk(clk),
+        .clk_m(clk_m),
         .rst(rst),
-        .dispatch_instr(lsu_dispatch_instr),
-        .agu_out(agu_out),
+        .rst_m(rst_m),
+        .dispatch_instr(lsu_dispatch_instr[0]),
+        .agu_out(agu_out[0]),
         .commit_sqN(commit_sqN),
         .flush(flush),
         .flush_sqN(flush_sqN),
         .OUT_busy(lsu_busy),
-        .OUT_cdb(lsu_cdb_lines)
+        .OUT_cdb(lsu_cdb_lines[0])
     );
 
-    logic [XLEN - 1:0] rs1_addr [ISSUE_WIDTH];
-    logic [XLEN - 1:0] rs2_addr [ISSUE_WIDTH];
     logic [XLEN - 1:0] rs1_data [ISSUE_WIDTH];
     logic [XLEN - 1:0] rs2_data [ISSUE_WIDTH];
+    tag_t              rs1_addr [ISSUE_WIDTH];
+    tag_t              rs2_addr [ISSUE_WIDTH];
+
     always_comb begin
         for (int i = 0; i < ISSUE_WIDTH; i++) begin
             rs1_addr[i]        = RF_raddr[i][0];
@@ -283,7 +298,7 @@ module core
     (
         .clk(clk),
         .rst(rst),
-        .rename_rob(rename),
+        .rename_rob(rename_rob),
         .flush(flush),
         .flush_sqN(flush_sqN),
         .CDB_valid(CDB_valid),

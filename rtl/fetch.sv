@@ -6,6 +6,7 @@ module fetch
     input       logic                     IN_busy,
     input       logic                     jump2,
     input       logic                     flush,
+    input       sqN_t                     flush_sqN,
     input       pc_t                      pc,
     input   var prefetch_instr_t          IN_instr  [FETCH_WIDTH],
     output      logic                     OUT_busy,
@@ -37,7 +38,7 @@ module fetch
     ta_gen1 JTA1
     (
         .pc(pc_array),
-        .valid(aligner_out),
+        .valid(valid),
         .opcode(opcode),
         .imm(imm),
         .IN_busy(OUT_busy),
@@ -52,6 +53,7 @@ module fetch
         .IN_instr(aligner_out),
         .IN_busy(IN_busy),
         .flush(flush),
+        .flush_sqN(flush_sqN),
         .OUT_busy(OUT_busy),
         .OUT_instr(OUT_instr)
     );

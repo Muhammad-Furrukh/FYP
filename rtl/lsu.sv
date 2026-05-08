@@ -1,8 +1,8 @@
 import include_pkg::*;
 
 module lsu (
-    input  logic                clk,
-    input  logic                rst,
+    input  logic                clk, clk_m,
+    input  logic                rst, rst_m,
     input  lsu_dispatch_instr_t dispatch_instr,
     input  agu_out_t            agu_out,
     input  sqN_t                commit_sqN [COMMIT_WIDTH],
@@ -76,6 +76,7 @@ module lsu (
     // Store Buffer ↔ Data Memory wiring
     // --------------------------------------------------------
     stb_mem_req_t   stb_mem_req [2];
+    logic	    mem_stall [2];
     stb_fwd_entry_t stb_fwd     [STOREB_SIZE];
     logic           str_busy;
 
@@ -87,6 +88,7 @@ module lsu (
         .commit_sqN (commit_sqN),
         .flush      (flush),
         .flush_sqN  (flush_sqN),
+        .mem_stall  (mem_stall),
         .mem_req    (stb_mem_req),
         .fwd        (stb_fwd),
         .str_busy   (str_busy)
@@ -117,11 +119,18 @@ module lsu (
     // Data Memory
     // --------------------------------------------------------
     data_memory u_dmem (
-        .clk     (clk),
-        .rst     (rst),
-        .wr_req  (stb_mem_req),
-        .rd_req  (ldb_mem_req),
-        .rd_resp (ldb_mem_resp)
+        .clk_cpu     	(clk),
+        .rst_cpu     	(rst),
+        
+        .clk_mem     	(clk_m),
+        .rst_mem     	(rst_m),	
+        
+        .wr_req  	(stb_mem_req),
+        .wr_stall	(mem_stall),
+        
+        .rd_req  	(ldb_mem_req),
+        .rd_resp 	(ldb_mem_resp),
+        .rd_stall	()
     );
 
     // --------------------------------------------------------

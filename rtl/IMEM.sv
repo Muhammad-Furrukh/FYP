@@ -20,19 +20,16 @@ module IMEM
         $readmemh("imem.hex", mem);
     end
     
-    logic [IMEM_ADDR_WIDTH] block_idx;
-    logic [IMEM_ADDR_WIDTH] base_word;
-    logic [IMEM_ADDR_WIDTH] word_index;
+    logic [IMEM_ADDR_WIDTH-1:0] block_idx;
+    logic [IMEM_ADDR_WIDTH-1:0] base_word;
 
-    always_ff @(posedge clk) begin
-        block_idx = (addr >> 3); 
-        base_word = block_idx * FETCH_WIDTH;  
+    assign block_idx = (addr >> 3); 
+    assign base_word = block_idx * FETCH_WIDTH;
 
+    always_ff @(posedge clk) begin  
         for (int i = 0; i < FETCH_WIDTH; i++) begin
-            word_index = base_word + i;
-
-            if (word_index < MEM_WORDS)
-                data[i] <= mem[word_index];
+            if ((base_word + i) < MEM_WORDS)
+                data[i] <= mem[base_word + i];
             else
                 data[i] <= 32'b0;
         end
