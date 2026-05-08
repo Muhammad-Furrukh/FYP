@@ -45,7 +45,7 @@ module decode
             next_sqN <= next_sqN + valid_count;
     end
 
-    always_ff @(posedge clk) begin
+    always_ff @(posedge clk or posedge rst) begin
         for (int i = 0; i < DECODE_WIDTH; i++) begin
             if (rst)
                 OUT_instr[i] <= '{valid: 1'b0,

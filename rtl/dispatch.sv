@@ -40,9 +40,9 @@ module dispatch
         .LSU_buffer_busy(LSU_buffer_busy),
         .LSU_busy(LSU_busy),
         .OUT_busy(d_unit_busy),
-        .OUT_alu_instr(alu_dispatch_out ),
-        .OUT_mul_div_instr(mul_div_dispatch_out),
-        .OUT_lsu_instr(lsu_dispatch_out)
+        .OUT_alu_instr(OUT_alu_instr),
+        .OUT_mul_div_instr(OUT_mul_div_instr),
+        .OUT_lsu_instr(OUT_lsu_instr)
     );
 
     branch_checkpoint BC

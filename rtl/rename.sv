@@ -60,9 +60,18 @@ module rename
     logic [NUM_REG-1:0] ftb;
 
     always_comb begin
-        ftb[0] = 1'b0;
-        for (int i = 1; i < NUM_REG; i++)
-            ftb[i] = tag_buffer[i].free;
+       ftb[0] = '0;
+       for (int i = 1; i < 32; i++) begin
+	   logic is_source;
+	   is_source = 1'b0;
+	   for (int j = 0; j < DECODE_WIDTH; j++) begin
+	       is_source |= (IN_instr[j].rs1 == i) | (IN_instr[j].rs2 == i);
+	   end
+	   ftb[i] = is_source ? 1'b0 : tag_buffer[i].free;
+       end
+       for (int i = 32; i < NUM_REG; i++) begin
+       	   ftb[i] = tag_buffer[i].free;
+       end
     end
 
 
@@ -188,20 +197,20 @@ module rename
 
         end else if (!stall) begin
             for (int i = 0; i < DECODE_WIDTH; i++) begin
-                OUT_instr[i].valid     <= IN_instr[i].valid;
-                OUT_instr[i].sqN       <= IN_instr[i].sqN;
-                OUT_instr[i].pc        <= IN_instr[i].pc;
-                OUT_instr[i].f_unit    <= IN_instr[i].f_unit;
-                OUT_instr[i].oper      <= IN_instr[i].oper;
-                OUT_instr[i].rs1_tag   <= local_rat[i][IN_instr[i].rs1];
-                OUT_instr[i].rs2_tag   <= local_rat[i][IN_instr[i].rs2];
-                OUT_instr[i].rd_tag    <= chosen[i];
-                OUT_instr[i].imm       <= IN_instr[i].imm;
-                OUT_instr[i].is_imm    <= IN_instr[i].is_imm;
-                OUT_instr[i].jump_type <= IN_instr[i].jump_type;
-                OUT_instr[i].br_type   <= IN_instr[i].br_type;
-                OUT_instr[i].u_type    <= IN_instr[i].u_type;
-                OUT_rd[i]              <= IN_instr[i].rd;
+	        OUT_instr[i].valid     <= IN_instr[i].valid;
+	        OUT_instr[i].sqN       <= IN_instr[i].sqN;
+	        OUT_instr[i].pc        <= IN_instr[i].pc;
+	        OUT_instr[i].f_unit    <= IN_instr[i].f_unit;
+	        OUT_instr[i].oper      <= IN_instr[i].oper;
+	        OUT_instr[i].rs1_tag   <= local_rat[i][IN_instr[i].rs1];
+	        OUT_instr[i].rs2_tag   <= local_rat[i][IN_instr[i].rs2];
+	        OUT_instr[i].rd_tag    <= chosen[i];
+	        OUT_instr[i].imm       <= IN_instr[i].imm;
+	        OUT_instr[i].is_imm    <= IN_instr[i].is_imm;
+	        OUT_instr[i].jump_type <= IN_instr[i].jump_type;
+	        OUT_instr[i].br_type   <= IN_instr[i].br_type;
+	        OUT_instr[i].u_type    <= IN_instr[i].u_type;
+	        OUT_rd[i]              <= IN_instr[i].rd;
             end
         end
         // stall: outputs hold implicitly
@@ -264,10 +273,9 @@ module rename
     // ── 7a. tag_buffer ────────────────────────────────────
     always_ff @(posedge clk or posedge rst) begin
         if (rst) begin
-            for (int i = 0; i < 32; i++)
-                tag_buffer[i] <= '{freeComm: 1'b0, ready: 1'b0, free: 1'b0};
-            for (int i = 32; i < NUM_REG; i++)
-                tag_buffer[i] <= '{freeComm: 1'b1, ready: 1'b0, free: 1'b1};
+	    tag_buffer[0] <= '{freeComm: 1'b0, ready: 1'b0, free: 1'b0};
+            for (int i = 1; i < NUM_REG; i++)
+                tag_buffer[i] <= '{freeComm: 1'b1, ready: 1'b1, free: 1'b1};
 
         end else if (flush) begin
             // Restore free bitmap from checkpoint.
