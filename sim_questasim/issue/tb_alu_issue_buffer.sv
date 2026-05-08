@@ -148,8 +148,7 @@ module tb_alu_issue_buffer;
         tag_ready[0] = 0;
         tag_ready[1] = 0;
     endtask
-
-  `
+  
     task automatic cdb_bcast(input int port, input tag_t t, input logic [XLEN-1:0] val);
         CDB_valid[port] = 1;
         CDB_tag[port]   = t;
@@ -717,7 +716,7 @@ module tb_alu_issue_buffer;
         if (fail_cnt == 0)
             $display("  *** ALL TESTS PASSED ***");
         else
-            $display("  *** KUCH TESTS FAIL HUE - upar dekho ***");
+            $display("  *** SOME TESTS FAILED <3> ***");
 
         $finish;
     end
