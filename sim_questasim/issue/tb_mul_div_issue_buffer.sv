@@ -726,7 +726,7 @@ module tb_mul_div_issue_buffer;
         if (fail_cnt == 0)
             $display("  *** ALL TESTS PASSED ***");
         else
-            $display("  *** KUCH TESTS FAIL HUE - upar dekho ***");
+            $display("  *** SOME TESTS FAILED ***");
 
         $finish;
     end
