@@ -1,23 +1,4 @@
-// ============================================================
-//  Testbench: tb_flush_controller
-//  DUT     : flush_controller #(NUM_PORTS=2)
-//
-//  sqN_t = 7-bit  =>  range [0..127],  half-range = 64
-//
-//  DUT diff formula: diff = sqN[i] - best_sqN
-//    MSB=1 => sqN[i] is OLDER than best_sqN => replace best_sqN
-//    MSB=0 => sqN[i] is NEWER or equal       => keep best_sqN
-//
-//  Scenarios
-//  ---------
-//  S1  Reset check
-//  S2  No valid port (br_taken=0, jump_type != 2'b10)
-//  S3  Single port valid via br_taken
-//  S4  Both ports valid — oldest (circular) sqN wins
-//  S5  sqN wraparound — 7-bit half-range=64 verified
-//  S6  Valid via jump_type == 2'b10 (not br_taken)
-//  S7  Back-to-back flush cycles (temporal stress)
-// ============================================================
+ 
 import include_pkg::*;
 
 module tb_flush_controller;
