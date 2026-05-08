@@ -273,7 +273,7 @@ module rename
     // ── 7a. tag_buffer ────────────────────────────────────
     always_ff @(posedge clk or posedge rst) begin
         if (rst) begin
-	    tag_buffer[0] <= '{freeComm: 1'b0, ready: 1'b0, free: 1'b0};
+	    tag_buffer[0] <= '{freeComm: 1'b1, ready: 1'b1, free: 1'b0};
             for (int i = 1; i < NUM_REG; i++)
                 tag_buffer[i] <= '{freeComm: 1'b1, ready: 1'b1, free: 1'b1};
 

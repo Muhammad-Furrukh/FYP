@@ -68,7 +68,7 @@ module tb_core;
 
                             // Quick test: check register_file via internal signals
                             // RF should have x1=5
-                            #1;
+                            tick();
                             tests_run++;
                             if (dut.register_file.registers[1] == 32'd5) begin
                                 $display("PASS: RF[1] = 5 (via direct access)");
