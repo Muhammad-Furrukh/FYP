@@ -29,7 +29,7 @@ all: test_core
 # ════════════════════════════════════════════════════
 # MUL_DIV unit test
 # ════════════════════════════════════════════════════
-MUL_DIV_DIR = $(SIM_DIR)/Vtb_mul_div
+MUL_DIV_DIR = $(SIM_DIR)/Vmul_div
 
 test_mul_div:
 	mkdir -p $(SIM_DIR)
@@ -43,7 +43,7 @@ test_mul_div:
 # ════════════════════════════════════════════════════
 # RENAME unit test
 # ════════════════════════════════════════════════════
-RENAME_DIR = $(SIM_DIR)/Vtb_rename
+RENAME_DIR = $(SIM_DIR)/Vrename
 
 test_rename:
 	mkdir -p $(SIM_DIR)
@@ -57,7 +57,7 @@ test_rename:
 # ════════════════════════════════════════════════════
 # DISPATCH_UNIT test
 # ════════════════════════════════════════════════════
-DISPATCH_UNIT_DIR = $(SIM_DIR)/Vtb_dispatch_unit
+DISPATCH_UNIT_DIR = $(SIM_DIR)/Vdispatch_unit
 
 test_dispatch_unit:
 	mkdir -p $(SIM_DIR)
@@ -71,7 +71,7 @@ test_dispatch_unit:
 # ════════════════════════════════════════════════════
 # BRANCH_CHECKPOINT test
 # ════════════════════════════════════════════════════
-BRCHKPT_DIR = $(SIM_DIR)/Vtb_branch_checkpoint
+BRCHKPT_DIR = $(SIM_DIR)/Vbranch_checkpoint
 
 test_branch_checkpoint:
 	mkdir -p $(SIM_DIR)
@@ -82,10 +82,22 @@ test_branch_checkpoint:
 		-o tb_branch_checkpoint_sim
 	cd $(BRCHKPT_DIR) && ./tb_branch_checkpoint_sim
 
+test_lsu:
+	verilator --cc --exe --build --trace-fst --trace --timing --main \
+		-Wall -Wno-fatal \
+		+incdir+rtl +incdir+include \
+		--top-module tb_lsu \
+		--Mdir sim_verilator/Vlsu \
+		include/include_pkg.sv rtl/sync_2ff.sv rtl/dmem.sv \
+		rtl/lsu.sv rtl/store_buffer.sv rtl/load_buffer.sv \
+		tb/modules/tb_lsu.sv \
+		-o tb_lsu_sim
+	./sim_verilator/Vlsu/tb_lsu_sim
+
 # ════════════════════════════════════════════════════
 # FULL CORE test
 # ════════════════════════════════════════════════════
-CORE_DIR = $(SIM_DIR)/Vtb_core
+CORE_DIR = $(SIM_DIR)/Vcore
 
 test_core:
 	mkdir -p $(SIM_DIR)
@@ -95,7 +107,7 @@ test_core:
 		--Mdir $(CORE_DIR) \
 		$(PKG_FILE) $(RTL_FILES) $(TB_DIR)/tb_core.sv \
 		-o tb_core_sim
-	cd $(CORE_DIR) && ./tb_core_sim
+	./$(CORE_DIR)/tb_core_sim +PROG=$(PROG)
 
 # ════════════════════════════════════════════════════
 # All unit tests

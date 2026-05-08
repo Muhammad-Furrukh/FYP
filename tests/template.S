@@ -8,21 +8,21 @@ _start:
     li x2, 10
     add x3, x1, x2     # x3 = 15
     
-    # Test pass/fail mechanism
-    li x28, 0x00001000  # PASS address
-    li x29, 0x00002000  # FAIL address
-    
     # Check result
     li x30, 15
     beq x3, x30, pass
     j fail
 
 pass:
-    sw x0, 0(x28)      # Write to PASS address
+    li x29, 0x00001000
+    li x30, 0xDEADBEEF    # PASS signature
+    sw x30, 0(x29)
     j end
 
 fail:
-    sw x0, 0(x29)      # Write to FAIL address
+    li x29, 0x00002000
+    li x30, 0xBAADC0DE    # FAIL signature  
+    sw x30, 0(x29)
     
 end:
     j end               # Loop forever

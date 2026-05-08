@@ -35,103 +35,117 @@ module load_buffer (
     logic       [$clog2(LOADB_SIZE)-1:0] count;
     logic       [$clog2(LOADB_SIZE)-1:0] stall;
 
-    always_comb begin
-        if (count == LOADB_SIZE)
-            ld_busy = 1'b1;
-        else
-            ld_busy = 1'b0;
-        
-        // Allocation logic: find the first invalid entry and allocate there
-        alloc_idx = 0;
-        for (int i = LOADB_SIZE - 1; i >= 0; i--) begin
-            if (!entries[i].valid) begin
-                alloc_idx = i;
-            end
-        end
-	
-	ta_wb_idx = 0;
-        // Target address write-back: find the matching entry for the incoming AGU result
-        for (int i = 0; i < LOADB_SIZE; i++) begin
-            if (entries[i].valid && (entries[i].sqN == addr_wb.sqN)) begin
-                ta_wb_idx = i;
-            end
-        end
+    	always_comb begin
+	    // ── ld_busy ──────────────────────────────────
+	    ld_busy = (count == $clog2(LOADB_SIZE)'(LOADB_SIZE));
 
-        // Find entries that are to be stalled
-        stall = '0;
-        for (int i = 0; i < LOADB_SIZE; i++) begin
-            if (entries[i].valid) begin
-                for (int j = 0; j < STOREB_SIZE; j++) begin
-                    // Found an older store instr
-                    if (stb_fwd[j].valid
-                        && (((entries[i].sqN - stb_fwd[j].sqN) & SQN_MASK) < ROB_SIZE)) begin
+	    // ── alloc_idx: first invalid entry ───────────
+	    alloc_idx = '0;
+	    for (int i = LOADB_SIZE-1; i >= 0; i--)
+		if (!entries[i].valid) alloc_idx = $clog2(LOADB_SIZE)'(i);
 
-                        if (!stb_fwd[j].addr_data_valid)
-                            stall[i] = 1'b1;
-                        else if (!entries[i].addr_valid)
-                            stall[i] = 1'b1;
-                        else if ((stb_fwd[j].addr <= entries[i].addr) 
-                          && (entries[i].addr <= (stb_fwd[j].addr + stb_fwd[j].data_size)))
-                            stall[i] = 1'b1;
-                        else if ((entries[i].addr <= stb_fwd[j].addr) &&
-                            (stb_fwd[j].addr <= (entries[i].addr + entries[i].data_size)))
-                            stall[i] = 1'b1;
-                    end
-                end
-            end
-        end
+	    // ── ta_wb_idx: match on sqN ───────────────────
+	    ta_wb_idx = '0;
+	    for (int i = 0; i < LOADB_SIZE; i++)
+		if (entries[i].valid && entries[i].sqN == addr_wb.sqN)
+		    ta_wb_idx = $clog2(LOADB_SIZE)'(i);
 
-        // Find index of 2 valid entries with no store conflicts (i.e., not stalled)
-        req_idx = '{default: '0};
-        for (int i = LOADB_SIZE - 1; i >= 0; i--) begin
-            if (!stall[i] && entries[i].valid && req_idx[0]) begin
-                req_idx[1] = req_idx[0];
-                req_idx[0] = i;
-            end
+	    // ── stall: only block if an OLDER store has not
+	    //    yet resolved its address (addr_data_valid=0)
+	    //    OR if it has resolved but address overlaps
+	    //    AND data is not yet valid (can't forward yet).
+	    //    If addr_data_valid=1 and address matches →
+	    //    forwarding hit, handled in sequential block.
+	    // ─────────────────────────────────────────────
+	    stall = '0;
+	    for (int i = 0; i < LOADB_SIZE; i++) begin
+		if (entries[i].valid && entries[i].addr_valid) begin
+		    for (int j = 0; j < STOREB_SIZE; j++) begin
+		        if (stb_fwd[j].valid) begin
+		            // Is this store older than the load?
+		            // older = (load.sqN - store.sqN) < ROB_SIZE
+		            logic store_is_older;
+		            store_is_older = ((entries[i].sqN - stb_fwd[j].sqN)
+		                              & SQN_MASK) < sqN_t'(ROB_SIZE);
 
-            else if (!stall[i] && entries[i].valid && !req_idx[0]) begin
-                req_idx[0] = i;
-            end
-        end
+		            if (store_is_older) begin
+		                if (!stb_fwd[j].addr_data_valid) begin
+		                    // Address unknown — conservative stall
+		                    stall[i] = 1'b1;
+		                end else begin
+		                    // Address known — check overlap
+		                    logic overlaps;
+		                    overlaps = (stb_fwd[j].addr[XLEN-1:2]
+		                                == entries[i].addr[XLEN-1:2]);
+		                    // Overlap + data not ready = stall
+		                    // Overlap + data ready    = forwarding hit (no stall)
+		                    if (overlaps && !stb_fwd[j].addr_data_valid)
+		                        stall[i] = 1'b1;
+		                    // No overlap → safe, no stall
+		                end
+		            end
+		        end
+		    end
+		end else if (entries[i].valid && !entries[i].addr_valid) begin
+		    // Our own address isn't known yet — can't check,
+		    // don't issue to memory
+		    stall[i] = 1'b1;
+		end
+	    end
 
-        // Send request to memory
-        for (int i = 0; i < 2; i++) begin
-	    mem_req[i].valid       = 0;
-            mem_req[i].sqN         = 0;
-            mem_req[i].r_addr      = 0;
-            mem_req[i].data_size   = 0;
-            mem_req[i].is_unsigned = 0;
-            if (entries[req_idx[i]].valid && !mem_stall[i]) begin
-                mem_req[i].valid       = 1'b1;
-                mem_req[i].sqN         = entries[req_idx[i]].sqN;
-                mem_req[i].r_addr      = entries[req_idx[i]].addr;
-                mem_req[i].data_size   = entries[req_idx[i]].data_size;
-                mem_req[i].is_unsigned = entries[req_idx[i]].is_unsigned;
-            end
-        end
+	    // ── req_idx: two lowest-index issuable entries ─
+	    // Use a found flag to avoid the index-0-as-sentinel bug
+	    begin
+		logic found0, found1;
+		found0 = 1'b0; found1 = 1'b0;
+		req_idx[0] = '0; req_idx[1] = '0;
+		for (int i = 0; i < LOADB_SIZE; i++) begin
+		    if (entries[i].valid && !stall[i]
+		        && entries[i].addr_valid && !entries[i].addr_valid) begin
+		        if (!found0) begin
+		            req_idx[0] = $clog2(LOADB_SIZE)'(i);
+		            found0 = 1'b1;
+		        end else if (!found1) begin
+		            req_idx[1] = $clog2(LOADB_SIZE)'(i);
+		            found1 = 1'b1;
+		        end
+		    end
+		end
 
-        // Broadcast valid data entry on CDB
-        broadcast_idx = '0;
-        for (int i = LOADB_SIZE; i >= 0; i--) begin
-            if (entries[i].valid && entries[i].data_valid) begin
-                broadcast_idx = i;
-            end
-        end
+		// Drive mem_req
+		for (int i = 0; i < 2; i++) begin
+		    mem_req[i] = '{default: '0};
+		end
+		if (found0 && !mem_stall[0]) begin
+		    mem_req[0].valid       = 1'b1;
+		    mem_req[0].sqN         = entries[req_idx[0]].sqN;
+		    mem_req[0].r_addr      = entries[req_idx[0]].addr;
+		    mem_req[0].data_size   = entries[req_idx[0]].data_size;
+		    mem_req[0].is_unsigned = entries[req_idx[0]].is_unsigned;
+		end
+		if (found1 && !mem_stall[1]) begin
+		    mem_req[1].valid       = 1'b1;
+		    mem_req[1].sqN         = entries[req_idx[1]].sqN;
+		    mem_req[1].r_addr      = entries[req_idx[1]].addr;
+		    mem_req[1].data_size   = entries[req_idx[1]].data_size;
+		    mem_req[1].is_unsigned = entries[req_idx[1]].is_unsigned;
+		end
+	    end
 
-        if (entries[broadcast_idx].valid && entries[broadcast_idx].data_valid) begin
-            cdb_out.valid       = 1'b1;
-            cdb_out.sqN         = entries[broadcast_idx].sqN;
-            cdb_out.tag         = entries[broadcast_idx].rd_tag;
-            cdb_out.result      = entries[broadcast_idx].data;
-        end
-
-        else begin
-            cdb_out.valid 	= 1'b0;
-            cdb_out.sqN   	= '0;
-            cdb_out.tag   	= '0;
-            cdb_out.result 	= '0;
-        end
-    end
+	    // ── broadcast_idx: oldest entry with data_valid ─
+	    broadcast_idx = '0;
+	    cdb_out = '{default: '0};
+	    for (int i = LOADB_SIZE-1; i >= 0; i--) begin  
+		if (entries[i].valid && entries[i].data_valid)
+		    broadcast_idx = $clog2(LOADB_SIZE)'(i);
+	    end
+	    if (entries[broadcast_idx].valid && entries[broadcast_idx].data_valid) begin
+			cdb_out.valid  = 1'b1;
+			cdb_out.sqN    = entries[broadcast_idx].sqN;
+			cdb_out.tag    = entries[broadcast_idx].rd_tag;
+			cdb_out.result = entries[broadcast_idx].data;
+	    end
+	end
 
     always_ff @(posedge clk or posedge rst) begin
         if (rst) begin
