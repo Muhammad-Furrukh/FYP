@@ -259,4 +259,3 @@ module alu_issue_buffer #(
     end
 
 endmodule   
-  
