@@ -13,12 +13,12 @@ module prefetch
     output      logic                                           OUT_valid   [FETCH_WIDTH]
 );
 
-    pc_t                              fetch_base;
-    pc_t                              next_pc;
-    pc_t                              current_pc;
-    pc_t                              instr_pc        [FETCH_WIDTH];
-    logic                             instr_valid     [FETCH_WIDTH];
-    logic [$clog2(FETCH_WIDTH+1)-1:0] instr_consumed;
+    pc_t                                     fetch_base;
+    pc_t                                     next_pc;
+    pc_t                                     current_pc;
+    pc_t                                     instr_pc        [FETCH_WIDTH];
+    logic                                    instr_valid     [FETCH_WIDTH];
+    logic            [$clog2(FETCH_WIDTH):0] instr_consumed;
 
     PC PC
     (
@@ -33,6 +33,7 @@ module prefetch
     (
         .clk(clk),
         .rst(rst),
+        .IN_busy(IN_busy),
         .addr(fetch_base[IMEM_ADDR_WIDTH -1:0]),
         .data(OUT_instr)
     );
@@ -59,7 +60,12 @@ module prefetch
     always_ff @(posedge clk or posedge rst) begin
         if (rst) begin
             OUT_pc    <= '{default: '0};
-            OUT_valid <= '{default: 1'b0};
+            OUT_valid <= '{default: '0};
+        end
+
+        else if (IN_busy) begin
+            OUT_pc    <= OUT_pc;
+            OUT_valid <= OUT_valid;
         end
 
         else begin

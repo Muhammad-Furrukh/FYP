@@ -14,7 +14,6 @@ module fetch
     output      fetch_instr_t             OUT_instr   [FETCH_WIDTH]
 );
 
-    logic                           invalidate;
     logic           [6:0]           opcode      [FETCH_WIDTH];
     logic           [20:0]          imm         [FETCH_WIDTH];
     logic           [XLEN -1:0]     iw          [FETCH_WIDTH];

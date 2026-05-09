@@ -4,6 +4,7 @@ module IMEM
 (
     input  logic                                    clk,
     input  logic                                    rst,
+    input  logic                                    IN_busy,
     input  logic            [IMEM_ADDR_WIDTH - 1:0] addr, // 8-byte aligned address             
     output prefetch_instr_t                         data [FETCH_WIDTH]
 );
@@ -17,7 +18,7 @@ module IMEM
     initial begin
         for (int i = 0; i < MEM_WORDS; i++)
             mem[i] = 32'b0;
-        //$readmemh("../../rtl/imem.hex", mem);
+        $readmemh("../../tests/add_test.hex", mem);
     end
     
     logic [IMEM_ADDR_WIDTH-1:0] block_idx;
@@ -27,9 +28,12 @@ module IMEM
     assign base_word = block_idx * FETCH_WIDTH;
 
     always_ff @(posedge clk or posedge rst) begin  
-        if (rst) begin
+        if (rst)
             data <= '{default: 32'b0};
-        end
+
+        else if (IN_busy)
+            data <= data;
+            
         else begin
             for (int i = 0; i < FETCH_WIDTH; i++) begin
                 if ((base_word + i) < MEM_WORDS)

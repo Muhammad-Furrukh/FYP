@@ -1,4 +1,4 @@
-`include "include_pkg.sv"
+import include_pkg::*;
 
 module lsu (
     input  logic                clk, clk_m,
@@ -70,7 +70,7 @@ module lsu (
     // ════════════════════════════════════════════════════
     // 2. Store buffer allocation and writeback
     // ════════════════════════════════════════════════════
-
+    logic       str_busy;
     stb_alloc_t stb_alloc;
 
     assign stb_alloc.valid   = has_store_disp && !str_busy;
@@ -88,7 +88,7 @@ module lsu (
     // ════════════════════════════════════════════════════
     // 3. Load buffer allocation and writeback
     // ════════════════════════════════════════════════════
-
+    logic       ld_busy;
     ldb_alloc_t ldb_alloc;
 
     assign ldb_alloc.valid   = has_load_disp && !ld_busy;
@@ -111,7 +111,6 @@ module lsu (
     stb_mem_req_t   stb_mem_req [2];
     logic           stb_stall   [2];
     stb_fwd_entry_t stb_fwd     [STOREB_SIZE];
-    logic           str_busy;
 
     store_buffer u_stb (
         .clk        (clk),
@@ -139,7 +138,6 @@ module lsu (
     ldb_mem_req_t ldb_mem_req  [2];
     dmem_resp_t   ldb_mem_resp [2];
     logic         ldb_stall    [2];
-    logic         ld_busy;
     CDB_line_t    ldb_cdb_out;
 
     load_buffer u_ldb (

@@ -38,7 +38,7 @@ module fetch_buffer
     // FIFO status
     assign can_write = (!flush) && 
                        (!jump1) &&
-                       (count < (PTR_W+1)'(FETCHB_SIZE) - (PTR_W+1)'(FETCH_WIDTH));
+                       (count <= (PTR_W+1)'(FETCHB_SIZE) - (PTR_W+1)'(FETCH_WIDTH));
     assign can_read  = (!flush) && (!jump1) && 
                        (!IN_busy) && (count > 0);
     assign OUT_busy  = !can_write;
@@ -85,19 +85,19 @@ module fetch_buffer
 
     // Find jal instr idx
     logic [PTR_W-1:0] jal_idx;
-    logic [PTR_W-1:0] non_jump_instrs;
+    logic [PTR_W-1:0] post_jump_instrs;
     always_comb begin
-        jal_idx = tail;
+        jal_idx = tail - 1;
 
         for (int i = 0; i < FETCH_WIDTH; i++) begin
             if (buffer[tail - (PTR_W)'(i + 1)].pc == jal_pc)
                 jal_idx = tail - (PTR_W)'(i + 1);
         end
 
-        if (tail == jal_idx)
-            non_jump_instrs = count;
+        if (tail - 1 == jal_idx)
+            post_jump_instrs = 0;
         else 
-            non_jump_instrs = tail - jal_idx - (PTR_W)'(1);
+            post_jump_instrs = tail - jal_idx - (PTR_W)'(1);
     end
 
     // Sequential updates
@@ -118,7 +118,7 @@ module fetch_buffer
         else if (jump1) begin
             head  <= head;
             tail  <= jal_idx + 1;
-            count <= count - (PTR_W+1)'(non_jump_instrs);
+            count <= count - (PTR_W+1)'(post_jump_instrs);
         end
 
         else begin

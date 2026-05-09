@@ -61,21 +61,22 @@ module core
 
     logic                        ROB_busy;
     logic                        chkpt_busy;
-    tag_t                        restore_specTag [32];
-    logic                        restore_free    [2**REG_ADDR_WIDTH];
-    commit_packet_t              commit_packet   [COMMIT_WIDTH];
-    tag_t                        read_ready      [ISSUE_WIDTH][2];
-    logic                        reg_ready       [ISSUE_WIDTH][2];
-    rename_instr_t               rename_instr    [DECODE_WIDTH];
-    logic                        chkpt           [DECODE_WIDTH];
-    sqN_t                        chkpt_sqN       [DECODE_WIDTH];
-    tag_t                        store_specTag   [DECODE_WIDTH][32];
-    logic                        store_free      [DECODE_WIDTH][2**REG_ADDR_WIDTH];
-    CDB_line_t                   CDB             [NUM_CDB_LINES];
-    tag_t                        CDB_tag         [NUM_CDB_LINES];
-    logic                        CDB_valid       [NUM_CDB_LINES];
-    logic           [XLEN - 1:0] CDB_result      [NUM_CDB_LINES];
-    sqN_t                        CDB_sqN         [NUM_CDB_LINES];   
+    tag_t                        restore_specTag     [32];
+    logic                        restore_free        [2**REG_ADDR_WIDTH];
+    commit_packet_t              commit_packet       [COMMIT_WIDTH];
+    tag_t                        read_ready          [ISSUE_WIDTH][2];
+    logic                        reg_ready           [ISSUE_WIDTH][2];
+    rename_instr_t               rename_instr        [DECODE_WIDTH];
+    logic                        chkpt               [DECODE_WIDTH];
+    sqN_t                        chkpt_sqN           [DECODE_WIDTH];
+    tag_t                        store_specTag       [DECODE_WIDTH][32];
+    logic                        store_free          [DECODE_WIDTH][2**REG_ADDR_WIDTH];
+    CDB_line_t                   CDB                 [NUM_CDB_LINES];
+    tag_t                        CDB_tag             [NUM_CDB_LINES];
+    logic                        CDB_valid           [NUM_CDB_LINES];
+    logic           [XLEN - 1:0] CDB_result          [NUM_CDB_LINES];
+    sqN_t                        CDB_sqN             [NUM_CDB_LINES];  
+    logic                        dispatch_unit_busy; 
 
     always_comb begin
         for (int i = 0; i < NUM_CDB_LINES; i ++) begin
@@ -124,7 +125,6 @@ module core
     logic                    alu_buffer_busy        [NUM_ALU_FU];
     logic                    mul_div_buffer_busy    [NUM_MUL_DIV_FU];
     logic                    lsu_buffer_busy        [NUM_AGU_FU];
-    logic                    dispatch_unit_busy;
     logic                    lsu_busy;
     sqN_t                    flush_sqN;
     logic		     comm_valid		    [COMMIT_WIDTH];	
