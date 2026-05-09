@@ -12,6 +12,7 @@ module branch_checkpoint
     input           	logic       	chk_valid   	[DECODE_WIDTH],
     input   var     	tag_t       	IN_specTag  	[DECODE_WIDTH][32],
     input   var     	logic       	IN_free     	[DECODE_WIDTH][2**REG_ADDR_WIDTH],
+    input			logic		disp_busy,
     output          	logic       	check_busy,
     output          	tag_t       	OUT_specTag 	[32],
     output          	logic       	OUT_free    	[2**REG_ADDR_WIDTH]
@@ -80,7 +81,7 @@ module branch_checkpoint
             end else begin
                 // Allocate
                 for (int i = 0; i < DECODE_WIDTH; i++) begin
-                    if (chk_valid[i] && !slot_collision) begin
+                    if (chk_valid[i] && !slot_collision && !disp_busy) begin
                         valid  [instr_sqN[i][CHKPT_BITS-1:0]] <= 1'b1;
                         specTag[instr_sqN[i][CHKPT_BITS-1:0]] <= IN_specTag[i];
                         free_bm[instr_sqN[i][CHKPT_BITS-1:0]] <= IN_free[i];

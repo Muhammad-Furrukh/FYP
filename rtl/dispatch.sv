@@ -10,7 +10,7 @@ module dispatch
     input       logic                    LSU_busy,
     input       logic                    flush,
     input       sqN_t                    flush_sqN,
-    input       logic			 comm_valid 		 [COMMIT_WIDTH],
+    input       logic			 		comm_valid 		 		[COMMIT_WIDTH],
     input       sqN_t                    commit_sqN              [COMMIT_WIDTH],
     input       sqN_t                    instr_sqN               [RENAME_WIDTH], 
     input   var rename_instr_t           IN_instr                [RENAME_WIDTH],
@@ -47,19 +47,20 @@ module dispatch
 
     branch_checkpoint BC
     (
-        .clk                (clk),
-        .rst                (rst),
-        .flush              (flush),
-        .flush_sqN          (flush_sqN),
-        .comm_valid	    (comm_valid),	
-        .commit_sqN         (commit_sqN),
-        .instr_sqN          (instr_sqN),
-        .chk_valid          (checkpoint),
-        .IN_specTag         (IN_specTag),
-        .IN_free            (IN_free),
-        .check_busy         (check_busy),
-        .OUT_specTag        (OUT_specTag),
-        .OUT_free           (OUT_free)
+        .clk                	(clk),
+        .rst                	(rst),
+        .flush              	(flush),
+        .flush_sqN          	(flush_sqN),
+        .comm_valid	    	   	(comm_valid),	
+        .commit_sqN         	(commit_sqN),
+        .instr_sqN          	(instr_sqN),
+        .chk_valid          	(checkpoint),
+        .IN_specTag         	(IN_specTag),
+        .IN_free            	(IN_free),
+        .disp_busy		    (d_unit_busy),
+        .check_busy         	(check_busy),
+        .OUT_specTag        	(OUT_specTag),
+        .OUT_free           	(OUT_free)
     );
 
 endmodule

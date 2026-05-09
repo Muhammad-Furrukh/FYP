@@ -18,6 +18,8 @@ all: $(addsuffix .hex, $(TESTS))
 	$(OBJCOPY) -O binary $< $@.bin
 	hexdump -v -e '1/4 "%08x\n"' $@.bin > $@
 	rm $@.bin
+	$(OBJDUMP) -D $< > $(basename $@).dis
 
 clean:
 	rm -f *.elf *.hex *.dis *.bin
+	

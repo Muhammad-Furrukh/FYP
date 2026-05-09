@@ -79,12 +79,9 @@ module tb_core;
 				@(posedge clk); #1;
 				cycle++;
 				for (int i = 0; i < NUM_CDB_LINES; i++) begin
-					
-					$display("[%0d] CDB[%0d] tag=%0d result=0x%08h sqN=%0d",
-          				cycle, i, dut.CDB[i].tag, dut.CDB[i].result, dut.CDB[i].sqN);
-				
-				    if (dut.CDB[i].valid)
-				        $display("RESULT AVAILABLE...");
+					if (dut.CDB[i].valid)
+						$display("[%0d] CDB[%0d] tag=%0d result=0x%08h sqN=%0d",
+		      				cycle, i, dut.CDB[i].tag, dut.CDB[i].result, dut.CDB[i].sqN);
 				end
 				// Also watch commits
 				for (int i = 0; i < COMMIT_WIDTH; i++) begin
