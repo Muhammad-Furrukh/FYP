@@ -23,8 +23,6 @@ module load_buffer (
         logic            valid;
         sqN_t            sqN;
         tag_t            rd_tag;
-        tag_t            rs1_tag;        // base register tag
-        logic [XLEN-1:0] imm;            // immediate offset
         logic [1:0]      data_size;
         logic            is_unsigned;
         logic [XLEN-1:0] addr;
@@ -66,97 +64,160 @@ module load_buffer (
 
 
     // ════════════════════════════════════════════════════
-    // 3. STB alias check
+    // 3. Byte-lane helpers
     //
-    //    For each load entry:
-    //      Scan STB for entries with matching rs1_tag + imm
-    //      that are older (sqN < load.sqN, wrap-safe).
-    //      Track the YOUNGEST such match.
+    //    byte_lanes(addr, data_size) returns a 4-bit mask
+    //    of which byte lanes within a 32-bit word the
+    //    access touches.
     //
-    //    Decision on youngest match:
-    //      addr_data_valid=1 → forward, set fwd_hit
-    //      addr_data_valid=0 → stall
-    //
-    //    No match → no stall, issue to memory when addr_valid
+    //    extract_bytes(word, addr, data_size) right-shifts
+    //    the store word so the relevant bytes land in
+    //    bits [XLEN-1:0] aligned to bit 0, ready for
+    //    sign/zero extension.
     // ════════════════════════════════════════════════════
 
-    logic [XLEN-1:0] fwd_data    [LOADB_SIZE];
-    logic            fwd_hit     [LOADB_SIZE];
-    logic            stall       [LOADB_SIZE];
+    function automatic logic [3:0] byte_lanes(
+        input logic [XLEN-1:0] addr,
+        input logic [1:0]      data_size
+    );
+        case (data_size)
+            2'b00:   byte_lanes = 4'b0001 << addr[1:0];          // byte
+            2'b01:   byte_lanes = 4'b0011 << addr[1:0];          // halfword
+            default: byte_lanes = 4'b1111;                       // word
+        endcase
+    endfunction
+
+    function automatic logic [XLEN-1:0] extract_bytes(
+        input logic [XLEN-1:0] store_word,
+        input logic [XLEN-1:0] ld_addr,
+        input logic [XLEN-1:0] st_addr,
+        input logic [1:0]      ld_size
+    );
+        // Byte offset of the load's LSB within the store word
+        logic [1:0] byte_off;
+        byte_off = ld_addr[1:0] - st_addr[1:0];
+        extract_bytes = store_word >> (byte_off * 8);
+        // Upper bits beyond ld_size are don't-cares;
+        // extend_data will mask/sign-extend them.
+    endfunction
+
+
+    // ════════════════════════════════════════════════════
+    // 4. STB alias / forwarding / stall
+    //
+    //    For each load entry, only when addr_valid = 1:
+    //
+    //      a) Scan every older STB entry.
+    //         If ANY older entry has addr_data_valid = 0
+    //         → stall (we cannot yet rule out aliasing).
+    //
+    //      b) Among older entries with addr_data_valid = 1,
+    //         check whether the store's byte lanes fully
+    //         cover the load's byte lanes (address match).
+    //         Track the YOUNGEST such covering store.
+    //
+    //      c) If no stall and a covering store was found
+    //         → forward (fwd_hit + fwd_data).
+    //
+    //      d) If no stall and no covering store
+    //         → fall through to memory arbitration.
+    // ════════════════════════════════════════════════════
+
+    logic [XLEN-1:0] fwd_data [LOADB_SIZE];
+    logic            fwd_hit  [LOADB_SIZE];
+    logic            stall    [LOADB_SIZE];
 
     always_comb begin
-        logic               found;
-        sqN_t               youngest_sqN;
-        logic [PTR_W-1:0]   youngest_j;
-        logic               is_older;
-        logic               tags_match;
-
-        found           = 1'b0;
-        youngest_sqN    = '0;
-        youngest_j      = '0;
-        is_older        = 1'b0;
-        tags_match      = 1'b0;
-
+        logic             is_older;
+        logic             addr_covers;
+        logic [3:0]       ld_lanes;
+        logic [3:0]       st_lanes;
+        logic             found_match;
+        sqN_t             youngest_sqN;
+        logic [PTR_W-1:0] youngest_j;
+        
+        found_match  	= '0;
+        youngest_sqN 	= '0;
+        youngest_j    	= '0;
+        ld_lanes		  	= '0;
+        st_lanes			= '0;
+        is_older			= '0;
+        addr_covers		= '0;
+        
         for (int i = 0; i < LOADB_SIZE; i++) begin
             fwd_hit[i]  = 1'b0;
             fwd_data[i] = '0;
             stall[i]    = 1'b0;
 
-            if (entries[i].valid) begin
-                // ── Find youngest older aliasing store ───
-                
+            // ── Gate: load address must be known ─────────
+            if (entries[i].valid && entries[i].addr_valid) begin
+
+                ld_lanes     = byte_lanes(entries[i].addr,
+                                          entries[i].data_size);
 
                 for (int j = 0; j < STOREB_SIZE; j++) begin
                     if (stb_fwd[j].valid || stb_fwd[j].committed) begin
-                        // Older = (load.sqN - store.sqN) in [1, ROB_SIZE)
-                        
 
-                        is_older = ((entries[i].sqN - stb_fwd[j].sqN)
-                                    & SQN_MASK) < sqN_t'(ROB_SIZE)
+                        // Older = (load.sqN - store.sqN) wraps into [1, ROB_SIZE)
+                        is_older = ((entries[i].sqN - stb_fwd[j].sqN) & SQN_MASK)
+                                       < sqN_t'(ROB_SIZE)
                                 && (stb_fwd[j].sqN != entries[i].sqN);
-                                
-                        tags_match = (stb_fwd[j].rs1_tag == entries[i].rs1_tag)
-                                  && (stb_fwd[j].imm      == entries[i].imm);
 
-                        if (is_older && tags_match) begin
-                            // Youngest = store whose sqN is closest
-                            // below load.sqN — largest sqN seen so far
-                            if (!found ||
-                                ((stb_fwd[j].sqN - youngest_sqN)
-                                 & SQN_MASK) < sqN_t'(ROB_SIZE)) begin
-                                found        = 1'b1;
-                                youngest_sqN = stb_fwd[j].sqN;
-                                youngest_j   = PTR_W'(j);
+                        if (is_older) begin
+                            if (!stb_fwd[j].addr_data_valid) begin
+                                // ── (a) Older store with unknown result → stall
+                                stall[i] = 1'b1;
+                            end else begin
+                                // ── (b) Older store with known addr+data
+                                //        Check byte-lane coverage:
+                                //        store lanes must cover all load lanes
+                                //        (word-aligned base must also match)
+                                st_lanes    = byte_lanes(stb_fwd[j].addr,
+                                                         stb_fwd[j].data_size);
+                                addr_covers = (stb_fwd[j].addr[XLEN-1:2]
+                                                  == entries[i].addr[XLEN-1:2])
+                                           && ((st_lanes & ld_lanes) == ld_lanes);
+
+                                if (addr_covers) begin
+                                    // Track youngest covering store
+                                    if (!found_match ||
+                                        ((stb_fwd[j].sqN - youngest_sqN) & SQN_MASK)
+                                            < sqN_t'(ROB_SIZE))
+                                    begin
+                                        found_match  = 1'b1;
+                                        youngest_sqN = stb_fwd[j].sqN;
+                                        youngest_j   = PTR_W'(j);
+                                    end
+                                end
                             end
                         end
                     end
                 end
 
-                // ── Evaluate youngest match ──────────────
-                if (found) begin
-                    if (stb_fwd[youngest_j].addr_data_valid) begin
-                        // Data ready — forward
-                        fwd_hit[i]  = 1'b1;
-                        fwd_data[i] = stb_fwd[youngest_j].data;
-                    end else begin
-                        // Data not ready — stall
-                        stall[i] = 1'b1;
-                    end
+                // ── (c) Forward from youngest covering store ──
+                // Only act if nothing triggered a stall
+                if (!stall[i] && found_match) begin
+                    fwd_hit[i]  = 1'b1;
+                    fwd_data[i] = extract_bytes(
+                                      stb_fwd[youngest_j].data,
+                                      entries[i].addr,
+                                      stb_fwd[youngest_j].addr,
+                                      entries[i].data_size);
                 end
-                // No match → proceed to memory
+                // ── (d) !stall && !found_match → memory ───────
             end
         end
     end
 
 
     // ════════════════════════════════════════════════════
-    // 4. Memory request arbitration
+    // 5. Memory request arbitration
     //    Issue up to 2 entries that:
-    //      - addr_valid (need real address for request)
+    //      - addr_valid
     //      - not stalled
-    //      - no fwd_hit (data not coming from STB)
+    //      - no fwd_hit
     //      - data not already valid
-    //    Prefix-sum: port p gets p-th issuable entry
+    //    Prefix-sum: port p gets the p-th issuable entry
     // ════════════════════════════════════════════════════
 
     logic [PTR_W-1:0] req_idx   [2];
@@ -167,11 +228,11 @@ module load_buffer (
         prefix[0] = '0;
         for (int i = 0; i < LOADB_SIZE; i++) begin
             logic can_issue;
-            can_issue  = entries[i].valid
-                      && entries[i].addr_valid
-                      && !stall[i]
-                      && !fwd_hit[i]
-                      && !entries[i].data_valid;
+            can_issue   = entries[i].valid
+                       && entries[i].addr_valid
+                       && !stall[i]
+                       && !fwd_hit[i]
+                       && !entries[i].data_valid;
             prefix[i+1] = prefix[i] + ($clog2(LOADB_SIZE)+1)'(can_issue);
         end
 
@@ -210,7 +271,7 @@ module load_buffer (
 
 
     // ════════════════════════════════════════════════════
-    // 5. CDB output
+    // 6. CDB output
     //    Oldest entry with data_valid broadcasts.
     //    Iterate reverse so lowest index wins on tie.
     // ════════════════════════════════════════════════════
@@ -240,7 +301,7 @@ module load_buffer (
 
 
     // ════════════════════════════════════════════════════
-    // 6. Busy
+    // 7. Busy
     // ════════════════════════════════════════════════════
 
     logic [PTR_W:0] used_count;
@@ -255,7 +316,7 @@ module load_buffer (
 
 
     // ════════════════════════════════════════════════════
-    // 7. Sign/zero extension
+    // 8. Sign/zero extension
     // ════════════════════════════════════════════════════
 
     function automatic logic [XLEN-1:0] extend_data(
@@ -274,7 +335,7 @@ module load_buffer (
 
 
     // ════════════════════════════════════════════════════
-    // 8. Sequential
+    // 9. Sequential
     //
     //    Priority (highest → lowest):
     //      rst          — full reset
@@ -282,6 +343,9 @@ module load_buffer (
     //      cdb_drain    — free broadcast entry
     //      mem_resp     — write back memory data
     //      fwd_hit      — write forwarded STB data
+    //                     (addr_valid is guaranteed here,
+    //                      so extend immediately — no raw
+    //                      latch / re-extend path needed)
     //      addr_wb      — write back AGU address
     //      alloc        — claim new slot
     // ════════════════════════════════════════════════════
@@ -320,23 +384,16 @@ module load_buffer (
             end
 
             // ── STB forwarding → data_valid ───────────────
-            // fwd_hit is combinational — write result into
-            // entry so it broadcasts on the next cycle.
+            // addr_valid is guaranteed before fwd_hit can assert
+            // (section 4 gates on it), so data_size/is_unsigned
+            // are already correct — extend immediately, no
+            // deferred re-extend path required.
             for (int i = 0; i < LOADB_SIZE; i++) begin
                 if (fwd_hit[i] && !entries[i].data_valid) begin
-                    // data_size/is_unsigned known only after addr_wb;
-                    // if addr not yet written, latch raw and re-extend
-                    // when addr_wb arrives. If addr already valid,
-                    // extend now.
-                    if (entries[i].addr_valid) begin
-                        entries[i].data <= extend_data(
-                                               fwd_data[i],
-                                               entries[i].data_size,
-                                               entries[i].is_unsigned);
-                    end else begin
-                        // Store raw — addr_wb handler will extend
-                        entries[i].data <= fwd_data[i];
-                    end
+                    entries[i].data       <= extend_data(
+                                                fwd_data[i],
+                                                entries[i].data_size,
+                                                entries[i].is_unsigned);
                     entries[i].data_valid <= 1'b1;
                 end
             end
@@ -347,30 +404,22 @@ module load_buffer (
                 entries[ta_wb_idx].addr_valid  <= 1'b1;
                 entries[ta_wb_idx].data_size   <= addr_wb.data_size;
                 entries[ta_wb_idx].is_unsigned <= addr_wb.is_unsigned;
-
-                // If data was forwarded before addr arrived,
-                // apply size/sign extension now
-                if (entries[ta_wb_idx].data_valid) begin
-                    entries[ta_wb_idx].data <= extend_data(
-                                                   entries[ta_wb_idx].data,
-                                                   addr_wb.data_size,
-                                                   addr_wb.is_unsigned);
-                end
+                // data_valid cannot be set yet at this point:
+                // fwd_hit requires addr_valid which only becomes
+                // true next cycle, so no re-extend case exists.
             end
 
             // ── Alloc ─────────────────────────────────────
             if (alloc.valid) begin
-                entries[alloc_idx].valid      <= 1'b1;
-                entries[alloc_idx].sqN        <= alloc.sqN;
-                entries[alloc_idx].rd_tag     <= alloc.rd_tag;
-                entries[alloc_idx].rs1_tag    <= alloc.rs1_tag;
-                entries[alloc_idx].imm        <= alloc.imm;
-                entries[alloc_idx].data_size  <= '0;
-                entries[alloc_idx].is_unsigned<= 1'b0;
-                entries[alloc_idx].addr       <= '0;
-                entries[alloc_idx].addr_valid <= 1'b0;
-                entries[alloc_idx].data       <= '0;
-                entries[alloc_idx].data_valid <= 1'b0;
+                entries[alloc_idx].valid       <= 1'b1;
+                entries[alloc_idx].sqN         <= alloc.sqN;
+                entries[alloc_idx].rd_tag      <= alloc.rd_tag;
+                entries[alloc_idx].data_size   <= '0;
+                entries[alloc_idx].is_unsigned <= 1'b0;
+                entries[alloc_idx].addr        <= '0;
+                entries[alloc_idx].addr_valid  <= 1'b0;
+                entries[alloc_idx].data        <= '0;
+                entries[alloc_idx].data_valid  <= 1'b0;
             end
         end
     end
