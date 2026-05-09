@@ -78,6 +78,9 @@ module decode
                                   u_type: NOT_U};
             end
 
+            else if (IN_busy)
+                OUT_instr[i] <= OUT_instr[i];
+
             else
                 OUT_instr[i] <= decode_out[i];
         end
