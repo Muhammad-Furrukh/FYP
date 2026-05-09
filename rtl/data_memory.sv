@@ -137,7 +137,7 @@ module data_memory (
 
     // Read response data held in slow domain until synced back
     logic [31:0]  rd_data_mem [2];
-    tag_t         rd_tag_mem  [2];
+    tag_t         rd_sqN_mem  [2];
     logic         rd_resp_valid_mem [2];
 
     // Track previous valid_sync to detect rising edge
@@ -160,6 +160,7 @@ module data_memory (
             for (int i = 0; i < 2; i++) begin
                 wr_ack_mem[i]        <= 1'b0;
                 rd_ack_mem[i]        <= 1'b0;
+                rd_sqN_mem[i]        <= '0;
                 rd_resp_valid_mem[i] <= 1'b0;
                 wr_valid_sync_r[i]   <= 1'b0;
                 rd_valid_sync_r[i]   <= 1'b0;
@@ -169,6 +170,7 @@ module data_memory (
             for (int i = 0; i < 2; i++) begin
                 wr_ack_mem[i]        <= 1'b0;
                 rd_ack_mem[i]        <= 1'b0;
+                rd_sqN_mem[i]        <= '0;
                 rd_resp_valid_mem[i] <= 1'b0;
                 wr_valid_sync_r[i]   <= wr_valid_sync[i];
                 rd_valid_sync_r[i]   <= rd_valid_sync[i];
@@ -201,6 +203,7 @@ module data_memory (
                 if (rd_valid_sync[i] && !rd_valid_sync_r[i]) begin
                     rd_data_mem[i]       <= bank[rd_req_held[i].r_addr[2]]
                                                [rd_req_held[i].r_addr[BANK_AW+2:3]];
+                    rd_sqN_mem[i]        <= rd_req_held[i].sqN;
                     rd_resp_valid_mem[i] <= 1'b1;
                     rd_ack_mem[i]        <= 1'b1;
                 end
@@ -246,6 +249,7 @@ module data_memory (
                 rd_resp[i] <= '{default: '0};
                 if (rd_ack_sync[i]) begin
                     rd_resp[i].valid <= 1'b1;
+                    rd_resp[i].sqN   <= rd_sqN_mem[i];
                     rd_resp[i].data  <= rd_data_mem[i];
                 end
             end

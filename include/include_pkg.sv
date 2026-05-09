@@ -259,8 +259,10 @@ typedef struct packed{
 	} agu_out_t;
 
 	typedef struct packed {
-	    logic               valid;
-	    sqN_t               sqN;
+	    logic               	valid;
+	    sqN_t               	sqN;
+        tag_t            	rs1_tag;         // base register tag
+        logic [XLEN-1:0] 	imm;             // immediate offset
 	} stb_alloc_t;  // Dispatch to Store Buffer
 
 	typedef struct packed {
@@ -272,9 +274,11 @@ typedef struct packed{
 	} stb_wb_t;    // AGU to Store Buffer (write-back)
 
 	typedef struct packed {
-	    logic               valid;
-	    sqN_t               sqN;
-	    tag_t               rd_tag;
+	    logic               	valid;
+	    logic [XLEN-1:0]		imm;
+	    tag_t				rs1_tag;
+	    sqN_t               	sqN;
+	    tag_t               	rd_tag;
 	} ldb_alloc_t;  // Dispatch to Load Buffer    
 
 	typedef struct packed {
@@ -286,11 +290,15 @@ typedef struct packed{
 	} ldb_addr_t;   // AGU to Load Buffer (write-back)
 
 	typedef struct packed {
-	    logic               valid;  
-	    sqN_t               sqN;
-	    logic [XLEN - 1:0]  addr;
-	    logic [1:0]         data_size;
-	    logic               addr_data_valid;
+	    logic            valid;
+        logic            committed;       // safe to drain to memory
+        logic            addr_data_valid; // addr + data both known
+        sqN_t            sqN;
+        tag_t            rs1_tag;         // base register tag
+        logic [XLEN-1:0] imm;             // immediate offset
+        logic [1:0]      data_size;
+        logic [XLEN-1:0] addr;
+        logic [XLEN-1:0] data;
 	} stb_fwd_entry_t;   // Store Buffer to Load Buffer forwarding entry
 
 	typedef struct packed {

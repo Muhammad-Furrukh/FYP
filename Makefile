@@ -82,17 +82,18 @@ test_branch_checkpoint:
 		-o tb_branch_checkpoint_sim
 	cd $(BRCHKPT_DIR) && ./tb_branch_checkpoint_sim
 
+LSU_DIR = $(SIM_DIR)/Vlsu
+
 test_lsu:
-	verilator --cc --exe --build --trace-fst --trace --timing --main \
-		-Wall -Wno-fatal \
-		+incdir+rtl +incdir+include \
+	mkdir -p $(SIM_DIR)
+	$(VERILATOR) $(UNIT_VFLAGS) \
 		--top-module tb_lsu \
-		--Mdir sim_verilator/Vlsu \
-		include/include_pkg.sv rtl/sync_2ff.sv rtl/dmem.sv \
+		--Mdir $(LSU_DIR) \
+		$(PKG_FILE) rtl/sync_2ff.sv rtl/data_memory.sv \
 		rtl/lsu.sv rtl/store_buffer.sv rtl/load_buffer.sv \
-		tb/modules/tb_lsu.sv \
+		$(UNIT_DIR)/tb_lsu.sv \
 		-o tb_lsu_sim
-	./sim_verilator/Vlsu/tb_lsu_sim
+	./$(LSU_DIR)/tb_lsu_sim
 
 # ════════════════════════════════════════════════════
 # FULL CORE test
