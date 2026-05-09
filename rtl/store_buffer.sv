@@ -23,8 +23,6 @@ module store_buffer (
         logic            committed;       // safe to drain to memory
         logic            addr_data_valid; // addr + data both known
         sqN_t            sqN;
-        tag_t            rs1_tag;         // base register tag
-        logic [XLEN-1:0] imm;             // immediate offset
         logic [1:0]      data_size;
         logic [XLEN-1:0] addr;
         logic [XLEN-1:0] data;
@@ -44,8 +42,6 @@ module store_buffer (
             fwd[i].committed      = entries[i].committed;
             fwd[i].addr_data_valid= entries[i].addr_data_valid;
             fwd[i].sqN            = entries[i].sqN;
-            fwd[i].rs1_tag        = entries[i].rs1_tag;
-            fwd[i].imm            = entries[i].imm;
             fwd[i].data_size      = entries[i].data_size;
             fwd[i].addr           = entries[i].addr;
             fwd[i].data           = entries[i].data;
@@ -178,10 +174,10 @@ module store_buffer (
 
             // ── WB: write addr + data ─────────────────────
             if (wb.valid) begin
-                entries[wb_idx].addr           <= wb.addr;
-                entries[wb_idx].data           <= wb.data;
-                entries[wb_idx].data_size      <= wb.data_size;
-                entries[wb_idx].addr_data_valid<= 1'b1;
+                entries[wb_idx].addr           	<= wb.addr;
+                entries[wb_idx].data           	<= wb.data;
+                entries[wb_idx].data_size      	<= wb.data_size;
+                entries[wb_idx].addr_data_valid	<= 1'b1;
             end
 
             // ── Drain: free entries sent to memory ────────
@@ -192,15 +188,13 @@ module store_buffer (
 
             // ── Alloc: claim a slot ───────────────────────
             if (alloc.valid) begin
-                entries[alloc_idx].valid          <= 1'b1;
-                entries[alloc_idx].committed      <= 1'b0;
-                entries[alloc_idx].addr_data_valid<= 1'b0;
-                entries[alloc_idx].sqN            <= alloc.sqN;
-                entries[alloc_idx].rs1_tag        <= alloc.rs1_tag;
-                entries[alloc_idx].imm            <= alloc.imm;
-                entries[alloc_idx].data_size      <= '0;
-                entries[alloc_idx].addr           <= '0;
-                entries[alloc_idx].data           <= '0;
+                entries[alloc_idx].valid          	<= 1'b1;
+                entries[alloc_idx].committed      	<= 1'b0;
+                entries[alloc_idx].addr_data_valid	<= 1'b0;
+                entries[alloc_idx].sqN            	<= alloc.sqN;
+                entries[alloc_idx].data_size      	<= '0;
+                entries[alloc_idx].addr           	<= '0;
+                entries[alloc_idx].data           	<= '0;
             end
         end
     end

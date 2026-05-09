@@ -261,8 +261,6 @@ typedef struct packed{
 	typedef struct packed {
 	    logic               	valid;
 	    sqN_t               	sqN;
-        tag_t            	rs1_tag;         // base register tag
-        logic [XLEN-1:0] 	imm;             // immediate offset
 	} stb_alloc_t;  // Dispatch to Store Buffer
 
 	typedef struct packed {
@@ -275,8 +273,6 @@ typedef struct packed{
 
 	typedef struct packed {
 	    logic               	valid;
-	    logic [XLEN-1:0]		imm;
-	    tag_t				rs1_tag;
 	    sqN_t               	sqN;
 	    tag_t               	rd_tag;
 	} ldb_alloc_t;  // Dispatch to Load Buffer    
@@ -294,8 +290,6 @@ typedef struct packed{
         logic            committed;       // safe to drain to memory
         logic            addr_data_valid; // addr + data both known
         sqN_t            sqN;
-        tag_t            rs1_tag;         // base register tag
-        logic [XLEN-1:0] imm;             // immediate offset
         logic [1:0]      data_size;
         logic [XLEN-1:0] addr;
         logic [XLEN-1:0] data;

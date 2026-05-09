@@ -75,8 +75,6 @@ module lsu (
 
     assign stb_alloc.valid   = has_store_disp && !str_busy;
     assign stb_alloc.sqN     = dispatch_instr[store_disp_idx].sqN;
-    assign stb_alloc.rs1_tag = dispatch_instr[store_disp_idx].rs1_tag;
-    assign stb_alloc.imm     = dispatch_instr[store_disp_idx].imm;
 
     stb_wb_t stb_wb;
 
@@ -96,8 +94,6 @@ module lsu (
     assign ldb_alloc.valid   = has_load_disp && !ld_busy;
     assign ldb_alloc.sqN     = dispatch_instr[load_disp_idx].sqN;
     assign ldb_alloc.rd_tag  = dispatch_instr[load_disp_idx].rd_tag;
-    assign ldb_alloc.rs1_tag = dispatch_instr[load_disp_idx].rs1_tag;
-    assign ldb_alloc.imm     = dispatch_instr[load_disp_idx].imm;
 
     ldb_addr_t ldb_addr_wb;
 
