@@ -190,7 +190,7 @@ module dispatch_unit
     always_comb begin
         packet_done = 1'b1;
         for (int i = 0; i < RENAME_WIDTH; i++)
-            if (slot_pending[i]) packet_done = 1'b0;
+            if (slot_pending[i] & !can_dispatch[i]) packet_done = 1'b0;
     end
 
     assign OUT_busy = !packet_done;

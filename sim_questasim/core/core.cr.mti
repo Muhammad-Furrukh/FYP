@@ -13,6 +13,23 @@ QuestaSim-64 vlog 2021.2_1 Compiler 2021.05 May 15 2021
 Top level modules:
 	lsu
 
+} {} {}} /home/muhammad/Documents/UET/FYP/rtl/branch_checkpoint.sv {2 {vlog -work work -vopt -sv -stats=none /home/muhammad/Documents/UET/FYP/rtl/branch_checkpoint.sv
+QuestaSim-64 vlog 2021.2_1 Compiler 2021.05 May 15 2021
+** Warning: /home/muhammad/Documents/UET/FYP/rtl/branch_checkpoint.sv(9): (vlog-13314) Defaulting port 'comm_valid' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+** Warning: /home/muhammad/Documents/UET/FYP/rtl/branch_checkpoint.sv(10): (vlog-13314) Defaulting port 'commit_sqN' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+** Warning: /home/muhammad/Documents/UET/FYP/rtl/branch_checkpoint.sv(11): (vlog-13314) Defaulting port 'instr_sqN' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+** Warning: /home/muhammad/Documents/UET/FYP/rtl/branch_checkpoint.sv(12): (vlog-13314) Defaulting port 'chk_valid' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+-- Compiling package branch_checkpoint_sv_unit
+-- Importing package include_pkg
+-- Compiling module branch_checkpoint
+** Warning: /home/muhammad/Documents/UET/FYP/rtl/branch_checkpoint.sv(9): (vlog-13314) Defaulting port 'comm_valid' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+** Warning: /home/muhammad/Documents/UET/FYP/rtl/branch_checkpoint.sv(10): (vlog-13314) Defaulting port 'commit_sqN' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+** Warning: /home/muhammad/Documents/UET/FYP/rtl/branch_checkpoint.sv(11): (vlog-13314) Defaulting port 'instr_sqN' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+** Warning: /home/muhammad/Documents/UET/FYP/rtl/branch_checkpoint.sv(12): (vlog-13314) Defaulting port 'chk_valid' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+
+Top level modules:
+	branch_checkpoint
+
 } {} {}} /home/muhammad/Documents/UET/FYP/rtl/lsu_issue_buffer.sv {2 {vlog -work work -vopt -sv -stats=none /home/muhammad/Documents/UET/FYP/rtl/lsu_issue_buffer.sv
 QuestaSim-64 vlog 2021.2_1 Compiler 2021.05 May 15 2021
 ** Warning: /home/muhammad/Documents/UET/FYP/rtl/lsu_issue_buffer.sv(8): (vlog-13314) Defaulting port 'IN_instr' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
@@ -91,20 +108,14 @@ QuestaSim-64 vlog 2021.2_1 Compiler 2021.05 May 15 2021
 Top level modules:
 	--none--
 
-} {} {}} /home/muhammad/Documents/UET/FYP/rtl/dispatch_unit.sv {2 {vlog -work work -vopt -sv -stats=none /home/muhammad/Documents/UET/FYP/rtl/dispatch_unit.sv
+} {} {}} /home/muhammad/Documents/UET/FYP/rtl/IMEM.sv {1 {vlog -work work -vopt -sv -stats=none /home/muhammad/Documents/UET/FYP/rtl/IMEM.sv
 QuestaSim-64 vlog 2021.2_1 Compiler 2021.05 May 15 2021
-** Warning: /home/muhammad/Documents/UET/FYP/rtl/dispatch_unit.sv(9): (vlog-13314) Defaulting port 'ALU_buffer_busy' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
-** Warning: /home/muhammad/Documents/UET/FYP/rtl/dispatch_unit.sv(10): (vlog-13314) Defaulting port 'MUL_DIV_buffer_busy' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
-** Warning: /home/muhammad/Documents/UET/FYP/rtl/dispatch_unit.sv(11): (vlog-13314) Defaulting port 'LSU_buffer_busy' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
--- Compiling package dispatch_unit_sv_unit
+-- Compiling package IMEM_sv_unit
 -- Importing package include_pkg
--- Compiling module dispatch_unit
-** Warning: /home/muhammad/Documents/UET/FYP/rtl/dispatch_unit.sv(9): (vlog-13314) Defaulting port 'ALU_buffer_busy' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
-** Warning: /home/muhammad/Documents/UET/FYP/rtl/dispatch_unit.sv(10): (vlog-13314) Defaulting port 'MUL_DIV_buffer_busy' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
-** Warning: /home/muhammad/Documents/UET/FYP/rtl/dispatch_unit.sv(11): (vlog-13314) Defaulting port 'LSU_buffer_busy' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+-- Compiling module IMEM
 
 Top level modules:
-	dispatch_unit
+	IMEM
 
 } {} {}} /home/muhammad/Documents/UET/FYP/rtl/dispatch.sv {2 {vlog -work work -vopt -sv -stats=none /home/muhammad/Documents/UET/FYP/rtl/dispatch.sv
 QuestaSim-64 vlog 2021.2_1 Compiler 2021.05 May 15 2021
@@ -355,15 +366,13 @@ Top level modules:
 QuestaSim-64 vlog 2021.2_1 Compiler 2021.05 May 15 2021
 ** Warning: /home/muhammad/Documents/UET/FYP/rtl/ta_gen1.sv(5): (vlog-13314) Defaulting port 'IN_pc' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
 ** Warning: /home/muhammad/Documents/UET/FYP/rtl/ta_gen1.sv(6): (vlog-13314) Defaulting port 'valid' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
-** Warning: /home/muhammad/Documents/UET/FYP/rtl/ta_gen1.sv(7): (vlog-13314) Defaulting port 'opcode' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
-** Warning: /home/muhammad/Documents/UET/FYP/rtl/ta_gen1.sv(8): (vlog-13314) Defaulting port 'imm' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+** Warning: /home/muhammad/Documents/UET/FYP/rtl/ta_gen1.sv(7): (vlog-13314) Defaulting port 'IN_instr' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
 -- Compiling package ta_gen1_sv_unit
 -- Importing package include_pkg
 -- Compiling module ta_gen1
 ** Warning: /home/muhammad/Documents/UET/FYP/rtl/ta_gen1.sv(5): (vlog-13314) Defaulting port 'IN_pc' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
 ** Warning: /home/muhammad/Documents/UET/FYP/rtl/ta_gen1.sv(6): (vlog-13314) Defaulting port 'valid' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
-** Warning: /home/muhammad/Documents/UET/FYP/rtl/ta_gen1.sv(7): (vlog-13314) Defaulting port 'opcode' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
-** Warning: /home/muhammad/Documents/UET/FYP/rtl/ta_gen1.sv(8): (vlog-13314) Defaulting port 'imm' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+** Warning: /home/muhammad/Documents/UET/FYP/rtl/ta_gen1.sv(7): (vlog-13314) Defaulting port 'IN_instr' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
 
 Top level modules:
 	ta_gen1
@@ -435,14 +444,10 @@ Top level modules:
 } {} {}} /home/muhammad/Documents/UET/FYP/rtl/fetch_buffer.sv {2 {vlog -work work -vopt -sv -stats=none /home/muhammad/Documents/UET/FYP/rtl/fetch_buffer.sv
 QuestaSim-64 vlog 2021.2_1 Compiler 2021.05 May 15 2021
 ** Warning: /home/muhammad/Documents/UET/FYP/rtl/fetch_buffer.sv(9): (vlog-13314) Defaulting port 'IN_instr' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
-** Warning: /home/muhammad/Documents/UET/FYP/rtl/fetch_buffer.sv(10): (vlog-13314) Defaulting port 'IN_valid' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
-** Warning: /home/muhammad/Documents/UET/FYP/rtl/fetch_buffer.sv(11): (vlog-13314) Defaulting port 'IN_pc' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
 -- Compiling package fetch_buffer_sv_unit
 -- Importing package include_pkg
 -- Compiling module fetch_buffer
 ** Warning: /home/muhammad/Documents/UET/FYP/rtl/fetch_buffer.sv(9): (vlog-13314) Defaulting port 'IN_instr' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
-** Warning: /home/muhammad/Documents/UET/FYP/rtl/fetch_buffer.sv(10): (vlog-13314) Defaulting port 'IN_valid' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
-** Warning: /home/muhammad/Documents/UET/FYP/rtl/fetch_buffer.sv(11): (vlog-13314) Defaulting port 'IN_pc' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
 
 Top level modules:
 	fetch_buffer
