@@ -934,3 +934,127 @@ run
 # [8] CDB[0] tag=1 result=0x00000064 sqN=0
 # [10] COMMIT[0] archTag=1 sqN=0
 run
+# Compile of include_pkg.sv was successful.
+# Compile of AGU.sv was successful with warnings.
+# Compile of ALU.sv was successful with warnings.
+# Compile of alu_issue_buffer.sv was successful with warnings.
+# Compile of branch_checkpoint.sv was successful with warnings.
+# Compile of branch_comparator.sv was successful.
+# Compile of core.sv was successful.
+# Compile of data_memory.sv was successful with warnings.
+# Compile of decode.sv was successful.
+# Compile of decoder.sv was successful.
+# Compile of dispatch.sv was successful with warnings.
+# Compile of dispatch_unit.sv was successful with warnings.
+# Compile of execute.sv was successful with warnings.
+# Compile of fetch.sv was successful with warnings.
+# Compile of fetch_buffer.sv was successful with warnings.
+# Compile of flush_controller.sv was successful with warnings.
+# Compile of IMEM.sv was successful.
+# Compile of immediate_gen.sv was successful.
+# Compile of instr_aligner.sv was successful.
+# Compile of issue.sv was successful.
+# Compile of load_buffer.sv was successful with warnings.
+# Compile of lsu.sv was successful with warnings.
+# Compile of lsu_issue_buffer.sv was successful with warnings.
+# Compile of mul_div.sv was successful with warnings.
+# Compile of mul_div_issue_buffer.sv was successful with warnings.
+# Compile of PC.sv was successful.
+# Compile of prefetch.sv was successful.
+# Compile of priority_encoder.sv was successful.
+# Compile of register_file.sv was successful with warnings.
+# Compile of rename.sv was successful with warnings.
+# Compile of ROB.sv was successful with warnings.
+# Compile of store_buffer.sv was successful with warnings.
+# Compile of sync_2ff.sv was successful.
+# Compile of ta_gen1.sv was successful with warnings.
+# Compile of ta_gen2.sv was successful with warnings.
+# Compile of core_tb.sv was successful with warnings.
+# 36 compiles, 0 failed with no errors.
+restart -f
+# Closing VCD file "tb_core.fst"
+# ** Note: (vsim-12125) Error and warning message counts have been reset to '0' because of 'restart'.
+# ** Note: (vsim-3813) Design is being optimized due to module recompilation...
+# ** Warning: /home/muhammad/Documents/UET/FYP/rtl/dispatch_unit.sv(9): (vopt-13314) Defaulting port 'ALU_buffer_busy' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: /home/muhammad/Documents/UET/FYP/rtl/dispatch_unit.sv(10): (vopt-13314) Defaulting port 'MUL_DIV_buffer_busy' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: /home/muhammad/Documents/UET/FYP/rtl/dispatch_unit.sv(11): (vopt-13314) Defaulting port 'LSU_buffer_busy' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Note: (vsim-12126) Error and warning message counts have been restored: Errors=0, Warnings=3.
+# Loading sv_std.std
+# Loading work.include_pkg(fast)
+# Loading work.core_tb_sv_unit(fast)
+# Loading work.tb_core(fast)
+# Loading work.core_sv_unit(fast)
+# Loading work.core(fast)
+# Loading work.prefetch_sv_unit(fast)
+# Loading work.prefetch(fast)
+# Loading work.PC_sv_unit(fast)
+# Loading work.PC(fast)
+# Loading work.IMEM_sv_unit(fast)
+# Loading work.IMEM(fast)
+# Loading work.instr_aligner_sv_unit(fast)
+# Loading work.instr_aligner(fast)
+# Loading work.fetch_sv_unit(fast)
+# Loading work.fetch(fast)
+# Loading work.ta_gen1_sv_unit(fast)
+# Loading work.ta_gen1(fast)
+# Loading work.fetch_buffer_sv_unit(fast)
+# Loading work.fetch_buffer(fast)
+# Loading work.decode_sv_unit(fast)
+# Loading work.decode(fast)
+# Loading work.decoder_sv_unit(fast)
+# Loading work.decoder(fast)
+# Loading work.immediate_gen_sv_unit(fast)
+# Loading work.immediate_gen(fast)
+# Loading work.rename_sv_unit(fast)
+# Loading work.rename(fast)
+# Loading work.dispatch_sv_unit(fast)
+# Loading work.dispatch(fast)
+# Loading work.dispatch_unit_sv_unit(fast)
+# Loading work.dispatch_unit(fast)
+# Loading work.branch_checkpoint_sv_unit(fast)
+# Loading work.branch_checkpoint(fast)
+# Loading work.issue_sv_unit(fast)
+# Loading work.issue(fast)
+# Loading work.alu_issue_buffer_sv_unit(fast)
+# Loading work.alu_issue_buffer(fast)
+# Loading work.priority_encoder(fast)
+# Loading work.branch_comparator_sv_unit(fast)
+# Loading work.branch_comparator(fast)
+# Loading work.mul_div_issue_buffer_sv_unit(fast)
+# Loading work.mul_div_issue_buffer(fast)
+# Loading work.lsu_issue_buffer_sv_unit(fast)
+# Loading work.lsu_issue_buffer(fast)
+# Loading work.ta_gen2_sv_unit(fast)
+# Loading work.ta_gen2(fast)
+# Loading work.flush_controller_sv_unit(fast)
+# Loading work.flush_controller(fast)
+# Loading work.execute_sv_unit(fast)
+# Loading work.execute(fast)
+# Loading work.ALU_sv_unit(fast)
+# Loading work.ALU(fast)
+# Loading work.mul_div_sv_unit(fast)
+# Loading work.MUL_DIV(fast)
+# Loading work.AGU_sv_unit(fast)
+# Loading work.AGU(fast)
+# Loading work.lsu_sv_unit(fast)
+# Loading work.lsu(fast)
+# Loading work.store_buffer_sv_unit(fast)
+# Loading work.store_buffer(fast)
+# Loading work.load_buffer_sv_unit(fast)
+# Loading work.load_buffer(fast)
+# Loading work.data_memory_sv_unit(fast)
+# Loading work.data_memory(fast)
+# Loading work.sync_2ff_sv_unit(fast)
+# Loading work.sync_2ff(fast)
+# Loading work.register_file_sv_unit(fast)
+# Loading work.register_file(fast)
+# Loading work.ROB_sv_unit(fast)
+# Loading work.ROB(fast)
+run
+# Core released from reset...
+# ** Error: Couldn't load program, exiting...
+#    Time: 96 ns  Scope: tb_core File: /home/muhammad/Documents/UET/FYP/sim_questasim/core/core_tb.sv Line: 53
+run
+# [8] CDB[0] tag=1 result=0x00000064 sqN=0
+# [10] COMMIT[0] archTag=1 sqN=0
+run
