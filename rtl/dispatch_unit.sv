@@ -90,9 +90,9 @@ module dispatch_unit
 	    prefix_mul[0] = '0;
 	    prefix_lsu[0] = '0;
 	    for (int s = 0; s < RENAME_WIDTH; s++) begin
-		prefix_alu[s+1] = prefix_alu[s] + ($clog2(RENAME_WIDTH)+1)'(slot_is_alu[s]);
-		prefix_mul[s+1] = prefix_mul[s] + ($clog2(RENAME_WIDTH)+1)'(slot_is_mul[s]);
-		prefix_lsu[s+1] = prefix_lsu[s] + ($clog2(RENAME_WIDTH)+1)'(slot_is_lsu[s]);
+            prefix_alu[s+1] = prefix_alu[s] + ($clog2(RENAME_WIDTH)+1)'(slot_is_alu[s]);
+            prefix_mul[s+1] = prefix_mul[s] + ($clog2(RENAME_WIDTH)+1)'(slot_is_mul[s]);
+            prefix_lsu[s+1] = prefix_lsu[s] + ($clog2(RENAME_WIDTH)+1)'(slot_is_lsu[s]);
 	    end
 
 	    // ── Port-ready prefix sums ───────────────────────
@@ -112,15 +112,15 @@ module dispatch_unit
 
 
     // ── Port assignment ───────────────────────────────────
-    logic [$clog2(RENAME_WIDTH):0] alu_slot  [NUM_ALU_FU];
+    logic [$clog2(RENAME_WIDTH):0] alu_slot   [NUM_ALU_FU];
     logic                          alu_valid  [NUM_ALU_FU];
-    logic [$clog2(RENAME_WIDTH):0] mul_slot  [NUM_MUL_DIV_FU];
+    logic [$clog2(RENAME_WIDTH):0] mul_slot   [NUM_MUL_DIV_FU];
     logic                          mul_valid  [NUM_MUL_DIV_FU];
-    logic [$clog2(RENAME_WIDTH):0] lsu_slot  [NUM_AGU_FU];
+    logic [$clog2(RENAME_WIDTH):0] lsu_slot   [NUM_AGU_FU];
     logic                          lsu_valid  [NUM_AGU_FU];
 
     
-        always_comb begin
+    always_comb begin
 		for (int p = 0; p < NUM_ALU_FU; p++) begin : g_alu_assign
 		    alu_slot[p]  = '0;
 		    alu_valid[p] = 1'b0;
@@ -128,15 +128,15 @@ module dispatch_unit
 		        for (int s = 0; s < RENAME_WIDTH; s++) begin
 		            if (slot_is_alu[s] &&
 		                (prefix_alu[s] == ($clog2(RENAME_WIDTH)+1)'(prefix_ready_alu[p]))) begin
-		                alu_slot[p]  = $clog2(RENAME_WIDTH)'(s);
+		                alu_slot[p]  = $clog2(RENAME_WIDTH+1)'(s);
 		                alu_valid[p] = 1'b1;
 		            end
 		        end
 		    end
 		end
-    	end
+    end
 
-        always_comb begin
+    always_comb begin
 		for (int p = 0; p < NUM_MUL_DIV_FU; p++) begin 
 		    mul_slot[p]  = '0;
 		    mul_valid[p] = 1'b0;
@@ -144,13 +144,13 @@ module dispatch_unit
 		        for (int s = 0; s < RENAME_WIDTH; s++) begin
 		            if (slot_is_mul[s] &&
 		                (prefix_mul[s] == ($clog2(RENAME_WIDTH)+1)'(prefix_ready_mul[p]))) begin
-		                mul_slot[p]  = $clog2(RENAME_WIDTH)'(s);
+		                mul_slot[p]  = $clog2(RENAME_WIDTH+1)'(s);
 		                mul_valid[p] = 1'b1;
 		            end
 		        end
 		    end
 		end
-    	end
+    end
 
 	always_comb begin
 		for (int p = 0; p < NUM_AGU_FU; p++) begin	
@@ -160,7 +160,7 @@ module dispatch_unit
 			for (int s = 0; s < RENAME_WIDTH; s++) begin
 			    if (slot_is_lsu[s] &&
 				(prefix_lsu[s] == ($clog2(RENAME_WIDTH)+1)'(prefix_ready_lsu[p]))) begin
-				lsu_slot[p]  = $clog2(RENAME_WIDTH)'(s);
+				lsu_slot[p]  = $clog2(RENAME_WIDTH+1)'(s);
 				lsu_valid[p] = 1'b1;
 			    end
 			end
@@ -205,46 +205,52 @@ module dispatch_unit
         OUT_mul_div_instr = '{default: '0};
         OUT_lsu_instr     = '{default: '0};
         
-	for (int p = 0; p < NUM_ALU_FU; p++) begin
-	    if (alu_valid[p]) begin
-	        OUT_alu_instr[p].valid     = 1'b1;
-	        OUT_alu_instr[p].sqN       = packet[alu_slot[p]].sqN;
-	        OUT_alu_instr[p].pc        = packet[alu_slot[p]].pc;
-	        OUT_alu_instr[p].oper      = packet[alu_slot[p]].oper;
-	        OUT_alu_instr[p].rs1_tag   = packet[alu_slot[p]].rs1_tag;
-	        OUT_alu_instr[p].rs2_tag   = packet[alu_slot[p]].rs2_tag;
-	        OUT_alu_instr[p].rd_tag    = packet[alu_slot[p]].rd_tag;
-	        OUT_alu_instr[p].imm       = packet[alu_slot[p]].imm;
-	        OUT_alu_instr[p].is_imm    = packet[alu_slot[p]].is_imm;
-	        OUT_alu_instr[p].jump_type = packet[alu_slot[p]].jump_type;
-	        OUT_alu_instr[p].br_type   = packet[alu_slot[p]].br_type;
-	        OUT_alu_instr[p].u_type    = packet[alu_slot[p]].u_type;
-	    end
-	end
+        for (int p = 0; p < NUM_ALU_FU; p++) begin
+            if (alu_valid[p]) begin
+                OUT_alu_instr[p].valid     = 1'b1;
+                OUT_alu_instr[p].sqN       = packet[alu_slot[p]].sqN;
+                OUT_alu_instr[p].pc        = packet[alu_slot[p]].pc;
+                OUT_alu_instr[p].oper      = packet[alu_slot[p]].oper;
+                OUT_alu_instr[p].rs1_tag   = packet[alu_slot[p]].rs1_tag;
+                OUT_alu_instr[p].rs2_tag   = packet[alu_slot[p]].rs2_tag;
+                OUT_alu_instr[p].rd_tag    = packet[alu_slot[p]].rd_tag;
+                OUT_alu_instr[p].imm       = packet[alu_slot[p]].imm;
+                OUT_alu_instr[p].is_imm    = packet[alu_slot[p]].is_imm;
+                OUT_alu_instr[p].jump_type = packet[alu_slot[p]].jump_type;
+                OUT_alu_instr[p].br_type   = packet[alu_slot[p]].br_type;
+                OUT_alu_instr[p].u_type    = packet[alu_slot[p]].u_type;
+            end
+            else 
+                OUT_alu_instr[p] = '{default: '0};
+        end
 
-	for (int p = 0; p < NUM_MUL_DIV_FU; p++) begin
-	    if (mul_valid[p]) begin
-	        OUT_mul_div_instr[p].valid   = 1'b1;
-	        OUT_mul_div_instr[p].sqN     = packet[mul_slot[p]].sqN;
-	        OUT_mul_div_instr[p].oper    = packet[mul_slot[p]].oper;
-	        OUT_mul_div_instr[p].rs1_tag = packet[mul_slot[p]].rs1_tag;
-	        OUT_mul_div_instr[p].rs2_tag = packet[mul_slot[p]].rs2_tag;
-	        OUT_mul_div_instr[p].rd_tag  = packet[mul_slot[p]].rd_tag;
-	    end
-	end
+        for (int p = 0; p < NUM_MUL_DIV_FU; p++) begin
+            if (mul_valid[p]) begin
+                OUT_mul_div_instr[p].valid   = 1'b1;
+                OUT_mul_div_instr[p].sqN     = packet[mul_slot[p]].sqN;
+                OUT_mul_div_instr[p].oper    = packet[mul_slot[p]].oper;
+                OUT_mul_div_instr[p].rs1_tag = packet[mul_slot[p]].rs1_tag;
+                OUT_mul_div_instr[p].rs2_tag = packet[mul_slot[p]].rs2_tag;
+                OUT_mul_div_instr[p].rd_tag  = packet[mul_slot[p]].rd_tag;
+            end
+            else
+                OUT_mul_div_instr[p] = '{default: '0};
+        end
 
-	for (int p = 0; p < NUM_AGU_FU; p++) begin
-	    if (lsu_valid[p]) begin
-	        OUT_lsu_instr[p].valid   = 1'b1;
-	        OUT_lsu_instr[p].sqN     = packet[lsu_slot[p]].sqN;
-	        OUT_lsu_instr[p].oper    = packet[lsu_slot[p]].oper;
-	        OUT_lsu_instr[p].rs1_tag = packet[lsu_slot[p]].rs1_tag;
-	        OUT_lsu_instr[p].rs2_tag = packet[lsu_slot[p]].rs2_tag;
-	        OUT_lsu_instr[p].rd_tag  = packet[lsu_slot[p]].rd_tag;
-	        OUT_lsu_instr[p].imm     = packet[lsu_slot[p]].imm;
-	        OUT_lsu_instr[p].is_imm  = packet[lsu_slot[p]].is_imm;
-	    end
-	end
+        for (int p = 0; p < NUM_AGU_FU; p++) begin
+            if (lsu_valid[p]) begin
+                OUT_lsu_instr[p].valid   = 1'b1;
+                OUT_lsu_instr[p].sqN     = packet[lsu_slot[p]].sqN;
+                OUT_lsu_instr[p].oper    = packet[lsu_slot[p]].oper;
+                OUT_lsu_instr[p].rs1_tag = packet[lsu_slot[p]].rs1_tag;
+                OUT_lsu_instr[p].rs2_tag = packet[lsu_slot[p]].rs2_tag;
+                OUT_lsu_instr[p].rd_tag  = packet[lsu_slot[p]].rd_tag;
+                OUT_lsu_instr[p].imm     = packet[lsu_slot[p]].imm;
+                OUT_lsu_instr[p].is_imm  = packet[lsu_slot[p]].is_imm;
+            end
+            else
+                OUT_lsu_instr[p] = '{default: '0};
+        end
     end
 
 
