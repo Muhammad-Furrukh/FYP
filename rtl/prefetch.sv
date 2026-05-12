@@ -16,6 +16,7 @@ module prefetch
     pc_t                                     fetch_base;
     pc_t                                     next_pc;
     pc_t                                     current_pc;
+    pc_t                                     actual_pc;
     pc_t                                     instr_pc        [FETCH_WIDTH];
     logic                                    instr_valid     [FETCH_WIDTH];
     logic            [$clog2(FETCH_WIDTH):0] instr_consumed;
@@ -40,7 +41,7 @@ module prefetch
 
     instr_aligner aligner
     (
-        .in_pc(current_pc),
+        .in_pc(actual_pc),
         .instr_pc(instr_pc),
         .instr_valid(instr_valid),
         .consumed(instr_consumed)
@@ -48,13 +49,14 @@ module prefetch
 
     always_comb begin
         case({jump2, jump1})
-            2'b00:   next_pc = (instr_consumed << 2) + current_pc; // No jump, increment PC by 4 for each consumed instruction
-            2'b01:   next_pc = jta1; // Target address for jal
-            2'b10:   next_pc = jta2; // Target address for branch or jalr
-            default: next_pc = (instr_consumed << 2) + current_pc;
+            2'b00:   actual_pc = current_pc; 
+            2'b01:   actual_pc = jta1; // Target address for jal
+            2'b10:   actual_pc = jta2; // Target address for branch or jalr
+            default: actual_pc = current_pc;
         endcase
 
-        fetch_base = current_pc & ( ~( XLEN'(7) ) ); // Align to 8-byte boundary
+        fetch_base = actual_pc & ( ~( XLEN'(7) ) ); // Align to 8-byte boundary
+        next_pc = actual_pc + (instr_consumed << 2);
     end
 
     always_ff @(posedge clk or posedge rst) begin

@@ -20,7 +20,7 @@ module IMEM
             mem[i] = 32'b0;
         $readmemh("../../tests/add_test.hex", mem);
     end
-    
+
     logic [IMEM_ADDR_WIDTH-1:0] block_idx;
     logic [IMEM_ADDR_WIDTH-1:0] base_word;
 
