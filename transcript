@@ -1824,3 +1824,93 @@ run
 # [10] CDB[1] tag=4 result=0x00000000 sqN=3
 # [10] COMMIT[0] archTag=1 sqN=0
 # [10] COMMIT[1] archTag=2 sqN=1
+add wave -position insertpoint  \
+{sim:/tb_core/dut/issue/gen_alu_buffer[0]/alu_issue_buffer_i/IN_instr}
+add wave -position insertpoint  \
+{sim:/tb_core/dut/issue/gen_alu_buffer[1]/alu_issue_buffer_i/IN_instr}
+restart -f
+# Closing VCD file "tb_core.fst"
+# ** Note: (vsim-12125) Error and warning message counts have been reset to '0' because of 'restart'.
+# ** Note: (vsim-8009) Loading existing optimized design _opt1
+# ** Note: (vsim-12126) Error and warning message counts have been restored: Errors=0, Warnings=3.
+# Loading work.include_pkg(fast)
+# Loading work.core_tb_sv_unit(fast)
+# Loading work.tb_core(fast)
+# Loading work.core_sv_unit(fast)
+# Loading work.core(fast)
+# Loading work.prefetch_sv_unit(fast)
+# Loading work.prefetch(fast)
+# Loading work.PC_sv_unit(fast)
+# Loading work.PC(fast)
+# Loading work.IMEM_sv_unit(fast)
+# Loading work.IMEM(fast)
+# Loading work.instr_aligner_sv_unit(fast)
+# Loading work.instr_aligner(fast)
+# Loading work.fetch_sv_unit(fast)
+# Loading work.fetch(fast)
+# Loading work.ta_gen1_sv_unit(fast)
+# Loading work.ta_gen1(fast)
+# Loading work.fetch_buffer_sv_unit(fast)
+# Loading work.fetch_buffer(fast)
+# Loading work.decode_sv_unit(fast)
+# Loading work.decode(fast)
+# Loading work.decoder_sv_unit(fast)
+# Loading work.decoder(fast)
+# Loading work.immediate_gen_sv_unit(fast)
+# Loading work.immediate_gen(fast)
+# Loading work.rename_sv_unit(fast)
+# Loading work.rename(fast)
+# Loading work.dispatch_sv_unit(fast)
+# Loading work.dispatch(fast)
+# Loading work.dispatch_unit_sv_unit(fast)
+# Loading work.dispatch_unit(fast)
+# Loading work.branch_checkpoint_sv_unit(fast)
+# Loading work.branch_checkpoint(fast)
+# Loading work.issue_sv_unit(fast)
+# Loading work.issue(fast)
+# Loading work.alu_issue_buffer_sv_unit(fast)
+# Loading work.alu_issue_buffer(fast)
+# Loading work.priority_encoder(fast)
+# Loading work.branch_comparator_sv_unit(fast)
+# Loading work.branch_comparator(fast)
+# Loading work.mul_div_issue_buffer_sv_unit(fast)
+# Loading work.mul_div_issue_buffer(fast)
+# Loading work.lsu_issue_buffer_sv_unit(fast)
+# Loading work.lsu_issue_buffer(fast)
+# Loading work.ta_gen2_sv_unit(fast)
+# Loading work.ta_gen2(fast)
+# Loading work.flush_controller_sv_unit(fast)
+# Loading work.flush_controller(fast)
+# Loading work.execute_sv_unit(fast)
+# Loading work.execute(fast)
+# Loading work.ALU_sv_unit(fast)
+# Loading work.ALU(fast)
+# Loading work.mul_div_sv_unit(fast)
+# Loading work.MUL_DIV(fast)
+# Loading work.AGU_sv_unit(fast)
+# Loading work.AGU(fast)
+# Loading work.lsu_sv_unit(fast)
+# Loading work.lsu(fast)
+# Loading work.store_buffer_sv_unit(fast)
+# Loading work.store_buffer(fast)
+# Loading work.load_buffer_sv_unit(fast)
+# Loading work.load_buffer(fast)
+# Loading work.data_memory_sv_unit(fast)
+# Loading work.data_memory(fast)
+# Loading work.sync_2ff_sv_unit(fast)
+# Loading work.sync_2ff(fast)
+# Loading work.register_file_sv_unit(fast)
+# Loading work.register_file(fast)
+# Loading work.ROB_sv_unit(fast)
+# Loading work.ROB(fast)
+run
+# Core released from reset...
+# ** Error: Couldn't load program, exiting...
+#    Time: 96 ns  Scope: tb_core File: /home/muhammad/Documents/UET/FYP/sim_questasim/core/core_tb.sv Line: 53
+run
+# [8] CDB[0] tag=1 result=0x00000064 sqN=0
+# [8] CDB[1] tag=2 result=0x00000032 sqN=1
+# [10] CDB[0] tag=3 result=0x00000000 sqN=2
+# [10] CDB[1] tag=4 result=0x00000000 sqN=3
+# [10] COMMIT[0] archTag=1 sqN=0
+# [10] COMMIT[1] archTag=2 sqN=1
