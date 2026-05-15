@@ -164,7 +164,9 @@ typedef struct packed{
 	    f_unit_t            f_unit;
 	    oper_t              oper;
 	    tag_t               rs1_tag;
+		logic               rs1_ready;
 	    tag_t               rs2_tag;
+		logic               rs2_ready;
 	    tag_t               rd_tag;
 	    imm_t               imm;
 	    logic               is_imm;
@@ -179,7 +181,9 @@ typedef struct packed{
 	    pc_t                pc;
 	    oper_t              oper;
 	    tag_t               rs1_tag;
+		logic               rs1_ready;
 	    tag_t               rs2_tag;
+		logic               rs2_ready;
 	    tag_t               rd_tag;
 	    imm_t               imm;
 	    logic               is_imm;
@@ -193,7 +197,9 @@ typedef struct packed{
 	    sqN_t               sqN;
 	    oper_t              oper;
 	    tag_t               rs1_tag;
+		logic               rs1_ready;
 	    tag_t               rs2_tag;
+		logic               rs2_ready;
 	    tag_t               rd_tag;
 	} mul_div_dispatch_instr_t;
 
@@ -202,7 +208,9 @@ typedef struct packed{
 	    sqN_t               sqN;
 	    oper_t              oper;
 	    tag_t               rs1_tag;
+		logic               rs1_ready;
 	    tag_t               rs2_tag;
+		logic               rs2_ready;
 	    tag_t               rd_tag;
 	    imm_t               imm;
 	    logic               is_imm;

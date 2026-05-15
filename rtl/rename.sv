@@ -14,9 +14,7 @@
 		input  var  decode_instr_t    IN_instr       [DECODE_WIDTH],
 		input  var  tag_t             CDB_tag        [NUM_CDB_LINES],
 		input  var  logic             CDB_valid      [NUM_CDB_LINES],
-		input  var  tag_t             read_tag       [ISSUE_WIDTH][2],
-		output      rename_instr_t    OUT_instr      [DECODE_WIDTH],
-		output      logic             reg_ready      [ISSUE_WIDTH][2],
+		output      rename_instr_t    OUT_instr      [DECODE_WIDTH], 
 		output      logic             chkpt          [DECODE_WIDTH],
 		output      sqN_t             chkpt_sqN      [DECODE_WIDTH],
 		output      tag_t             chkpt_specTag  [DECODE_WIDTH][32],
@@ -181,10 +179,49 @@
 		// 6. Outputs
 		// ════════════════════════════════════════════════════
 
-		// ── 6a. reg_ready (combinational — exception to rule) ─
-		for (genvar i = 0; i < ISSUE_WIDTH; i++) begin : gen_reg_ready
-		    assign reg_ready[i][0] = tag_buffer[read_tag[i][0]].ready;
-		    assign reg_ready[i][1] = tag_buffer[read_tag[i][1]].ready;
+		// ── 6a. Ready state transmission 
+		logic cdb_ready_rs1   [DECODE_WIDTH];
+		logic cdb_ready_rs2   [DECODE_WIDTH];
+		logic intra_ready_rs1 [DECODE_WIDTH];
+		logic intra_ready_rs2 [DECODE_WIDTH];
+		logic rs1_ready 	  [DECODE_WIDTH];
+		logic rs2_ready 	  [DECODE_WIDTH];
+		always_comb begin
+			cdb_ready_rs1   = '{default: 1'b0};
+			cdb_ready_rs2   = '{default: 1'b0};
+			intra_ready_rs1 = '{default: 1'b1};
+    		intra_ready_rs2 = '{default: 1'b1};
+
+			// Check and mark operands ready if broadcasted on CDB
+			for (int i = 0; i < DECODE_WIDTH; i++) begin
+				for (int j = 0; j < ISSUE_WIDTH; j++) begin
+					if (local_rat[i][IN_instr[i].rs1] == CDB_tag[j])
+						cdb_ready_rs1[i] = 1'b1;
+					if (local_rat[i][IN_instr[i].rs2] == CDB_tag[j])
+						cdb_ready_rs2[i] = 1'b1;
+				end
+			end
+
+			// Check if operands are produced by earlier instr in same group
+			for (int i = 0; i < DECODE_WIDTH; i++) begin
+				for (int k = 0; k < i; k++) begin  // Look at earlier instructions only
+					if (IN_instr[k].valid && IN_instr[k].rd != 5'd0) begin
+						// Instr k writes to rd, check if i reads it
+						if (IN_instr[i].rs1 != 5'd0 && IN_instr[k].rd == IN_instr[i].rs1)
+							intra_ready_rs1[i] = 1'b0;
+						if (IN_instr[i].rs1 != 5'd0 && IN_instr[k].rd == IN_instr[i].rs2)
+							intra_ready_rs2[i] = 1'b0;
+					end
+				end
+			end
+
+			for (int i = 0; i < DECODE_WIDTH; i++) begin
+				rs1_ready[i] = (IN_instr[i].rs1 == 0) || (intra_ready_rs1[i] && 
+				            (cdb_ready_rs1[i] || tag_buffer[local_rat[i][IN_instr[i].rs1]].ready));
+
+				rs2_ready[i] = (IN_instr[i].rs2 == 0) || (intra_ready_rs2[i] && 
+				            (cdb_ready_rs2[i] || tag_buffer[local_rat[i][IN_instr[i].rs2]].ready));
+			end
 		end
 
 		// ── 6b. Renamed instructions (registered) ────────────
@@ -204,7 +241,9 @@
 			    OUT_instr[i].f_unit    <= IN_instr[i].f_unit;
 			    OUT_instr[i].oper      <= IN_instr[i].oper;
 			    OUT_instr[i].rs1_tag   <= local_rat[i][IN_instr[i].rs1];
+				OUT_instr[i].rs1_ready <= rs1_ready[i];
 			    OUT_instr[i].rs2_tag   <= local_rat[i][IN_instr[i].rs2];
+				OUT_instr[i].rs2_ready <= rs2_ready[i];
 			    OUT_instr[i].rd_tag    <= chosen[i];
 			    OUT_instr[i].imm       <= IN_instr[i].imm;
 			    OUT_instr[i].is_imm    <= IN_instr[i].is_imm;

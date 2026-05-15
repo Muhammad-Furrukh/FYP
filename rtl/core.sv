@@ -64,8 +64,6 @@ module core
     tag_t                        restore_specTag     [32];
     logic                        restore_free        [2**REG_ADDR_WIDTH];
     commit_packet_t              commit_packet       [COMMIT_WIDTH];
-    tag_t                        read_ready          [ISSUE_WIDTH][2];
-    logic                        reg_ready           [ISSUE_WIDTH][2];
     rename_instr_t               rename_instr        [DECODE_WIDTH];
     logic                        chkpt               [DECODE_WIDTH];
     sqN_t                        chkpt_sqN           [DECODE_WIDTH];
@@ -112,9 +110,7 @@ module core
         .IN_instr(decode_instr),
         .CDB_tag(CDB_tag),
         .CDB_valid(CDB_valid),
-        .read_tag(read_ready),
         .OUT_instr(rename_instr),
-        .reg_ready(reg_ready),
         .chkpt(chkpt),
         .chkpt_sqN(chkpt_sqN),
         .chkpt_specTag(store_specTag),
@@ -127,7 +123,7 @@ module core
     logic                    lsu_buffer_busy        [NUM_AGU_FU];
     logic                    lsu_busy;
     sqN_t                    flush_sqN;
-    logic		     comm_valid		    [COMMIT_WIDTH];	
+    logic		             comm_valid		        [COMMIT_WIDTH];	
     sqN_t                    commit_sqN             [COMMIT_WIDTH];
     alu_dispatch_instr_t     alu_dispatch_instr     [NUM_ALU_FU];
     mul_div_dispatch_instr_t mul_div_dispatch_instr [NUM_MUL_DIV_FU];
@@ -158,6 +154,8 @@ module core
         .MUL_DIV_buffer_busy(mul_div_buffer_busy),
         .LSU_buffer_busy(lsu_buffer_busy),
         .LSU_busy(lsu_busy),
+        .CDB_tag(CDB_tag),
+        .CDB_valid(CDB_valid),
         .flush(flush),
         .flush_sqN(flush_sqN),
         .comm_valid(comm_valid),
@@ -193,7 +191,6 @@ module core
         .IN_lsu_instr(lsu_dispatch_instr),
         .flush(flush),
         .flush_sqN(flush_sqN),
-        .tag_ready(reg_ready),
         .RF_data(RF_read_data),
         .IN_busy(mul_div_fu_busy),
         .CDB_tag(CDB_tag),
@@ -203,7 +200,6 @@ module core
         .OUT_br_taken(br_taken),
         .OUT_jump_type(jump_type),
         .OUT_busy(issue_buffer_busy),
-        .check_ready(read_ready),
         .read_tag(RF_raddr),
         .jta2(jta2),
         .jump2(jump2)

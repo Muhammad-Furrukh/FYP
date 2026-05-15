@@ -10,6 +10,8 @@ module dispatch_unit
     input           logic                       MUL_DIV_buffer_busy [NUM_MUL_DIV_FU],
     input           logic                       LSU_buffer_busy     [NUM_AGU_FU],
     input           logic                       LSU_busy,
+    input           tag_t                       CDB_tag             [ISSUE_WIDTH],
+    input           logic                       CDB_valid           [ISSUE_WIDTH],
     output          logic                       OUT_busy,
     output          alu_dispatch_instr_t        OUT_alu_instr       [NUM_ALU_FU],
     output          mul_div_dispatch_instr_t    OUT_mul_div_instr   [NUM_MUL_DIV_FU],
@@ -212,7 +214,11 @@ module dispatch_unit
                 OUT_alu_instr[p].pc        = packet[alu_slot[p]].pc;
                 OUT_alu_instr[p].oper      = packet[alu_slot[p]].oper;
                 OUT_alu_instr[p].rs1_tag   = packet[alu_slot[p]].rs1_tag;
+                OUT_alu_instr[p].rs1_ready = (output_rs1_ready[alu_slot[p]])?
+                                              1'b1 : packet[alu_slot[p]].rs1_ready;
                 OUT_alu_instr[p].rs2_tag   = packet[alu_slot[p]].rs2_tag;
+                OUT_alu_instr[p].rs2_ready = (output_rs2_ready[alu_slot[p]])?
+                                              1'b1 : packet[alu_slot[p]].rs2_ready;
                 OUT_alu_instr[p].rd_tag    = packet[alu_slot[p]].rd_tag;
                 OUT_alu_instr[p].imm       = packet[alu_slot[p]].imm;
                 OUT_alu_instr[p].is_imm    = packet[alu_slot[p]].is_imm;
@@ -226,12 +232,16 @@ module dispatch_unit
 
         for (int p = 0; p < NUM_MUL_DIV_FU; p++) begin
             if (mul_valid[p]) begin
-                OUT_mul_div_instr[p].valid   = 1'b1;
-                OUT_mul_div_instr[p].sqN     = packet[mul_slot[p]].sqN;
-                OUT_mul_div_instr[p].oper    = packet[mul_slot[p]].oper;
-                OUT_mul_div_instr[p].rs1_tag = packet[mul_slot[p]].rs1_tag;
-                OUT_mul_div_instr[p].rs2_tag = packet[mul_slot[p]].rs2_tag;
-                OUT_mul_div_instr[p].rd_tag  = packet[mul_slot[p]].rd_tag;
+                OUT_mul_div_instr[p].valid     = 1'b1;
+                OUT_mul_div_instr[p].sqN       = packet[mul_slot[p]].sqN;
+                OUT_mul_div_instr[p].oper      = packet[mul_slot[p]].oper;
+                OUT_mul_div_instr[p].rs1_tag   = packet[mul_slot[p]].rs1_tag;
+                OUT_mul_div_instr[p].rs1_ready = (output_rs1_ready[mul_slot[p]])?
+                                                 1'b1 : packet[mul_slot[p]].rs1_ready;
+                OUT_mul_div_instr[p].rs2_tag   = packet[mul_slot[p]].rs2_tag;
+                OUT_mul_div_instr[p].rs2_ready = (output_rs2_ready[mul_slot[p]])?
+                                              1'b1 : packet[mul_slot[p]].rs2_ready;
+                OUT_mul_div_instr[p].rd_tag    = packet[mul_slot[p]].rd_tag;
             end
             else
                 OUT_mul_div_instr[p] = '{default: '0};
@@ -239,26 +249,60 @@ module dispatch_unit
 
         for (int p = 0; p < NUM_AGU_FU; p++) begin
             if (lsu_valid[p]) begin
-                OUT_lsu_instr[p].valid   = 1'b1;
-                OUT_lsu_instr[p].sqN     = packet[lsu_slot[p]].sqN;
-                OUT_lsu_instr[p].oper    = packet[lsu_slot[p]].oper;
-                OUT_lsu_instr[p].rs1_tag = packet[lsu_slot[p]].rs1_tag;
-                OUT_lsu_instr[p].rs2_tag = packet[lsu_slot[p]].rs2_tag;
-                OUT_lsu_instr[p].rd_tag  = packet[lsu_slot[p]].rd_tag;
-                OUT_lsu_instr[p].imm     = packet[lsu_slot[p]].imm;
-                OUT_lsu_instr[p].is_imm  = packet[lsu_slot[p]].is_imm;
+                OUT_lsu_instr[p].valid     = 1'b1;
+                OUT_lsu_instr[p].sqN       = packet[lsu_slot[p]].sqN;
+                OUT_lsu_instr[p].oper      = packet[lsu_slot[p]].oper;
+                OUT_lsu_instr[p].rs1_tag   = packet[lsu_slot[p]].rs1_tag;
+                OUT_lsu_instr[p].rs1_ready = (output_rs1_ready[lsu_slot[p]])?
+                                             1'b1 : packet[lsu_slot[p]].rs1_ready;
+                OUT_lsu_instr[p].rs2_tag   = packet[lsu_slot[p]].rs2_tag;
+                OUT_lsu_instr[p].rs2_ready = (output_rs2_ready[lsu_slot[p]])?
+                                             1'b1 : packet[lsu_slot[p]].rs2_ready;
+                OUT_lsu_instr[p].rd_tag    = packet[lsu_slot[p]].rd_tag;
+                OUT_lsu_instr[p].imm       = packet[lsu_slot[p]].imm;
+                OUT_lsu_instr[p].is_imm    = packet[lsu_slot[p]].is_imm;
             end
             else
                 OUT_lsu_instr[p] = '{default: '0};
         end
     end
 
+    logic input_rs1_ready  [RENAME_WIDTH];
+    logic input_rs2_ready  [RENAME_WIDTH];
+    logic output_rs1_ready [RENAME_WIDTH];
+    logic output_rs2_ready [RENAME_WIDTH];
+    always_comb begin
+        // Check if incoming rs1_tag matches CDB
+        for (int j = 0; j < ISSUE_WIDTH; j++) begin
+            if (CDB_valid[j] && (IN_instr[i].rs1_tag == CDB_tag[j])) begin
+                input_rs1_ready[i] = 1'b1;
+            end
+        end
 
+        // Check if incoming rs2 tag matches CDB
+        for (int j = 0; j < ISSUE_WIDTH; j++) begin
+            if (CDB_valid[j] && (IN_instr[i].rs2_tag == CDB_tag[j])) begin
+                input_rs2_ready[i] = 1'b1;
+            end
+        end
+
+        // Check if registered rs1_tag matches CDB
+        for (int j = 0; j < ISSUE_WIDTH; j++) begin
+            if (CDB_valid[j] && (packet[i].rs1_tag == CDB_tag[j])) begin
+                output_rs1_ready[i] = 1'b1;
+            end
+        end
+
+        for (int j = 0; j < ISSUE_WIDTH; j++) begin
+            if (CDB_valid[j] && (packet[i].rs2_tag == CDB_tag[j])) begin
+                output_rs2_ready[i] = 1'b1;
+            end
+        end
+    end
 
     // ════════════════════════════════════════════════════
     // 8. Sequential
     // ════════════════════════════════════════════════════
-
     always_ff @(posedge clk or posedge rst) begin
         if (rst || flush) begin
             for (int i = 0; i < RENAME_WIDTH; i++) begin
@@ -277,14 +321,40 @@ module dispatch_unit
                                    u_type: NOT_U};
                 dispatched[i] <= 1'b0;
             end
-        end else begin
+        end 
+
+        else begin
             for (int i = 0; i < RENAME_WIDTH; i++)
                 if (can_dispatch[i]) dispatched[i] <= 1'b1;
 
             if (packet_done) begin
                 for (int i = 0; i < RENAME_WIDTH; i++) begin
-                    packet[i]     <= IN_instr[i];
+                    packet[i].valid     <= IN_instr[i].valid;
+                    packet[i].sqN       <= IN_instr[i].sqN;
+                    packet[i].pc        <= IN_instr[i].pc;
+                    packet[i].f_unit    <= IN_instr[i].f_unit;
+                    packet[i].oper      <= IN_instr[i].oper;
+                    packet[i].rs1_tag   <= IN_instr[i].rs1_tag;
+                    packet[i].rs1_ready <= (input_rs1_ready)? 1'b1 : IN_instr[i].rs1_ready;
+                    packet[i].rs2_tag   <= IN_instr[i].rs2_tag;
+                    packet[i].rs2_ready <= (input_rs2_ready)? 1'b1 : IN_instr[i].rs2_ready;
+                    packet[i].rd_tag    <= IN_instr[i].rd_tag;
+                    packet[i].imm       <= IN_instr[i].imm;
+                    packet[i].is_imm    <= IN_instr[i].is_imm;
+                    packet[i].jump_type <= IN_instr[i].jump_type;
+                    packet[i].br_type   <= IN_instr[i].br_type;
+                    packet[i].u_type    <= IN_instr[i].u_type;
+                    
                     dispatched[i] <= 1'b0;
+                end
+            end
+
+            else begin
+                for (int i = 0; i < RENAME_WIDTH; i++) begin
+                    if (!can_dispatch[i]) begin
+                        packet[i].rs1_ready <= output_rs1_ready[i]? 1'b1 : IN_instr[i].rs1_ready;
+                        packet[i].rs2_ready <= output_rs2_ready[i]? 1'b1 : IN_instr[i].rs1_ready;
+                    end
                 end
             end
         end

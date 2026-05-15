@@ -9,7 +9,6 @@ module issue
     input  var  lsu_dispatch_instr_t                IN_lsu_instr      [NUM_AGU_FU],
     input       logic                               flush,
     input       sqN_t                               flush_sqN,
-    input  var  logic                               tag_ready         [ISSUE_WIDTH][2],
     input  var  logic                    [31:0]     RF_data           [ISSUE_WIDTH][2],
     input  var  logic                               IN_busy           [NUM_MUL_DIV_FU],
     input  var  tag_t                               CDB_tag           [ISSUE_WIDTH],
@@ -19,7 +18,6 @@ module issue
     output      logic                               OUT_br_taken      [NUM_ALU_FU],
     output      jump_type_t                         OUT_jump_type     [NUM_ALU_FU],
     output      logic                               OUT_busy          [ISSUE_WIDTH],
-    output      tag_t                               check_ready       [ISSUE_WIDTH][2],
     output      tag_t                               read_tag          [ISSUE_WIDTH][2],
     output      pc_t                                jta2,
     output      logic                               jump2    
@@ -39,7 +37,6 @@ module issue
             .IN_instr(IN_alu_instr[i]),
             .flush(flush),
             .flush_sqN(flush_sqN),
-            .tag_ready(tag_ready[i]),
             .RF_data(RF_data[i]),
             .CDB_tag(CDB_tag),
             .CDB_valid(CDB_valid),
@@ -50,7 +47,6 @@ module issue
             .OUT_busy(OUT_busy[i]),
             .rs1_result(alu_rs1_result[i]),
             .imm(alu_imm[i]),
-            .check_ready(check_ready[i]),
             .read_tag(read_tag[i])
         );
     end
@@ -70,14 +66,12 @@ module issue
             .IN_instr(IN_mul_div_instr[i]),
             .flush(flush),
             .flush_sqN(flush_sqN),
-            .tag_ready(tag_ready[NUM_ALU_FU + i]),
             .RF_data(RF_data[NUM_ALU_FU + i]),
             .IN_busy(IN_busy[i]),
             .CDB_tag(CDB_tag),
             .CDB_valid(CDB_valid),
             .OUT_instr(OUT_instr[NUM_ALU_FU + i]),
             .OUT_busy(OUT_busy[NUM_ALU_FU + i]),
-            .check_ready(check_ready[NUM_ALU_FU + i]),
             .read_tag(read_tag[NUM_ALU_FU + i])
         );
     end
@@ -90,13 +84,11 @@ module issue
             .IN_instr(IN_lsu_instr[i]),
             .flush(flush),
             .flush_sqN(flush_sqN),
-            .tag_ready(tag_ready[NUM_INT_FU + i]),
             .RF_data(RF_data[NUM_INT_FU + i]),
             .CDB_tag(CDB_tag),
             .CDB_valid(CDB_valid),
             .OUT_instr(OUT_lsu_instr[i]),
             .OUT_busy(OUT_busy[NUM_INT_FU + i]),
-            .check_ready(check_ready[NUM_INT_FU + i]),
             .read_tag(read_tag[NUM_INT_FU + i])
         );
     end

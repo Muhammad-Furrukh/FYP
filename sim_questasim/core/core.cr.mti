@@ -101,13 +101,6 @@ QuestaSim-64 vlog 2021.2_1 Compiler 2021.05 May 15 2021
 Top level modules:
 	decoder
 
-} {} {}} /home/muhammad/Documents/UET/FYP/include/include_pkg.sv {1 {vlog -work work -vopt -sv -stats=none /home/muhammad/Documents/UET/FYP/include/include_pkg.sv
-QuestaSim-64 vlog 2021.2_1 Compiler 2021.05 May 15 2021
--- Compiling package include_pkg
-
-Top level modules:
-	--none--
-
 } {} {}} /home/muhammad/Documents/UET/FYP/rtl/IMEM.sv {1 {vlog -work work -vopt -sv -stats=none /home/muhammad/Documents/UET/FYP/rtl/IMEM.sv
 QuestaSim-64 vlog 2021.2_1 Compiler 2021.05 May 15 2021
 -- Compiling package IMEM_sv_unit
@@ -116,27 +109,6 @@ QuestaSim-64 vlog 2021.2_1 Compiler 2021.05 May 15 2021
 
 Top level modules:
 	IMEM
-
-} {} {}} /home/muhammad/Documents/UET/FYP/rtl/dispatch.sv {2 {vlog -work work -vopt -sv -stats=none /home/muhammad/Documents/UET/FYP/rtl/dispatch.sv
-QuestaSim-64 vlog 2021.2_1 Compiler 2021.05 May 15 2021
-** Warning: /home/muhammad/Documents/UET/FYP/rtl/dispatch.sv(8): (vlog-13314) Defaulting port 'MUL_DIV_buffer_busy' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
-** Warning: /home/muhammad/Documents/UET/FYP/rtl/dispatch.sv(9): (vlog-13314) Defaulting port 'LSU_buffer_busy' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
-** Warning: /home/muhammad/Documents/UET/FYP/rtl/dispatch.sv(13): (vlog-13314) Defaulting port 'comm_valid' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
-** Warning: /home/muhammad/Documents/UET/FYP/rtl/dispatch.sv(14): (vlog-13314) Defaulting port 'commit_sqN' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
-** Warning: /home/muhammad/Documents/UET/FYP/rtl/dispatch.sv(15): (vlog-13314) Defaulting port 'instr_sqN' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
-** Warning: /home/muhammad/Documents/UET/FYP/rtl/dispatch.sv(17): (vlog-13314) Defaulting port 'checkpoint' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
--- Compiling package dispatch_sv_unit
--- Importing package include_pkg
--- Compiling module dispatch
-** Warning: /home/muhammad/Documents/UET/FYP/rtl/dispatch.sv(8): (vlog-13314) Defaulting port 'MUL_DIV_buffer_busy' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
-** Warning: /home/muhammad/Documents/UET/FYP/rtl/dispatch.sv(9): (vlog-13314) Defaulting port 'LSU_buffer_busy' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
-** Warning: /home/muhammad/Documents/UET/FYP/rtl/dispatch.sv(13): (vlog-13314) Defaulting port 'comm_valid' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
-** Warning: /home/muhammad/Documents/UET/FYP/rtl/dispatch.sv(14): (vlog-13314) Defaulting port 'commit_sqN' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
-** Warning: /home/muhammad/Documents/UET/FYP/rtl/dispatch.sv(15): (vlog-13314) Defaulting port 'instr_sqN' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
-** Warning: /home/muhammad/Documents/UET/FYP/rtl/dispatch.sv(17): (vlog-13314) Defaulting port 'checkpoint' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
-
-Top level modules:
-	dispatch
 
 } {} {}} /home/muhammad/Documents/UET/FYP/rtl/immediate_gen.sv {1 {vlog -work work -vopt -sv -stats=none /home/muhammad/Documents/UET/FYP/rtl/immediate_gen.sv
 QuestaSim-64 vlog 2021.2_1 Compiler 2021.05 May 15 2021
@@ -183,15 +155,6 @@ QuestaSim-64 vlog 2021.2_1 Compiler 2021.05 May 15 2021
 Top level modules:
 	ta_gen2
 
-} {} {}} /home/muhammad/Documents/UET/FYP/rtl/core.sv {1 {vlog -work work -vopt -sv -stats=none /home/muhammad/Documents/UET/FYP/rtl/core.sv
-QuestaSim-64 vlog 2021.2_1 Compiler 2021.05 May 15 2021
--- Compiling package core_sv_unit
--- Importing package include_pkg
--- Compiling module core
-
-Top level modules:
-	core
-
 } {} {}} /home/muhammad/Documents/UET/FYP/rtl/instr_aligner.sv {1 {vlog -work work -vopt -sv -stats=none /home/muhammad/Documents/UET/FYP/rtl/instr_aligner.sv
 QuestaSim-64 vlog 2021.2_1 Compiler 2021.05 May 15 2021
 -- Compiling package instr_aligner_sv_unit
@@ -200,15 +163,6 @@ QuestaSim-64 vlog 2021.2_1 Compiler 2021.05 May 15 2021
 
 Top level modules:
 	instr_aligner
-
-} {} {}} /home/muhammad/Documents/UET/FYP/rtl/issue.sv {1 {vlog -work work -vopt -sv -stats=none /home/muhammad/Documents/UET/FYP/rtl/issue.sv
-QuestaSim-64 vlog 2021.2_1 Compiler 2021.05 May 15 2021
--- Compiling package issue_sv_unit
--- Importing package include_pkg
--- Compiling module issue
-
-Top level modules:
-	issue
 
 } {} {}} /home/muhammad/Documents/UET/FYP/rtl/load_buffer.sv {2 {vlog -work work -vopt -sv -stats=none /home/muhammad/Documents/UET/FYP/rtl/load_buffer.sv
 QuestaSim-64 vlog 2021.2_1 Compiler 2021.05 May 15 2021
