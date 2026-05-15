@@ -150,9 +150,9 @@ initial begin
     @(posedge clk); #1;
 
     for (int i = 0; i < 64; i++) begin
-        $display("ROB[%0d]: SqN=%0d tag=%0d rd=%0d ready=%0b",
+        $display("ROB[%0d]: sqN=%0d tag=%0d rd=%0d ready=%0b",
                   i,
-                  dut.rob[i].SqN,
+                  dut.rob[i].sqN,
                   dut.rob[i].tag,
                   dut.rob[i].rd,
                   dut.rob[i].ready);

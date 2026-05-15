@@ -59,10 +59,10 @@ always_comb begin
     num_commit = 0;
 
     for (int i = 0; i < RENAME_WIDTH; i++) begin
-        num_write += (write_en[i] && !full);
+        num_write += (write_en[i]);
     end
     for (int i = 0; i < COMMIT_WIDTH; i++) begin
-        num_commit += (commit[i] && !empty && actual_commit);
+        num_commit += (commit[i] && actual_commit);
     end    
     
 end
@@ -106,6 +106,9 @@ always_ff @(posedge clk or posedge rst) begin
     else
         // ----------------CDB sqN Matching---------------------------
         for (int j = 0; j < ROB_SIZE; j++) begin
+            if (rob[j].tag == 0) begin   // branch and jump case
+               rob[j].ready <= 1;
+            end
             is_new_alloc = 0;
             for (int i = 0; i < RENAME_WIDTH; i++) begin
                 is_new_alloc |= (j == (tail+i)) && write_en[i];
