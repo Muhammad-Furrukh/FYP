@@ -38,8 +38,6 @@ logic actual_commit;
 // ---------------- COMBINATIONAL ----------------
 always_comb begin
     
-    OUT_busy = (count > ROB_SIZE - RENAME_WIDTH);
-    
     for (int i=0; i<RENAME_WIDTH; i++) begin
         write_en[i] = (rename_rob[i].valid && (count < (ROB_SIZE-i)));
     end
@@ -169,5 +167,6 @@ end
 
 assign full  = (count == ROB_SIZE);
 assign empty = (count == 0);
+assign OUT_busy = (count > ROB_SIZE - RENAME_WIDTH);
 
 endmodule
