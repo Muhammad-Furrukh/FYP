@@ -132,14 +132,14 @@
 	    lsu_oper_t          lsu_oper;
 	} oper_t;
 
-//------------------------------------------------------------------
-// Structs
-//------------------------------------------------------------------
-typedef struct packed{ 
-    logic               valid;
-    pc_t                pc;
-    prefetch_instr_t    instr;
-} fetch_instr_t;
+	//------------------------------------------------------------------
+	// Structs
+	//------------------------------------------------------------------
+	typedef struct packed{ 
+		logic               valid;
+		pc_t                pc;
+		prefetch_instr_t    instr;
+	} fetch_instr_t;
 
 	typedef struct packed {
 	    logic               valid;
@@ -254,6 +254,7 @@ typedef struct packed{
 	    sqN_t               sqN;
 	    logic  [4:0]        archTag;
 	    tag_t               rd_tag;
+		logic               is_store;
 	} rename_rob_t;
 
 	typedef struct packed {
