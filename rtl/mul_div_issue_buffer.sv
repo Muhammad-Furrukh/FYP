@@ -209,3 +209,4 @@ module mul_div_issue_buffer #(
     assign OUT_instr = (flush)? '0: registered_out_instr;
 
 endmodule
+
