@@ -89,10 +89,14 @@ module core
     rename_rob_t       rename_rob    [DECODE_WIDTH];
     always_comb begin
         for (int i = 0; i < DECODE_WIDTH; i++) begin
-            rename_rob[i].valid = rename_instr[i].valid;
-            rename_rob[i].sqN   = rename_instr[i].sqN;
-            rename_rob[i].archTag = rename_rob_rd[i];
-            rename_rob[i].rd_tag  = rename_instr[i].rd_tag;
+            rename_rob[i].valid    =  rename_instr[i].valid;
+            rename_rob[i].sqN      =  rename_instr[i].sqN;
+            rename_rob[i].archTag  =  rename_rob_rd[i];
+            rename_rob[i].rd_tag   =  rename_instr[i].rd_tag;
+            rename_rob[i].is_store =  rename_instr[i].f_unit == LSU &&
+                                     (rename_instr[i].oper == LSU_SB ||
+                                      rename_instr[i].oper == LSU_SH ||
+                                      rename_instr[i].oper == LSU_SW);
         end
     end
 
@@ -138,11 +142,11 @@ module core
 
         for (int i = 0; i < ISSUE_WIDTH; i++) begin
             if (i < NUM_ALU_FU) 
-                alu_buffer_busy[i]     = issue_buffer_busy[i];
+                alu_buffer_busy[i]                  = issue_buffer_busy[i];
             else if (i < NUM_INT_FU)
-                mul_div_buffer_busy[i] = issue_buffer_busy[i];
+                mul_div_buffer_busy[i - NUM_ALU_FU] = issue_buffer_busy[i];
             else
-                lsu_buffer_busy[i]     = issue_buffer_busy[i];
+                lsu_buffer_busy[i - NUM_INT_FU]     = issue_buffer_busy[i];
         end
     end
 
@@ -174,7 +178,6 @@ module core
         .OUT_lsu_instr(lsu_dispatch_instr)
     );
 
-    tag_t              RF_raddr        [ISSUE_WIDTH][2];
     logic [XLEN - 1:0] RF_read_data    [ISSUE_WIDTH][2];
     logic              mul_div_fu_busy [NUM_MUL_DIV_FU];
     issue_instr_t      int_issue_instr [NUM_INT_FU];
@@ -194,13 +197,13 @@ module core
         .RF_data(RF_read_data),
         .IN_busy(mul_div_fu_busy),
         .CDB_tag(CDB_tag),
+        .CDB_result(CDB_result),
         .CDB_valid(CDB_valid),
         .OUT_instr(int_issue_instr),
         .OUT_lsu_instr(lsu_issue_instr),
         .OUT_br_taken(br_taken),
         .OUT_jump_type(jump_type),
         .OUT_busy(issue_buffer_busy),
-        .read_tag(RF_raddr),
         .jta2(jta2),
         .jump2(jump2)
     );
@@ -214,13 +217,13 @@ module core
 
     flush_controller flush_controller
     (
-	.clk(clk),          // add this
-	.rst(rst),          // add this
-	.br_taken(br_taken),
-	.sqN(br_jalr_sqN),
-	.jump_type(jump_type),
-	.flush(flush),
-	.flush_sqN(flush_sqN)
+        .clk(clk),       
+        .rst(rst),         
+        .br_taken(br_taken),
+        .sqN(br_jalr_sqN),
+        .jump_type(jump_type),
+        .flush(flush),
+        .flush_sqN(flush_sqN)
     );
 
     agu_out_t  agu_out       [NUM_AGU_FU];
@@ -271,10 +274,20 @@ module core
 
     // Block 1: addr — purely driven by RF_raddr (output of issue)
     always_comb begin
-	    for (int i = 0; i < ISSUE_WIDTH; i++) begin
-		rs1_addr[i] = RF_raddr[i][0];
-		rs2_addr[i] = RF_raddr[i][1];
+	    for (int i = 0; i < NUM_ALU_FU; i++) begin
+            rs1_addr[i] = alu_dispatch_instr[i].rs1_tag;
+            rs2_addr[i] = alu_dispatch_instr[i].rs2_tag;
 	    end 
+
+        for (int i = 0; i < NUM_MUL_DIV_FU; i++) begin
+            rs1_addr[i + NUM_ALU_FU] = mul_div_dispatch_instr[i].rs1_tag;
+            rs2_addr[i + NUM_ALU_FU] = mul_div_dispatch_instr[i].rs2_tag;
+        end
+
+        for (int i = 0; i < NUM_AGU_FU; i++) begin
+            rs1_addr[i + NUM_INT_FU] = lsu_dispatch_instr[i].rs1_tag;
+            rs2_addr[i + NUM_INT_FU] = lsu_dispatch_instr[i].rs2_tag;
+        end
     end
 
     // Block 2: data — purely driven by register_file outputs

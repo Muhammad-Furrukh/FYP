@@ -59,7 +59,7 @@ module ALU
             
             COPY: begin
                 // For LUI instruction, just copy operand1
-                alu_result = IN_instr.operand1;
+                alu_result = IN_instr.operand2;
             end
             
             default: begin

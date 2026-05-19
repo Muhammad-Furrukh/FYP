@@ -25,6 +25,46 @@ module dispatch_unit
     rename_instr_t  packet     [RENAME_WIDTH];
     logic           dispatched [RENAME_WIDTH];
 
+    // Ready bit logic
+    logic input_rs1_ready  [RENAME_WIDTH];
+    logic input_rs2_ready  [RENAME_WIDTH];
+    logic output_rs1_ready [RENAME_WIDTH];
+    logic output_rs2_ready [RENAME_WIDTH];
+    always_comb begin
+        input_rs1_ready  = '{default: '0};
+        input_rs2_ready  = '{default: '0};
+        output_rs1_ready = '{default: '0};
+        output_rs2_ready = '{default: '0};
+        // Check if incoming rs1_tag matches CDB
+        for (int i = 0; i < RENAME_WIDTH; i++) begin
+            for (int j = 0; j < ISSUE_WIDTH; j++) begin
+                if (CDB_valid[j] && (IN_instr[i].rs1_tag == CDB_tag[j])) begin
+                    input_rs1_ready[i] = 1'b1;
+                end
+            end
+
+            // Check if incoming rs2 tag matches CDB
+            for (int j = 0; j < ISSUE_WIDTH; j++) begin
+                if (CDB_valid[j] && (IN_instr[i].rs2_tag == CDB_tag[j])) begin
+                    input_rs2_ready[i] = 1'b1;
+                end
+            end
+
+            // Check if registered rs1_tag matches CDB
+            for (int j = 0; j < ISSUE_WIDTH; j++) begin
+                if (CDB_valid[j] && (packet[i].rs1_tag == CDB_tag[j])) begin
+                    output_rs1_ready[i] = 1'b1;
+                end
+            end
+
+            for (int j = 0; j < ISSUE_WIDTH; j++) begin
+                if (CDB_valid[j] && (packet[i].rs2_tag == CDB_tag[j])) begin
+                    output_rs2_ready[i] = 1'b1;
+                end
+            end
+        end
+    end
+
 
     // ════════════════════════════════════════════════════
     // 2. Downstream ready
@@ -267,58 +307,13 @@ module dispatch_unit
         end
     end
 
-    logic input_rs1_ready  [RENAME_WIDTH];
-    logic input_rs2_ready  [RENAME_WIDTH];
-    logic output_rs1_ready [RENAME_WIDTH];
-    logic output_rs2_ready [RENAME_WIDTH];
-    always_comb begin
-        // Check if incoming rs1_tag matches CDB
-        for (int j = 0; j < ISSUE_WIDTH; j++) begin
-            if (CDB_valid[j] && (IN_instr[i].rs1_tag == CDB_tag[j])) begin
-                input_rs1_ready[i] = 1'b1;
-            end
-        end
-
-        // Check if incoming rs2 tag matches CDB
-        for (int j = 0; j < ISSUE_WIDTH; j++) begin
-            if (CDB_valid[j] && (IN_instr[i].rs2_tag == CDB_tag[j])) begin
-                input_rs2_ready[i] = 1'b1;
-            end
-        end
-
-        // Check if registered rs1_tag matches CDB
-        for (int j = 0; j < ISSUE_WIDTH; j++) begin
-            if (CDB_valid[j] && (packet[i].rs1_tag == CDB_tag[j])) begin
-                output_rs1_ready[i] = 1'b1;
-            end
-        end
-
-        for (int j = 0; j < ISSUE_WIDTH; j++) begin
-            if (CDB_valid[j] && (packet[i].rs2_tag == CDB_tag[j])) begin
-                output_rs2_ready[i] = 1'b1;
-            end
-        end
-    end
-
     // ════════════════════════════════════════════════════
     // 8. Sequential
     // ════════════════════════════════════════════════════
     always_ff @(posedge clk or posedge rst) begin
         if (rst || flush) begin
             for (int i = 0; i < RENAME_WIDTH; i++) begin
-                packet[i]     <= '{valid: 1'b0,
-                                   sqN: '0,
-                                   pc: '0,
-                                   f_unit: NO_UNIT, 
-                                   oper: COPY,
-                                   rs1_tag: '0,
-                                   rs2_tag: '0,
-                                   rd_tag: '0,
-                                   imm: '0,
-                                   is_imm: 1'b0,
-                                   jump_type: NOT_JUMP,
-                                   br_type: NOT_BRANCH,
-                                   u_type: NOT_U};
+                packet[i]     <= '{default: '0};
                 dispatched[i] <= 1'b0;
             end
         end 
@@ -335,9 +330,9 @@ module dispatch_unit
                     packet[i].f_unit    <= IN_instr[i].f_unit;
                     packet[i].oper      <= IN_instr[i].oper;
                     packet[i].rs1_tag   <= IN_instr[i].rs1_tag;
-                    packet[i].rs1_ready <= (input_rs1_ready)? 1'b1 : IN_instr[i].rs1_ready;
+                    packet[i].rs1_ready <= (input_rs1_ready[i])? 1'b1 : IN_instr[i].rs1_ready;
                     packet[i].rs2_tag   <= IN_instr[i].rs2_tag;
-                    packet[i].rs2_ready <= (input_rs2_ready)? 1'b1 : IN_instr[i].rs2_ready;
+                    packet[i].rs2_ready <= (input_rs2_ready[i])? 1'b1 : IN_instr[i].rs2_ready;
                     packet[i].rd_tag    <= IN_instr[i].rd_tag;
                     packet[i].imm       <= IN_instr[i].imm;
                     packet[i].is_imm    <= IN_instr[i].is_imm;

@@ -41,33 +41,43 @@ module execute
         );
     end
 
+    CDB_line_t registered_CDB_output [NUM_INT_FU];
+    agu_out_t  registered_AGU_output [NUM_AGU_FU];
     always_ff @(posedge clk or posedge rst) begin
         if (rst) begin
-            for (int i = 0; i < NUM_INT_FU; i++) begin
-                CDB_line[i] <= '0;
-            end
-            
-            for (int i = 0; i < NUM_AGU_FU; i++) begin
-                agu_out[i] <= '0;
-            end
+            registered_CDB_output <= '{default: '0};
+            registered_AGU_output <= '{default: '0};
         end
 
         else if (flush) begin
             for (int i = 0; i < NUM_INT_FU; i++) begin
                 if (((flush_sqN - int_fu_out[i].sqN) & SQN_MASK) > ROB_SIZE)
-                    CDB_line[i].valid <= 1'b0;
+                    registered_CDB_output[i] <= '0;
+                else
+                    registered_CDB_output[i] <= registered_CDB_output[i]; // Keep if still valid
             end
 
             for (int i = 0; i < NUM_AGU_FU; i++) begin
                 if (((flush_sqN - next_agu_out[i].sqN) & SQN_MASK) > ROB_SIZE)
-                    agu_out[i].valid <= 1'b0;
+                    registered_AGU_output[i] <= '0;
+                else
+                    registered_AGU_output[i] <= registered_AGU_output[i]; // Keep if still valid
             end
         end
 
         else begin
-            CDB_line <= int_fu_out;
-            agu_out  <= next_agu_out;
+            registered_CDB_output <= int_fu_out;
+            registered_AGU_output <= next_agu_out;
         end
+    end
+
+    // Final output assignment
+    for (genvar i = 0; i < NUM_INT_FU; i++) begin : gen_output_assign_int
+        assign CDB_line[i] = (flush)? '0: registered_CDB_output[i];
+    end
+
+    for (genvar i = 0; i < NUM_AGU_FU; i++) begin : gen_output_assign_agu
+        assign agu_out[i] = (flush)? '0: registered_AGU_output[i];
     end
 
 endmodule

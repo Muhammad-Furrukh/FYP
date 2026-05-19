@@ -18,7 +18,7 @@ module IMEM
     initial begin
         for (int i = 0; i < MEM_WORDS; i++)
             mem[i] = 32'b0;
-        $readmemh("../../tests/add_test.hex", mem);
+        $readmemh("../../tests/branch_test.hex", mem);
     end
 
     logic [IMEM_ADDR_WIDTH-1:0] block_idx;

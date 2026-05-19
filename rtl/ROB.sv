@@ -22,8 +22,8 @@ module ROB
 
     rob_entry rob [ROB_SIZE];
 
-    logic [$clog2(ROB_SIZE)-1:0] alloc_index  [RENAME_WIDTH];
-    logic [$clog2(ROB_SIZE)-1:0] commit_index [COMMIT_WIDTH];
+    logic [$clog2(ROB_SIZE)-1:0]   alloc_index  [RENAME_WIDTH];
+    logic [$clog2(ROB_SIZE)-1:0]   commit_index [COMMIT_WIDTH];
     logic [$clog2(RENAME_WIDTH):0] num_wr;
     logic [$clog2(COMMIT_WIDTH):0] num_commit;
 
@@ -115,7 +115,8 @@ module ROB
                     rob[alloc_index[i]].sqN   <= rename_rob[i].sqN;
                     rob[alloc_index[i]].tag   <= rename_rob[i].rd_tag;
                     rob[alloc_index[i]].rd    <= rename_rob[i].archTag;
-                    rob[alloc_index[i]].ready <= 0;
+                    rob[alloc_index[i]].ready <= (rename_rob[i].is_store)? 
+                                                  1 : 0;
                 end
             end
 

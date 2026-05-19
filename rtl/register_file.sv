@@ -16,7 +16,7 @@ logic [XLEN-1:0] registers [(1<<REG_ADDR_WIDTH)-1:0];
 integer i;
 
 // ---------------- WRITE (Sequential) ----------------
-always @(posedge clk or posedge rst) begin
+always @(negedge clk or posedge rst) begin
     if (rst) begin
         for (i = 0; i < (1<<REG_ADDR_WIDTH); i++)
             registers[i] <= '0;

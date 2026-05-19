@@ -12,13 +12,13 @@ module issue
     input  var  logic                    [31:0]     RF_data           [ISSUE_WIDTH][2],
     input  var  logic                               IN_busy           [NUM_MUL_DIV_FU],
     input  var  tag_t                               CDB_tag           [ISSUE_WIDTH],
+    input       logic                    [XLEN-1:0] CDB_result        [ISSUE_WIDTH],
     input  var  logic                               CDB_valid         [ISSUE_WIDTH],
     output      issue_instr_t                       OUT_instr         [NUM_INT_FU],
     output      lsu_issue_instr_t                   OUT_lsu_instr     [NUM_AGU_FU],
     output      logic                               OUT_br_taken      [NUM_ALU_FU],
     output      jump_type_t                         OUT_jump_type     [NUM_ALU_FU],
     output      logic                               OUT_busy          [ISSUE_WIDTH],
-    output      tag_t                               read_tag          [ISSUE_WIDTH][2],
     output      pc_t                                jta2,
     output      logic                               jump2    
 );
@@ -40,14 +40,14 @@ module issue
             .RF_data(RF_data[i]),
             .CDB_tag(CDB_tag),
             .CDB_valid(CDB_valid),
+            .CDB_result(CDB_result),
             .OUT_instr(OUT_instr[i]),
             .OUT_br_taken(OUT_br_taken[i]),
             .OUT_jump_type(OUT_jump_type[i]),
             .OUT_pc(pc[i]),
             .OUT_busy(OUT_busy[i]),
             .rs1_result(alu_rs1_result[i]),
-            .imm(alu_imm[i]),
-            .read_tag(read_tag[i])
+            .imm(alu_imm[i])
         );
     end
 
@@ -69,10 +69,10 @@ module issue
             .RF_data(RF_data[NUM_ALU_FU + i]),
             .IN_busy(IN_busy[i]),
             .CDB_tag(CDB_tag),
+            .CDB_result(CDB_result),
             .CDB_valid(CDB_valid),
             .OUT_instr(OUT_instr[NUM_ALU_FU + i]),
-            .OUT_busy(OUT_busy[NUM_ALU_FU + i]),
-            .read_tag(read_tag[NUM_ALU_FU + i])
+            .OUT_busy(OUT_busy[NUM_ALU_FU + i])
         );
     end
 
@@ -86,10 +86,10 @@ module issue
             .flush_sqN(flush_sqN),
             .RF_data(RF_data[NUM_INT_FU + i]),
             .CDB_tag(CDB_tag),
+            .CDB_result(CDB_result),
             .CDB_valid(CDB_valid),
             .OUT_instr(OUT_lsu_instr[i]),
-            .OUT_busy(OUT_busy[NUM_INT_FU + i]),
-            .read_tag(read_tag[NUM_INT_FU + i])
+            .OUT_busy(OUT_busy[NUM_INT_FU + i])
         );
     end
 
