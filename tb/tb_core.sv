@@ -1,4 +1,4 @@
-`include "include_pkg.sv"
+import include_pkg::*;
 
 module tb_core;
     logic clk, clk_m, rst, rst_m;

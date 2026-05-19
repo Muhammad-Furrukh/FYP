@@ -250,11 +250,11 @@
 	} commit_packet_t;
 
 	typedef struct packed {
-	    logic               valid;
-	    sqN_t               sqN;
-	    logic  [4:0]        archTag;
-	    tag_t               rd_tag;
-		logic               is_store;
+	    logic               	valid;
+	    logic			    	is_store;
+	    sqN_t               	sqN;
+	    logic  [4:0]        	archTag;
+	    tag_t               	rd_tag;
 	} rename_rob_t;
 
 	typedef struct packed {
