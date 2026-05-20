@@ -94,7 +94,9 @@ module issue
     end
 
     ta_gen2 ta_gen2
-    (   .IN_valid(instr_valid),
+    (   .clk(clk),
+        .rst(rst),
+        .IN_valid(instr_valid),
         .br_taken(OUT_br_taken),
         .jump_type(OUT_jump_type),
         .instr_sqN(instr_sqN),

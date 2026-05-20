@@ -46,12 +46,12 @@ module tb_core;
     fork
 		begin
 		    // Load instruction memory from hex file
-		    if ($value$plusargs("PROG=%s", prog_file)) begin
-		        $display("Loading program: %s", prog_file);
-		        $readmemh(prog_file, dut.prefetch.IMEM.mem);
-		    end else begin
-		        $error("Couldn't load program, exiting...");
-		    end
+		    // if ($value$plusargs("PROG=%s", prog_file)) begin
+		    //     $display("Loading program: %s", prog_file);
+		    //     $readmemh(prog_file, dut.prefetch.IMEM.mem);
+		    // end else begin
+		    //     $error("Couldn't load program, exiting...");
+		    // end
 		    
 			begin
 			// Monitor memory-mapped test result addresses
