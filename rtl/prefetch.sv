@@ -51,7 +51,7 @@ module prefetch
         case({jump2, jump1})
             2'b00:   actual_pc = current_pc; 
             2'b01:   actual_pc = jta1; // Target address for jal
-            2'b10:   actual_pc = jta2; // Target address for branch or jalr
+            2'b10, 2'b11:   actual_pc = jta2; // Target address for branch or jalr
             default: actual_pc = current_pc;
         endcase
 

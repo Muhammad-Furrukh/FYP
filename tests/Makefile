@@ -5,7 +5,7 @@ OBJDUMP = $(RISCV_PREFIX)objdump
 CFLAGS = -march=rv32im -mabi=ilp32 -nostdlib -nostartfiles -ffreestanding -O2
 LDFLAGS = -T link.ld
 
-TESTS = template add_test branch_test mul_test
+TESTS = template add_test branch_test mul_test test_prog
 
 .PHONY: all clean
 

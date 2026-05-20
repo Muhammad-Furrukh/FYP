@@ -14,7 +14,7 @@
 	parameter int unsigned COMMIT_WIDTH      = 2;
 	parameter int unsigned REG_ADDR_WIDTH    = 6;
 	parameter int unsigned DMEM_ADDR_WIDTH   = 10;
-	parameter int unsigned IMEM_ADDR_WIDTH   = 8;
+	parameter int unsigned IMEM_ADDR_WIDTH   = 10;
 	parameter int unsigned ROB_SIZE          = 64;
 	parameter int unsigned FETCHB_SIZE       = 16;
 	parameter int unsigned ISSUEB_SIZE       = 8;
@@ -250,11 +250,11 @@
 	} commit_packet_t;
 
 	typedef struct packed {
-	    logic               valid;
-	    sqN_t               sqN;
-	    logic  [4:0]        archTag;
-	    tag_t               rd_tag;
-		logic               is_store;
+	    logic               	valid;
+	    logic			    	is_store;
+	    sqN_t               	sqN;
+	    logic  [4:0]        	archTag;
+	    tag_t               	rd_tag;
 	} rename_rob_t;
 
 	typedef struct packed {

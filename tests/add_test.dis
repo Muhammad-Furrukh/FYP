@@ -1,38 +1,42 @@
-
 add_test.elf:     file format elf32-littleriscv
 
 
 Disassembly of section .text:
 
 00000000 <_start>:
-   0:	06400093          	li	ra,100
-   4:	03200113          	li	sp,50
-   8:	002081b3          	add	gp,ra,sp
-   c:	40208233          	sub	tp,ra,sp
-  10:	0020f2b3          	and	t0,ra,sp
-  14:	0020e333          	or	t1,ra,sp
-  18:	0020c3b3          	xor	t2,ra,sp
-  1c:	09600e13          	li	t3,150
-  20:	03c19263          	bne	gp,t3,44 <fail>
-  24:	03200e13          	li	t3,50
-  28:	01c21e63          	bne	tp,t3,44 <fail>
-  2c:	0040006f          	j	30 <pass>
+   0:	00100093          	li	ra,1
+   4:	00108113          	addi	sp,ra,1
+   8:	00110193          	addi	gp,sp,1
+   c:	00118213          	addi	tp,gp,1
+  10:	00120293          	addi	t0,tp,1 # 1 <_start+0x1>
+  14:	00428333          	add	t1,t0,tp
+  18:	003303b3          	add	t2,t1,gp
+  1c:	00238433          	add	s0,t2,sp
+  20:	001404b3          	add	s1,s0,ra
+  24:	00f00e13          	li	t3,15
+  28:	03c49863          	bne	s1,t3,58 <fail>
+  2c:	06400513          	li	a0,100
+  30:	0c800513          	li	a0,200
+  34:	12c00513          	li	a0,300
+  38:	00050513          	mv	a0,a0
+  3c:	12c00e13          	li	t3,300
+  40:	0040006f          	j	44 <pass>
 
-00000030 <pass>:
-  30:	00001eb7          	lui	t4,0x1
-  34:	deadcf37          	lui	t5,0xdeadc
-  38:	eeff0f13          	addi	t5,t5,-273 # deadbeef <end+0xdeadbe9b>
-  3c:	01eea023          	sw	t5,0(t4) # 1000 <end+0xfac>
-  40:	0140006f          	j	54 <end>
+00000044 <pass>:
+  44:	00001eb7          	lui	t4,0x1
+  48:	deadcf37          	lui	t5,0xdeadc
+  4c:	eeff0f13          	addi	t5,t5,-273 # deadbeef <end+0xdeadbe87>
+  50:	01eea023          	sw	t5,0(t4) # 1000 <end+0xf98>
+  54:	0140006f          	j	68 <end>
 
-00000044 <fail>:
-  44:	00002eb7          	lui	t4,0x2
-  48:	baadcf37          	lui	t5,0xbaadc
-  4c:	0def0f13          	addi	t5,t5,222 # baadc0de <end+0xbaadc08a>
-  50:	01eea023          	sw	t5,0(t4) # 2000 <end+0x1fac>
+00000058 <fail>:
+  58:	00002eb7          	lui	t4,0x2
+  5c:	baadcf37          	lui	t5,0xbaadc
+  60:	0def0f13          	addi	t5,t5,222 # baadc0de <end+0xbaadc076>
+  64:	01eea023          	sw	t5,0(t4) # 2000 <end+0x1f98>
 
-00000054 <end>:
-  54:	0000006f          	j	54 <end>
+00000068 <end>:
+  68:	0000006f          	j	68 <end>
 
 Disassembly of section .riscv.attributes:
 

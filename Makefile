@@ -16,7 +16,9 @@ RTL_FILES = $(filter-out $(PKG_FILE), \
 UNIT_VFLAGS  = --cc --exe --build --trace-fst --trace --timing --main
 UNIT_VFLAGS += -Wall -Wno-fatal
 UNIT_VFLAGS += -Wno-UNUSED -Wno-UNDRIVEN -Wno-DECLFILENAME
+UNIT_VFLAGS += -Wno-IMPORTSTAR -Wno-ENUMVALUE
 UNIT_VFLAGS += +incdir+$(RTL_DIR) +incdir+$(INC_DIR)
+UNIT_VFLAGS += --trace-structs
 
 # ════════════════════════════════════════════════════
 # Phony targets
