@@ -55,8 +55,8 @@ initial begin
     // =====================================================
     #10;
     for (int i = 0; i < 64; i += 2) begin
-        rename_rob[0] = '{valid:1, sqN:i,   archTag:1, rd_tag:1};
-        rename_rob[1] = '{valid:1, sqN:i+1, archTag:2, rd_tag:2};
+        rename_rob[0] = '{valid:1, sqN:i,   archTag:1, rd_tag:1, is_store:0};
+        rename_rob[1] = '{valid:1, sqN:i+1, archTag:2, rd_tag:2, is_store:0};
         #10;
     end
 
@@ -85,8 +85,8 @@ initial begin
     // =====================================================
     #10;
     for (int i = 64; i < 128; i += 2) begin
-        rename_rob[0] = '{valid:1, sqN:i,   archTag:1, rd_tag:1};
-        rename_rob[1] = '{valid:1, sqN:i+1, archTag:2, rd_tag:2};
+        rename_rob[0] = '{valid:1, sqN:i,   archTag:1, rd_tag:1, is_store:0};
+        rename_rob[1] = '{valid:1, sqN:i+1, archTag:2, rd_tag:2, is_store:0};
         #10;
     end
 
@@ -115,8 +115,8 @@ initial begin
     // =====================================================
     #10;
     for (int i = 0; i < 32; i += 2) begin
-        rename_rob[0] = '{valid:1, sqN:i,   archTag:1, rd_tag:1};
-        rename_rob[1] = '{valid:1, sqN:i+1, archTag:2, rd_tag:2};
+        rename_rob[0] = '{valid:1, sqN:i,   archTag:1, rd_tag:1, is_store:0};
+        rename_rob[1] = '{valid:1, sqN:i+1, archTag:2, rd_tag:2, is_store:0};
         #10;
     end
 

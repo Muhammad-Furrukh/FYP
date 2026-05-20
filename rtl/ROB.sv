@@ -104,9 +104,6 @@ always_ff @(posedge clk or posedge rst) begin
     else
         // ----------------CDB sqN Matching---------------------------
         for (int j = 0; j < ROB_SIZE; j++) begin
-            if (rob[j].tag == 0) begin   // branch and jump case
-               rob[j].ready <= 1;
-            end
             is_new_alloc = 0;
             for (int i = 0; i < RENAME_WIDTH; i++) begin
                 is_new_alloc |= (j == (tail+i)) && write_en[i];
@@ -155,6 +152,7 @@ always_ff @(posedge clk or posedge rst) begin
                     rob[tail + w_ptr].sqN <= rename_rob[i].sqN;
                     rob[tail + w_ptr].tag <= rename_rob[i].rd_tag;
                     rob[tail + w_ptr].rd  <= rename_rob[i].archTag;
+                    rob[tail + w_ptr].ready  <= (rename_rob[i].is_store) ? 1:0 ;
                     w_ptr++;
                 end
             end
@@ -170,3 +168,4 @@ assign empty = (count == 0);
 assign OUT_busy = (count > ROB_SIZE - RENAME_WIDTH);
 
 endmodule
+
