@@ -36,8 +36,9 @@ always_comb begin
     for (int i = 0; i < RENAME_WIDTH; i++)
         write_en[i] = rename_rob[i].valid && (count < (ROB_SIZE - i));
 
-    for (int j = 0; j < COMMIT_WIDTH; j++)
-        commit[j] = (count > j) && rob[head+j].ready;
+    commit[0] = (count > 0) && rob[head].ready;
+	for (int j = 1; j < COMMIT_WIDTH; j++)
+		commit[j] = (count > j) && rob[head+j].ready && commit[j-1];
 	
 	alloc_offset[0] = '0;
     for (int i = 0; i < RENAME_WIDTH-1; i++) begin
