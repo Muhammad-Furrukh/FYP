@@ -56,21 +56,29 @@
 		// ════════════════════════════════════════════════════
 
 		logic [NUM_REG-1:0] ftb;
-
 		always_comb begin
-			ftb[0] = 1'b0;
-			for (int i = 1; i < NUM_REG; i++) begin
-				logic is_source;
-				is_source = 1'b0;
-				for (int j = 0; j < DECODE_WIDTH; j++) begin
-				    if (IN_instr[j].valid) begin
-				        is_source |= (rename_table[IN_instr[j].rs1].specTag == REG_ADDR_WIDTH'(i))
-				                   | (rename_table[IN_instr[j].rs2].specTag == REG_ADDR_WIDTH'(i));
-				    end
-				end
-				ftb[i] = is_source ? 1'b0 : tag_buffer[i].free;
+			for (int i = 0; i < NUM_REG; i++) begin
+				ftb[i] = tag_buffer[i].free;
 			end
 		end
+
+		// always_comb begin
+		// 	for (int i = 0; i < DECODE_WIDTH; i++) 
+		// 		ftb[i][0] = 1'b0;  // Tag 0 is never free
+			
+		// 	for (int i = 0; i < DECODE_WIDTH; i++) begin
+		// 		logic is_source;
+		// 		is_source = 1'b0;
+		// 		for (int j = 1 < NUM_REG; j++) begin
+		// 			if (IN_instr[i].valid) begin
+		// 				is_source |= (rename_table[IN_instr[i].rs1].specTag == REG_ADDR_WIDTH'(j))
+		// 				          |  (rename_table[IN_instr[i].rs2].specTag == REG_ADDR_WIDTH'(j));
+		// 			end
+		// 			ftb[i][j] = is_source ? 1'b0 : tag_buffer[i].free;
+		// 		end
+		// 	end
+
+		// end
 
 
 		// ════════════════════════════════════════════════════
@@ -314,8 +322,11 @@
 		always_ff @(posedge clk or posedge rst) begin
 		    if (rst) begin
 			tag_buffer[0] <= '{freeComm: 1'b1, ready: 1'b1, free: 1'b0};
-		        for (int i = 1; i < NUM_REG; i++)
-		            tag_buffer[i] <= '{freeComm: 1'b1, ready: 1'b1, free: 1'b1};
+		        for (int i = 1; i < 32; i++)
+		            tag_buffer[i] <= '{freeComm: 1'b0, ready: 1'b1, free: 1'b0};
+
+				for (int i = 32; i < NUM_REG; i++)
+					tag_buffer[i] <= '{freeComm: 1'b1, ready: 1'b1, free: 1'b1};
 
 		    end else if (flush) begin
 		        // Restore free bitmap from checkpoint.

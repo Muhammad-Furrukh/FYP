@@ -23,7 +23,6 @@ module alu_issue_buffer #(
     output      pc_t                           OUT_pc,
     output      logic           [XLEN-1:0]     rs1_result,
     output      logic           [XLEN-1:0]     imm,
-    output      tag_t                          read_tag          [2],
     output      logic                          OUT_busy
 );
   
