@@ -62,7 +62,7 @@ always_ff @(posedge clk or posedge rst) begin
         head  <= 0;
         tail  <= 0;
         for (int k = 0; k < COMMIT_WIDTH; k++)
-            OUT_commit[k].valid <= 0;
+            OUT_commit[k] <= '0;
         for (int l = 0; l < ROB_SIZE; l++)
             rob[l] <= '0;
     end

@@ -1,8 +1,6 @@
 import include_pkg::*;
 
 module ta_gen2 ( 
-    input  logic            clk,
-    input  logic            rst,
     input  logic            IN_valid [NUM_ALU_FU],
     input  logic            br_taken [NUM_ALU_FU],
     input  jump_type_t      jump_type [NUM_ALU_FU],
@@ -18,53 +16,39 @@ module ta_gen2 (
     logic [$clog2(NUM_ALU_FU)-1:0] oldest_idx;
     sqN_t oldest_sqN;
 
-    // Combinational computation
-    pc_t             next_jta2;
-    logic            next_jump2;
-
     always_comb begin
+
         oldest_idx = '0;
         oldest_sqN = '1;
-        next_jump2 = 1'b0;
-        next_jta2  = '0;
+        jump2 = 1'b0;
+        jta2  = '0;
         
         for (int i = 0; i < NUM_ALU_FU; i++) begin
             if (IN_valid[i] && 
             (br_taken[i] || (jump_type[i] == 2'b10)) &&
             instr_sqN[i] < oldest_sqN) begin
                 oldest_sqN = instr_sqN[i];
-                oldest_idx = $clog2(NUM_ALU_FU)'(i);
+                oldest_idx = $clog2(NUM_ALU_FU)'(i);  // ← line 31
             end
         end
 
         if (IN_valid[oldest_idx]) begin
             if (br_taken[oldest_idx]) begin
-                next_jump2 = 1'b1;
-                next_jta2  = pc[oldest_idx] + 
-                             imm[oldest_idx];
+                jump2 = 1'b1;
+                jta2  = pc[oldest_idx] + 
+                        imm[oldest_idx];
             end
 
             else if (jump_type[oldest_idx] == 2'b10) begin
-                next_jump2 = 1'b1;
-                next_jta2  = alu_rs1_result[oldest_idx] + 
-                             imm[oldest_idx];
+                jump2 = 1'b1;
+                jta2  = alu_rs1_result[oldest_idx] + 
+                        imm[oldest_idx];
             end
 
             else begin
-                next_jump2 = 1'b0;
-                next_jta2  = '0;
+                jump2 = 1'b0;
+                jta2  = '0;
             end
-        end
-    end
-
-    // Sequential output registers
-    always_ff @(posedge clk or posedge rst) begin
-        if (rst) begin
-            jta2  <= '0;
-            jump2 <= 1'b0;
-        end else begin
-            jta2  <= next_jta2;
-            jump2 <= next_jump2;
         end
     end
 endmodule
