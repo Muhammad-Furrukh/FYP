@@ -1,22 +1,105 @@
+# Reading pref.tcl
 # //  Questa Sim-64
-# //  Version 2021.2_1 linux_x86_64 May 15 2021
+# //  Version 2024.1 win64 Feb  1 2024
 # //
-# //  Copyright 1991-2021 Mentor Graphics Corporation
-# //  All Rights Reserved.
+# // Unpublished work. Copyright 2024 Siemens
 # //
-# //  QuestaSim and its associated documentation contain trade
-# //  secrets and commercial or financial information that are the property of
-# //  Mentor Graphics Corporation and are privileged, confidential,
-# //  and exempt from disclosure under the Freedom of Information Act,
-# //  5 U.S.C. Section 552. Furthermore, this information
-# //  is prohibited from disclosure under the Trade Secrets Act,
-# //  18 U.S.C. Section 1905.
+# // This material contains trade secrets or otherwise confidential information
+# // owned by Siemens Industry Software Inc. or its affiliates (collectively,
+# // "SISW"), or its licensors. Access to and use of this information is strictly
+# // limited as set forth in the Customer's applicable agreements with SISW.
 # //
-# Loading project core
-vsim -voptargs=+acc work.tb_core
-# vsim -voptargs="+acc" work.tb_core 
-# Start time: 02:07:44 on May 10,2026
-# ** Note: (vsim-8009) Loading existing optimized design _opt
+# // This material may not be copied, distributed, or otherwise disclosed outside
+# // of the Customer's facilities without the express written permission of SISW,
+# // and may not be used in any way not expressly authorized by SISW.
+# //
+# vsim -gui work.tb_core -voptargs="+acc" -suppress 8386 "+PROG=..\..\tests\branch_test.hex" -do "do wave.do;run -all; quit" 
+# Start time: 14:05:41 on May 26,2026
+# ** Note: (vsim-3812) Design is being optimized...
+# ** Warning: (vopt-10587) Some optimizations are turned off because the +acc switch is in effect. This will cause your simulation to run slowly. Please use -access/-debug to maintain needed visibility.
+# Support of the MGLS_LICENSE_FILE and LM_LICENSE_FILE licensing environment variables will be discontinued starting with the 2025.1 release. Please update to using the SALT_LICENSE_SERVER variable.
+# Please contact Siemens EDA Customer Support (https://support.sw.siemens.com/) for assistance.
+# ** Warning: ./../../rtl/lsu.sv(7): (vopt-13314) Defaulting port 'agu_out' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/lsu.sv(8): (vopt-13314) Defaulting port 'commit_sqN' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/lsu.sv(9): (vopt-13314) Defaulting port 'dispatch_instr' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/fetch_buffer.sv(9): (vopt-13314) Defaulting port 'IN_instr' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/branch_checkpoint.sv(9): (vopt-13314) Defaulting port 'comm_valid' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/branch_checkpoint.sv(10): (vopt-13314) Defaulting port 'commit_sqN' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/branch_checkpoint.sv(11): (vopt-13314) Defaulting port 'instr_sqN' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/branch_checkpoint.sv(12): (vopt-13314) Defaulting port 'chk_valid' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: core_tb.sv(77): (vopt-2244) Variable 'cycle' is implicitly static. You must either explicitly declare it as static or automatic
+# or remove the initialization in the declaration of variable.
+# ** Warning: ./../../rtl/execute.sv(9): (vopt-13314) Defaulting port 'int_issue_instr' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/execute.sv(10): (vopt-13314) Defaulting port 'lsu_issue_instr' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/issue.sv(15): (vopt-13314) Defaulting port 'CDB_result' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/ta_gen1.sv(5): (vopt-13314) Defaulting port 'IN_pc' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/ta_gen1.sv(6): (vopt-13314) Defaulting port 'valid' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/ta_gen1.sv(7): (vopt-13314) Defaulting port 'IN_instr' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/AGU.sv(5): (vopt-13314) Defaulting port 'IN_instr' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/ALU.sv(5): (vopt-13314) Defaulting port 'IN_instr' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/flush_controller.sv(8): (vopt-13314) Defaulting port 'br_taken' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/flush_controller.sv(9): (vopt-13314) Defaulting port 'sqN' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/flush_controller.sv(10): (vopt-13314) Defaulting port 'jump_type' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/ta_gen2.sv(4): (vopt-13314) Defaulting port 'IN_valid' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/ta_gen2.sv(5): (vopt-13314) Defaulting port 'br_taken' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/ta_gen2.sv(6): (vopt-13314) Defaulting port 'jump_type' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/ta_gen2.sv(7): (vopt-13314) Defaulting port 'instr_sqN' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/ta_gen2.sv(8): (vopt-13314) Defaulting port 'pc' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/ta_gen2.sv(9): (vopt-13314) Defaulting port 'alu_rs1_result' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/ta_gen2.sv(10): (vopt-13314) Defaulting port 'imm' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/register_file.sv(6): (vopt-13314) Defaulting port 'rs1_addr' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/register_file.sv(7): (vopt-13314) Defaulting port 'rs2_addr' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/register_file.sv(8): (vopt-13314) Defaulting port 'rd_addr' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/register_file.sv(9): (vopt-13314) Defaulting port 'rd_write_en' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/register_file.sv(10): (vopt-13314) Defaulting port 'rd_data' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/dispatch.sv(8): (vopt-13314) Defaulting port 'MUL_DIV_buffer_busy' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/dispatch.sv(9): (vopt-13314) Defaulting port 'LSU_buffer_busy' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/dispatch.sv(11): (vopt-13314) Defaulting port 'CDB_tag' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/dispatch.sv(12): (vopt-13314) Defaulting port 'CDB_valid' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/dispatch.sv(15): (vopt-13314) Defaulting port 'comm_valid' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/dispatch.sv(16): (vopt-13314) Defaulting port 'commit_sqN' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/dispatch.sv(17): (vopt-13314) Defaulting port 'instr_sqN' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/dispatch.sv(19): (vopt-13314) Defaulting port 'checkpoint' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/fetch.sv(8): (vopt-13314) Defaulting port 'instr_pc' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/fetch.sv(9): (vopt-13314) Defaulting port 'instr_valid' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/fetch.sv(10): (vopt-13314) Defaulting port 'IN_instr' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/dispatch_unit.sv(9): (vopt-13314) Defaulting port 'ALU_buffer_busy' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/dispatch_unit.sv(10): (vopt-13314) Defaulting port 'MUL_DIV_buffer_busy' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/dispatch_unit.sv(11): (vopt-13314) Defaulting port 'LSU_buffer_busy' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/dispatch_unit.sv(13): (vopt-13314) Defaulting port 'CDB_tag' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/dispatch_unit.sv(14): (vopt-13314) Defaulting port 'CDB_valid' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/rename.sv(116): (vopt-2182) 'masked' might be read before written in always_comb or always @* block.
+# ** Warning: ./../../rtl/load_buffer.sv(6): (vopt-13314) Defaulting port 'alloc' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/load_buffer.sv(7): (vopt-13314) Defaulting port 'addr_wb' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/load_buffer.sv(8): (vopt-13314) Defaulting port 'stb_fwd' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/load_buffer.sv(11): (vopt-13314) Defaulting port 'mem_resp' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/load_buffer.sv(12): (vopt-13314) Defaulting port 'mem_stall' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/mul_div.sv(8): (vopt-13314) Defaulting port 'IN_instr' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/alu_issue_buffer.sv(9): (vopt-13314) Defaulting port 'IN_instr' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/alu_issue_buffer.sv(13): (vopt-13314) Defaulting port 'RF_data' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/alu_issue_buffer.sv(15): (vopt-13314) Defaulting port 'CDB_tag' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/alu_issue_buffer.sv(16): (vopt-13314) Defaulting port 'CDB_result' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/alu_issue_buffer.sv(17): (vopt-13314) Defaulting port 'CDB_valid' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/lsu_issue_buffer.sv(8): (vopt-13314) Defaulting port 'IN_instr' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/lsu_issue_buffer.sv(12): (vopt-13314) Defaulting port 'RF_data' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/lsu_issue_buffer.sv(14): (vopt-13314) Defaulting port 'CDB_tag' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/lsu_issue_buffer.sv(15): (vopt-13314) Defaulting port 'CDB_result' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/lsu_issue_buffer.sv(16): (vopt-13314) Defaulting port 'CDB_valid' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/mul_div_issue_buffer.sv(8): (vopt-13314) Defaulting port 'IN_instr' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/mul_div_issue_buffer.sv(12): (vopt-13314) Defaulting port 'RF_data' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/mul_div_issue_buffer.sv(15): (vopt-13314) Defaulting port 'CDB_tag' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/mul_div_issue_buffer.sv(16): (vopt-13314) Defaulting port 'CDB_result' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/mul_div_issue_buffer.sv(17): (vopt-13314) Defaulting port 'CDB_valid' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/store_buffer.sv(6): (vopt-13314) Defaulting port 'alloc' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/store_buffer.sv(7): (vopt-13314) Defaulting port 'wb' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/store_buffer.sv(8): (vopt-13314) Defaulting port 'commit_sqN' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/store_buffer.sv(11): (vopt-13314) Defaulting port 'mem_stall' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/data_memory.sv(30): (vopt-13314) Defaulting port 'wr_req' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/data_memory.sv(34): (vopt-13314) Defaulting port 'rd_req' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/ROB.sv(6): (vopt-13314) Defaulting port 'rename_rob' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/ROB.sv(9): (vopt-13314) Defaulting port 'CDB_valid' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ./../../rtl/ROB.sv(10): (vopt-13314) Defaulting port 'CDB_sqN' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Note: (vsim-12126) Error and warning message counts have been restored: Errors=0, Warnings=80.
 # Loading sv_std.std
 # Loading work.include_pkg(fast)
 # Loading work.core_tb_sv_unit(fast)
@@ -88,25 +171,60 @@ vsim -voptargs=+acc work.tb_core
 # Loading work.register_file(fast)
 # Loading work.ROB_sv_unit(fast)
 # Loading work.ROB(fast)
-add wave sim:/tb_core/*
-add wave -position insertpoint  \
-sim:/tb_core/dut/fetch/IN_busy
-run
+# do wave.do
+# Cannot open macro file: wave.do
+# run -all
 # Core released from reset...
-# ** Error: Couldn't load program, exiting...
-#    Time: 96 ns  Scope: tb_core File: /home/muhammad/Documents/UET/FYP/sim_questasim/core/core_tb.sv Line: 53
-run
-# [8] CDB[0] tag=1 result=0x00000064 sqN=0
+# Loading program: ..\..\tests\branch_test.hex
+# [8] CDB[0] tag=32 result=0x0000000a sqN=0
+# [8] CDB[1] tag=33 result=0x00000014 sqN=1
 # [10] COMMIT[0] archTag=1 sqN=0
-run
-add wave -position insertpoint  \
-sim:/tb_core/dut/rename/chkpt_busy
-add wave -position insertpoint  \
-sim:/tb_core/dut/rename/chkpt_need
-restart -f
+# [10] COMMIT[1] archTag=2 sqN=1
+# [10] *** FLUSH sqN=3 ***
+# [11] CDB[0] tag=0 result=0x0000003c sqN=2
+# [11] CDB[1] tag=0 result=0x00000008 sqN=3
+# [13] COMMIT[0] archTag=0 sqN=2
+# [13] COMMIT[1] archTag=0 sqN=3
+# [18] *** FLUSH sqN=12 ***
+# [19] CDB[0] tag=0 result=0x00000008 sqN=12
+# [21] COMMIT[0] archTag=0 sqN=12
+# [26] CDB[0] tag=0 result=0x00000028 sqN=20
+# [27] *** FLUSH sqN=21 ***
+# [28] CDB[0] tag=0 result=0x00000008 sqN=21
+# [28] CDB[1] tag=0 result=0x00000028 sqN=22
+# [29] COMMIT[0] archTag=0 sqN=20
+# [30] COMMIT[0] archTag=0 sqN=21
+# [35] *** FLUSH sqN=30 ***
+# [36] CDB[0] tag=0 result=0x00000008 sqN=30
+# [36] CDB[1] tag=0 result=0x00000030 sqN=31
+# [38] COMMIT[0] archTag=0 sqN=30
+# [43] CDB[0] tag=34 result=0x00001000 sqN=39
+# [43] CDB[1] tag=35 result=0xdeadc000 sqN=40
+# [45] CDB[0] tag=36 result=0xdeadbeef sqN=41
+# [45] COMMIT[0] archTag=29 sqN=39
+# [45] COMMIT[1] archTag=30 sqN=40
+# [46] CDB[0] tag=0 result=0x00000044 sqN=43
+# [47] CDB[0] tag=0 result=0x00000058 sqN=44
+# [47] COMMIT[0] archTag=30 sqN=41
+# [47] COMMIT[1] archTag=0 sqN=42
+# [48] CDB[0] tag=0 result=0x00000058 sqN=45
+# [48] COMMIT[0] archTag=0 sqN=43
+# [49] CDB[0] tag=0 result=0x00000058 sqN=46
+# [49] COMMIT[0] archTag=0 sqN=44
+# PASS: data=deadbeef
+# ** Note: $finish    : core_tb.sv(65)
+#    Time: 595 ns  Iteration: 1  Instance: /tb_core
+# 1
+# Break in Module tb_core at core_tb.sv line 65
+# couldn't load library "C:/questasim64_2024.1/win64/ScintillaTk/ScintillaTk114.dll": this library or a dependent library could not be found in library path
+# list element in quotes followed by ":" instead of space
+#  quit
+add wave -r sim:/tb_core/*
+restart
 # Closing VCD file "tb_core.fst"
 # ** Note: (vsim-12125) Error and warning message counts have been reset to '0' because of 'restart'.
 # ** Note: (vsim-8009) Loading existing optimized design _opt
+# ** Note: (vsim-12126) Error and warning message counts have been restored: Errors=0, Warnings=80.
 # Loading work.include_pkg(fast)
 # Loading work.core_tb_sv_unit(fast)
 # Loading work.tb_core(fast)
@@ -177,10 +295,51 @@ restart -f
 # Loading work.register_file(fast)
 # Loading work.ROB_sv_unit(fast)
 # Loading work.ROB(fast)
-run
+run -all
 # Core released from reset...
-# ** Error: Couldn't load program, exiting...
-#    Time: 96 ns  Scope: tb_core File: /home/muhammad/Documents/UET/FYP/sim_questasim/core/core_tb.sv Line: 53
-run
-# [8] CDB[0] tag=1 result=0x00000064 sqN=0
+# Loading program: ..\..\tests\branch_test.hex
+# [8] CDB[0] tag=32 result=0x0000000a sqN=0
+# [8] CDB[1] tag=33 result=0x00000014 sqN=1
 # [10] COMMIT[0] archTag=1 sqN=0
+# [10] COMMIT[1] archTag=2 sqN=1
+# [10] *** FLUSH sqN=3 ***
+# [11] CDB[0] tag=0 result=0x0000003c sqN=2
+# [11] CDB[1] tag=0 result=0x00000008 sqN=3
+# [13] COMMIT[0] archTag=0 sqN=2
+# [13] COMMIT[1] archTag=0 sqN=3
+# [18] *** FLUSH sqN=12 ***
+# [19] CDB[0] tag=0 result=0x00000008 sqN=12
+# [21] COMMIT[0] archTag=0 sqN=12
+# [26] CDB[0] tag=0 result=0x00000028 sqN=20
+# [27] *** FLUSH sqN=21 ***
+# [28] CDB[0] tag=0 result=0x00000008 sqN=21
+# [28] CDB[1] tag=0 result=0x00000028 sqN=22
+# [29] COMMIT[0] archTag=0 sqN=20
+# [30] COMMIT[0] archTag=0 sqN=21
+# [35] *** FLUSH sqN=30 ***
+# [36] CDB[0] tag=0 result=0x00000008 sqN=30
+# [36] CDB[1] tag=0 result=0x00000030 sqN=31
+# [38] COMMIT[0] archTag=0 sqN=30
+# [43] CDB[0] tag=34 result=0x00001000 sqN=39
+# [43] CDB[1] tag=35 result=0xdeadc000 sqN=40
+# [45] CDB[0] tag=36 result=0xdeadbeef sqN=41
+# [45] COMMIT[0] archTag=29 sqN=39
+# [45] COMMIT[1] archTag=30 sqN=40
+# [46] CDB[0] tag=0 result=0x00000044 sqN=43
+# [47] CDB[0] tag=0 result=0x00000058 sqN=44
+# [47] COMMIT[0] archTag=30 sqN=41
+# [47] COMMIT[1] archTag=0 sqN=42
+# [48] CDB[0] tag=0 result=0x00000058 sqN=45
+# [48] COMMIT[0] archTag=0 sqN=43
+# [49] CDB[0] tag=0 result=0x00000058 sqN=46
+# [49] COMMIT[0] archTag=0 sqN=44
+# PASS: data=deadbeef
+# ** Note: $finish    : core_tb.sv(65)
+#    Time: 595 ns  Iteration: 1  Instance: /tb_core
+# 1
+# Break in Module tb_core at core_tb.sv line 65
+# couldn't load library "C:/questasim64_2024.1/win64/ScintillaTk/ScintillaTk114.dll": this library or a dependent library could not be found in library path
+# list element in quotes followed by ":" instead of space
+write format wave -window .main_pane.wave.interior.cs.body.pw.wf D:/FYP/sim_questasim/core/wave.do
+# End time: 14:08:59 on May 26,2026, Elapsed time: 0:03:18
+# Errors: 0, Warnings: 80, Suppressed Errors: 147
