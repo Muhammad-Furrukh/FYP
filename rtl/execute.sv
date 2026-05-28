@@ -66,8 +66,12 @@ module execute
         end
 
         else begin
-            registered_CDB_output <= int_fu_out;
-            registered_AGU_output <= next_agu_out;
+        	for (int i = 0; i < NUM_INT_FU; i++) begin
+            	registered_CDB_output[i] <= int_fu_out[i];
+            end
+            for (int i = 0; i < NUM_AGU_FU; i++) begin
+            	registered_AGU_output[i] <= next_agu_out[i];
+        	end
         end
     end
 

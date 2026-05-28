@@ -1,3 +1,4 @@
+
 add_test.elf:     file format elf32-littleriscv
 
 
@@ -14,29 +15,37 @@ Disassembly of section .text:
   1c:	00238433          	add	s0,t2,sp
   20:	001404b3          	add	s1,s0,ra
   24:	00f00e13          	li	t3,15
-  28:	03c49863          	bne	s1,t3,58 <fail>
+  28:	05c49863          	bne	s1,t3,78 <fail>
   2c:	06400513          	li	a0,100
   30:	0c800513          	li	a0,200
   34:	12c00513          	li	a0,300
   38:	00050513          	mv	a0,a0
   3c:	12c00e13          	li	t3,300
-  40:	0040006f          	j	44 <pass>
+  40:	02a00593          	li	a1,42
+  44:	00000613          	li	a2,0
+  48:	00058633          	add	a2,a1,zero
+  4c:	06300593          	li	a1,99
+  50:	02a00e13          	li	t3,42
+  54:	03c61263          	bne	a2,t3,78 <fail>
+  58:	06300e13          	li	t3,99
+  5c:	01c59e63          	bne	a1,t3,78 <fail>
+  60:	0040006f          	j	64 <pass>
 
-00000044 <pass>:
-  44:	00001eb7          	lui	t4,0x1
-  48:	deadcf37          	lui	t5,0xdeadc
-  4c:	eeff0f13          	addi	t5,t5,-273 # deadbeef <end+0xdeadbe87>
-  50:	01eea023          	sw	t5,0(t4) # 1000 <end+0xf98>
-  54:	0140006f          	j	68 <end>
+00000064 <pass>:
+  64:	00001eb7          	lui	t4,0x1
+  68:	deadcf37          	lui	t5,0xdeadc
+  6c:	eeff0f13          	addi	t5,t5,-273 # deadbeef <end+0xdeadbe67>
+  70:	01eea023          	sw	t5,0(t4) # 1000 <end+0xf78>
+  74:	0140006f          	j	88 <end>
 
-00000058 <fail>:
-  58:	00002eb7          	lui	t4,0x2
-  5c:	baadcf37          	lui	t5,0xbaadc
-  60:	0def0f13          	addi	t5,t5,222 # baadc0de <end+0xbaadc076>
-  64:	01eea023          	sw	t5,0(t4) # 2000 <end+0x1f98>
+00000078 <fail>:
+  78:	00002eb7          	lui	t4,0x2
+  7c:	baadcf37          	lui	t5,0xbaadc
+  80:	0def0f13          	addi	t5,t5,222 # baadc0de <end+0xbaadc056>
+  84:	01eea023          	sw	t5,0(t4) # 2000 <end+0x1f78>
 
-00000068 <end>:
-  68:	0000006f          	j	68 <end>
+00000088 <end>:
+  88:	0000006f          	j	88 <end>
 
 Disassembly of section .riscv.attributes:
 

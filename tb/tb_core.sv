@@ -32,10 +32,10 @@ module tb_core;
     initial begin
         string prog_file;
         
-        $dumpfile("tb_core.fst");
+        $dumpfile("./sim_verilator/tb_core.fst");
         $dumpvars(0, tb_core);
     
-	// Initialize clocks and reset
+		// Initialize clocks and reset
         clk = 0; clk_m = 0;
         rst = 1; rst_m = 1;
         
@@ -43,16 +43,18 @@ module tb_core;
         rst = 0; rst_m = 0;
 
         $display("Core released from reset...");
-    fork
-		    // begin
-		    // Load instruction memory from hex file
-		    // if ($value$plusargs("PROG=%s", prog_file)) begin
-		    //     $display("Loading program: %s", prog_file);
-		    //     $readmemh(prog_file, dut.prefetch.IMEM.mem);
-		    // end else begin
-		    //     $error("Couldn't load program, exiting...");
-		    // end
-		    
+        
+    	fork
+			begin
+				// Load instruction memory from hex file
+				if ($value$plusargs("PROG=%s", prog_file)) begin
+					$display("Loading program: %s", prog_file);
+					$readmemh(prog_file, dut.prefetch.IMEM.mem);
+				end else begin
+					$error("Couldn't load program, exiting...");
+				end
+	    	end
+	    	
 			begin
 				// Monitor memory-mapped test result addresses
 				@(posedge clk);
@@ -73,16 +75,13 @@ module tb_core;
 				end
 			end
 		join_none
-		
+	
 		// Should not reach here under normal conditions
 		#1000;
 		tests_fail++;
 		$display("FAIL: Timed out waiting for result");
 		
-		$readmemh(prog_file, dut.prefetch.IMEM.mem);
-		for (int i = 0; i < 25; i++)
-			$display("IMEM[%02d] = %08h", i, dut.prefetch.IMEM.mem[i]);
-		
 		$finish;
-    end
+		end
+    
 endmodule

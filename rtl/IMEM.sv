@@ -30,16 +30,15 @@ module IMEM
     always_ff @(posedge clk or posedge rst) begin  
         if (rst)
             data <= '{default: 32'b0};
-
-        else if (IN_busy)
-            data <= data;
             
         else begin
             for (int i = 0; i < FETCH_WIDTH; i++) begin
-                if ((base_word + i) < MEM_WORDS)
-                    data[i] <= mem[base_word + i];
-                else
-                    data[i] <= 32'b0;
+		        if (!IN_busy) begin
+		            if ((base_word + i) < MEM_WORDS)
+		                data[i] <= mem[base_word + i];
+		            else
+		                data[i] <= 32'b0;
+		        end
             end
         end
     end

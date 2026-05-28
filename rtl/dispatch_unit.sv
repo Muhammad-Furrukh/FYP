@@ -348,7 +348,7 @@ module dispatch_unit
                 for (int i = 0; i < RENAME_WIDTH; i++) begin
                     if (!can_dispatch[i]) begin
                         packet[i].rs1_ready <= output_rs1_ready[i]? 1'b1 : IN_instr[i].rs1_ready;
-                        packet[i].rs2_ready <= output_rs2_ready[i]? 1'b1 : IN_instr[i].rs1_ready;
+                        packet[i].rs2_ready <= output_rs2_ready[i]? 1'b1 : IN_instr[i].rs2_ready;
                     end
                 end
             end
