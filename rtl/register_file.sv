@@ -23,7 +23,7 @@ always @(negedge clk or posedge rst) begin
     end
     else begin
         for (i = 0; i < NUM_CDB_LINES; i++) begin
-            if (rd_write_en[i]) begin
+            if (rd_write_en[i] && rd_addr[i] != '0) begin
                 registers[rd_addr[i]] <= rd_data[i];
             end
         end
