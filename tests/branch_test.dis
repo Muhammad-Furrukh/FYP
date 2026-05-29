@@ -5,40 +5,53 @@ branch_test.elf:     file format elf32-littleriscv
 Disassembly of section .text:
 
 00000000 <_start>:
-   0:	00a00093          	li	ra,10
-   4:	01400113          	li	sp,20
-   8:	02208e63          	beq	ra,sp,44 <fail>
-   c:	00209463          	bne	ra,sp,14 <test_blt>
-  10:	0340006f          	j	44 <fail>
+   0:	00500093          	li	ra,5
+   4:	00500113          	li	sp,5
+   8:	00000193          	li	gp,0
+   c:	00208463          	beq	ra,sp,14 <_start+0x14>
+  10:	06300193          	li	gp,99
+  14:	00118193          	addi	gp,gp,1
+  18:	00100e13          	li	t3,1
+  1c:	07c19a63          	bne	gp,t3,90 <fail>
+  20:	00a00093          	li	ra,10
+  24:	01400113          	li	sp,20
+  28:	00000213          	li	tp,0
+  2c:	0020c463          	blt	ra,sp,34 <_start+0x34>
+  30:	06300213          	li	tp,99
+  34:	00208233          	add	tp,ra,sp
+  38:	01e00e13          	li	t3,30
+  3c:	05c21a63          	bne	tp,t3,90 <fail>
+  40:	01400093          	li	ra,20
+  44:	00a00113          	li	sp,10
+  48:	00000293          	li	t0,0
+  4c:	0020c663          	blt	ra,sp,58 <_start+0x58>
+  50:	00700293          	li	t0,7
+  54:	0080006f          	j	5c <_start+0x5c>
+  58:	06300293          	li	t0,99
+  5c:	00700e13          	li	t3,7
+  60:	03c29863          	bne	t0,t3,90 <fail>
+  64:	00000093          	li	ra,0
+  68:	00800113          	li	sp,8
+  6c:	00108093          	addi	ra,ra,1
+  70:	fe20cee3          	blt	ra,sp,6c <_start+0x6c>
+  74:	00800e13          	li	t3,8
+  78:	01c09c63          	bne	ra,t3,90 <fail>
 
-00000014 <test_blt>:
-  14:	0020c463          	blt	ra,sp,1c <test_bge>
-  18:	02c0006f          	j	44 <fail>
+0000007c <pass>:
+  7c:	00001eb7          	lui	t4,0x1
+  80:	deadcf37          	lui	t5,0xdeadc
+  84:	eeff0f13          	addi	t5,t5,-273 # deadbeef <end+0xdeadbe4f>
+  88:	01eea023          	sw	t5,0(t4) # 1000 <end+0xf60>
+  8c:	0140006f          	j	a0 <end>
 
-0000001c <test_bge>:
-  1c:	0220d463          	bge	ra,sp,44 <fail>
-  20:	00117463          	bgeu	sp,ra,28 <test_bltu>
-  24:	0200006f          	j	44 <fail>
+00000090 <fail>:
+  90:	00002eb7          	lui	t4,0x2
+  94:	baadcf37          	lui	t5,0xbaadc
+  98:	0def0f13          	addi	t5,t5,222 # baadc0de <end+0xbaadc03e>
+  9c:	01eea023          	sw	t5,0(t4) # 2000 <end+0x1f60>
 
-00000028 <test_bltu>:
-  28:	0020e463          	bltu	ra,sp,30 <pass>
-  2c:	0180006f          	j	44 <fail>
-
-00000030 <pass>:
-  30:	00001eb7          	lui	t4,0x1
-  34:	deadcf37          	lui	t5,0xdeadc
-  38:	eeff0f13          	addi	t5,t5,-273 # deadbeef <end+0xdeadbe9b>
-  3c:	01eea023          	sw	t5,0(t4) # 1000 <end+0xfac>
-  40:	0140006f          	j	54 <end>
-
-00000044 <fail>:
-  44:	00002eb7          	lui	t4,0x2
-  48:	baadcf37          	lui	t5,0xbaadc
-  4c:	0def0f13          	addi	t5,t5,222 # baadc0de <end+0xbaadc08a>
-  50:	01eea023          	sw	t5,0(t4) # 2000 <end+0x1fac>
-
-00000054 <end>:
-  54:	0000006f          	j	54 <end>
+000000a0 <end>:
+  a0:	0000006f          	j	a0 <end>
 
 Disassembly of section .riscv.attributes:
 
@@ -47,7 +60,7 @@ Disassembly of section .riscv.attributes:
    2:	0000                	.insn	2, 0x0000
    4:	7200                	.insn	2, 0x7200
    6:	7369                	.insn	2, 0x7369
-   8:	01007663          	bgeu	zero,a6,14 <test_blt>
+   8:	01007663          	bgeu	zero,a6,14 <_start+0x14>
    c:	001d                	.insn	2, 0x001d
    e:	0000                	.insn	2, 0x0000
   10:	7205                	.insn	2, 0x7205
