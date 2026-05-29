@@ -19,8 +19,7 @@ _start:
     mul  x6, x5, x2
     mul  x7,  x6, x2       # slot 5
     mul  x8,  x7, x2       # slot 6 mul  x7,  x6, x2       # slot 5
-    mul  x8,  x7, x2       # slot 6
-    
+
     # ROB drain
     #   — resume check
     addi x15, x0, 10
