@@ -17,7 +17,22 @@ _start:
     mul  x4, x3, x2        # slot 2 — RAW on x3
     mul  x5, x4, x2        # slot 3 — RAW on x4
     mul  x6, x5, x2
+    mul  x7,  x6, x2       # slot 5
+    mul  x8,  x7, x2       # slot 6 mul  x7,  x6, x2       # slot 5
+    mul  x8,  x7, x2       # slot 6
+    
+    # ROB drain
+    #   — resume check
+    addi x15, x0, 10
+    addi x16, x0, 20 mul  x7,  x6, x2       # slot 5
+    mul  x8,  x7, x2       # slot 6
+    add  x17, x15, x16     # x17 = 30
+    addi x18, x0, 30
+    bne  x17, x18, fail
 
+    # 2 * 3^12 = 2 * 531441 = 1062882
+    li   x19, 1062882
+    bne  x14, x19, fail
 
 pass:
     li   x29, 0x00001000
@@ -30,3 +45,5 @@ fail:
     sw   x30, 0(x29)
 done:
     j done
+
+ 
