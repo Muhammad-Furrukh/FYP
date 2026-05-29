@@ -215,8 +215,8 @@ module tb_core;
                     end
                     if (dut.lsu.u_dmem.wr_req_held[0].valid &&
                         dut.lsu.u_dmem.wr_req_held[0].wr_addr == 32'h00002000) begin
-                        $display("FAIL: data=%h", dut.lsu.u_dmem.wr_req_held[0].data);
                         dump_rob();
+                        $error("FAIL: data=%h", dut.lsu.u_dmem.wr_req_held[0].data);
                         $finish;
                     end
                 end
@@ -224,9 +224,8 @@ module tb_core;
         join_none
 
         #2000;
-        $display("FAIL: Timed out waiting for result");
         dump_rob();
-        $finish;
+        $error("FAIL: Timed out waiting for result");
     end
 
 endmodule
