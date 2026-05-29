@@ -23,7 +23,8 @@ _start:
     # ROB drain
     #   — resume check
     addi x15, x0, 10
-    addi x16, x0, 20 mul  x7,  x6, x2       # slot 5
+    addi x16, x0, 20 
+    mul  x7,  x6, x2       # slot 5
     mul  x8,  x7, x2       # slot 6
     add  x17, x15, x16     # x17 = 30
     addi x18, x0, 30

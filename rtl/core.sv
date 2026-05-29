@@ -93,10 +93,7 @@ module core
             rename_rob[i].sqN      =  rename_instr[i].sqN;
             rename_rob[i].archTag  =  rename_rob_rd[i];
             rename_rob[i].rd_tag   =  rename_instr[i].rd_tag;
-            rename_rob[i].is_store =  rename_instr[i].f_unit == LSU &&
-                                     (rename_instr[i].oper == LSU_SB ||
-                                      rename_instr[i].oper == LSU_SH ||
-                                      rename_instr[i].oper == LSU_SW);
+            rename_rob[i].is_store =  (rename_instr[i].rd_tag == '0);
         end
     end
 

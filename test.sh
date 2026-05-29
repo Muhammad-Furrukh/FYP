@@ -1,15 +1,31 @@
-# Compile all tests
-cd tests
-make all
+#!/bin/bash
 
-# Run individual tests
-cd ..
-make test_core PROG=tests/add_test.hex
-make test_core PROG=tests/mul_test.hex
-make test_core PROG=tests/branch_test.hex
+# Build all tests
+cd tests && make all && cd ..
 
-# Or create a test runner script
-for test in add_test mul_test branch_test; do
-    echo "Running $test..."
-    make test_core PROG=tests/$test.hex
+# Initialize counters
+PASS=0
+FAIL=0
+
+# Run each test
+for hex_file in tests/*.hex; do
+    test_name=$(basename "$hex_file" .hex)
+    echo -n "Running $test_name... "
+    
+    make test_core PROG=$hex_file > /dev/null 2>&1
+    
+    if [ $? -eq 0 ]; then
+        echo "PASS"
+        ((PASS++))
+    else
+        echo "FAIL"
+        ((FAIL++))
+    fi
 done
+
+# Summary
+echo ""
+echo "========================="
+echo "PASS: $PASS"
+echo "FAIL: $FAIL"
+echo "========================="
