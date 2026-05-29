@@ -16,20 +16,23 @@ _start:
 
 	.Ltaken1:
 		addi x3, x3, 1           # correct path: x3 = 1
-		li   x28, 1
-		bne  x3, x28, fail
+	
+	li   x28, 1
+	bne  x3, x28, fail
 
     # Case 2: nested dependent computation after flush
-    li   x1, 10
-    li   x2, 20
-    li   x4, 0
-    blt  x1, x2, .Ltaken2    # taken: x1 < x2
-    li   x4, 99              # wrong path
-
+	li   x1, 10
+	li   x2, 20
+	li   x4, 0
+	blt  x1, x2, .Ltaken2
+	li   x4, 99              # wrong path — flushed
+	
 	.Ltaken2:
-		add  x4, x1, x2          # x4 = 30
-		li   x28, 30
-		bne  x4, x28, fail
+		addi x4, x4, 30      # correct path: x4 = 0 + 30 = 30 and if flush wrong: x4 = 99 + 30 = 129
+	
+	li   x28, 30
+	bne  x4, x28, fail
+
 
     # Case 3: not-taken branch (fall through)
     li   x1, 20

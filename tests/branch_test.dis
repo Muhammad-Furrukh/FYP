@@ -18,7 +18,7 @@ Disassembly of section .text:
   28:	00000213          	li	tp,0
   2c:	0020c463          	blt	ra,sp,34 <_start+0x34>
   30:	06300213          	li	tp,99
-  34:	00208233          	add	tp,ra,sp
+  34:	01e20213          	addi	tp,tp,30 # 1e <_start+0x1e>
   38:	01e00e13          	li	t3,30
   3c:	05c21a63          	bne	tp,t3,90 <fail>
   40:	01400093          	li	ra,20
