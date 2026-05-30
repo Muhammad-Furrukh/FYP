@@ -261,6 +261,7 @@ module core
         .dispatch_instr(lsu_dispatch_instr),
         .agu_out(agu_out),
         .commit_sqN(commit_sqN),
+        .comm_valid(comm_valid),
         .flush(flush),
         .flush_sqN(flush_sqN),
         .OUT_busy(lsu_busy),

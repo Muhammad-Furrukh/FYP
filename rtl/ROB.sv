@@ -62,13 +62,13 @@ always_comb begin
             if (i < int'(count)) begin
                 // (sqN - (flush_sqN+1)) < ROB_SIZE means sqN is in the
                 // window [flush_sqN+1 .. flush_sqN+ROB_SIZE], i.e. future.
-                if ((rob[head + ($clog2(ROB_SIZE))'(i)].sqN - (flush_sqN + sqN_t'(1))) < sqN_t'(ROB_SIZE))
+                if (((rob[head + ($clog2(ROB_SIZE))'(i)].sqN - flush_sqN) & SQN_MASK) < sqN_t'(ROB_SIZE))
                     squash_count = squash_count + 1'b1;
             end
         end
         // Wind tail back by exactly the number of squashed slots.
         // This is safe because tail is a modular ROB index.
-        new_tail = tail - squash_count[$clog2(ROB_SIZE)-1:0] - 1;
+        new_tail = tail - squash_count[$clog2(ROB_SIZE)-1:0];
     end
 end
 
@@ -105,7 +105,7 @@ always_ff @(posedge clk or posedge rst) begin
             count <= count - squash_count;
 
             for (int a = 0; a < ROB_SIZE; a++) begin
-                if ((rob[a].sqN - (flush_sqN + sqN_t'(1))) < sqN_t'(ROB_SIZE))
+                if (((rob[a].sqN - flush_sqN) & SQN_MASK) < sqN_t'(ROB_SIZE))
                     rob[a].ready <= 0;
             end
         end

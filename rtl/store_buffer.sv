@@ -5,23 +5,20 @@ module store_buffer (
     input  logic            rst,
     input  stb_alloc_t      alloc,
     input  stb_wb_t         wb,
-    input  sqN_t            commit_sqN  [COMMIT_WIDTH],
+    input  sqN_t            commit_sqN [COMMIT_WIDTH],
+    input  logic            comm_valid [COMMIT_WIDTH],
     input  logic            flush,
     input  sqN_t            flush_sqN,
-    input  logic            mem_stall   [2],
-    output stb_mem_req_t    mem_req     [2],
-    output stb_fwd_entry_t  fwd         [STOREB_SIZE],
+    input  logic            mem_stall  [2],
+    output stb_mem_req_t    mem_req    [2],
+    output stb_fwd_entry_t  fwd        [STOREB_SIZE],
     output logic            str_busy
 );
 
-    // ════════════════════════════════════════════════════
-    // 0. Entry type
-    // ════════════════════════════════════════════════════
-
     typedef struct packed {
         logic            valid;
-        logic            committed;       // safe to drain to memory
-        logic            addr_data_valid; // addr + data both known
+        logic            committed;
+        logic            addr_data_valid;
         sqN_t            sqN;
         logic [1:0]      data_size;
         logic [XLEN-1:0] addr;
@@ -30,43 +27,24 @@ module store_buffer (
 
     localparam PTR_W = $clog2(STOREB_SIZE);
 
-    stb_entry_t entries [STOREB_SIZE];
+    stb_entry_t                  entries  [STOREB_SIZE];
+    logic [PTR_W-1:0]            head, tail;
+    logic [PTR_W:0]              count;
 
-    // ════════════════════════════════════════════════════
-    // 1. Expose forwarding view
-    // ════════════════════════════════════════════════════
-
+    // ── Forwarding view ──────────────────────────────
     always_comb
         for (int i = 0; i < STOREB_SIZE; i++) begin
-            fwd[i].valid          = entries[i].valid;
-            fwd[i].committed      = entries[i].committed;
-            fwd[i].addr_data_valid= entries[i].addr_data_valid;
-            fwd[i].sqN            = entries[i].sqN;
-            fwd[i].data_size      = entries[i].data_size;
-            fwd[i].addr           = entries[i].addr;
-            fwd[i].data           = entries[i].data;
+            fwd[i].valid           = entries[i].valid;
+            fwd[i].committed       = entries[i].committed;
+            fwd[i].addr_data_valid = entries[i].addr_data_valid;
+            fwd[i].sqN             = entries[i].sqN;
+            fwd[i].data_size       = entries[i].data_size;
+            fwd[i].addr            = entries[i].addr;
+            fwd[i].data            = entries[i].data;
         end
 
-
-    // ════════════════════════════════════════════════════
-    // 2. Alloc index — first invalid slot
-    // ════════════════════════════════════════════════════
-
-    logic [PTR_W-1:0] alloc_idx;
-
-    always_comb begin
-        alloc_idx = '0;
-        for (int i = STOREB_SIZE-1; i >= 0; i--)
-            if (!entries[i].valid) alloc_idx = PTR_W'(i);
-    end
-
-
-    // ════════════════════════════════════════════════════
-    // 3. WB index — match on sqN
-    // ════════════════════════════════════════════════════
-
+    // ── WB index — match on sqN ──────────────────────
     logic [PTR_W-1:0] wb_idx;
-
     always_comb begin
         wb_idx = '0;
         for (int i = 0; i < STOREB_SIZE; i++)
@@ -74,124 +52,132 @@ module store_buffer (
                 wb_idx = PTR_W'(i);
     end
 
-
-    // ════════════════════════════════════════════════════
-    // 4. Drain — find up to 2 committed entries
-    //    Prefix-sum: port p gets the p-th committed entry
-    // ════════════════════════════════════════════════════
-
-    logic [PTR_W-1:0] drain_idx  [2];
+    // ── Drain ports — head and head+1 ────────────────
+    // Port 0: entries[head]   if valid+committed+addr_data_valid
+    // Port 1: entries[head+1] if port 0 drains AND head+1 also ready
+    // A port only drains if the corresponding mem_stall is low.
     logic             drain_valid [2];
+    logic [PTR_W-1:0] drain_idx   [2];
 
     always_comb begin
-        logic [$clog2(STOREB_SIZE):0] prefix [STOREB_SIZE+1];
-        prefix[0] = '0;
-        for (int i = 0; i < STOREB_SIZE; i++)
-            prefix[i+1] = prefix[i]
-                        + ($clog2(STOREB_SIZE)+1)'(entries[i].valid
-                                                 & entries[i].committed
-                                                 & entries[i].addr_data_valid);
+        drain_valid[0] = (count > 0)
+                       && entries[head].valid
+                       && entries[head].committed
+                       && entries[head].addr_data_valid
+                       && !mem_stall[0];
 
-        drain_valid[0] = 1'b0; drain_idx[0] = '0;
-        drain_valid[1] = 1'b0; drain_idx[1] = '0;
+        drain_valid[1] = drain_valid[0]
+                       && (count > 1)
+                       && entries[head + PTR_W'(1)].valid
+                       && entries[head + PTR_W'(1)].committed
+                       && entries[head + PTR_W'(1)].addr_data_valid
+                       && !mem_stall[1];
 
-        for (int i = 0; i < STOREB_SIZE; i++) begin
-            if (entries[i].valid && entries[i].committed
-                && entries[i].addr_data_valid) begin
-                if (prefix[i] == '0) begin
-                    drain_valid[0] = 1'b1;
-                    drain_idx[0]   = PTR_W'(i);
-                end else if (prefix[i] == 1) begin
-                    drain_valid[1] = 1'b1;
-                    drain_idx[1]   = PTR_W'(i);
+        drain_idx[0] = head;
+        drain_idx[1] = head + PTR_W'(1);
+    end
+
+    // ── Busy ─────────────────────────────────────────
+    assign str_busy = (count >= PTR_W'(STOREB_SIZE - COMMIT_WIDTH));
+
+    // ── Flush: count entries strictly after flush_sqN ─
+    logic [PTR_W:0]   squash_count;
+    logic [PTR_W-1:0] new_tail;
+
+    always_comb begin
+        squash_count = '0;
+        if (count > 0) begin
+            for (int i = 0; i < STOREB_SIZE; i++) begin
+                if (i < int'(count)) begin
+                    if (((entries[head + PTR_W'(i)].sqN - flush_sqN) & SQN_MASK) < sqN_t'(STOREB_SIZE))
+                        squash_count = squash_count + 1'b1;
                 end
             end
         end
+        new_tail = tail - squash_count[PTR_W-1:0];
     end
 
-    // ════════════════════════════════════════════════════
-    // 6. Busy — not enough free slots
-    // ════════════════════════════════════════════════════
-
-    logic [PTR_W:0] used_count;
-
-    always_comb begin
-        used_count = '0;
-        for (int i = 0; i < STOREB_SIZE; i++)
-            if (entries[i].valid) used_count++;
-    end
-
-    assign str_busy = (used_count >= PTR_W'(STOREB_SIZE - COMMIT_WIDTH));
-
-
-    // ════════════════════════════════════════════════════
-    // 7. Sequential
-    //
-    //    Priority (highest → lowest):
-    //      rst    — full reset
-    //      flush  — squash speculative entries
-    //      normal — commit, wb, drain, alloc
-    // ════════════════════════════════════════════════════
-
+    // ── Sequential ───────────────────────────────────
     always_ff @(posedge clk or posedge rst) begin
         if (rst) begin
             for (int i = 0; i < STOREB_SIZE; i++)
                 entries[i] <= '{default: '0};
-                
-			for (int p = 0; p < 2; p++) 
-				mem_req[p]        <= '{default: '0};
+            for (int p = 0; p < 2; p++)
+                mem_req[p] <= '{default: '0};
+            head  <= '0;
+            tail  <= '0;
+            count <= '0;
+        end
 
-        end else if (flush) begin
+        else if (flush) begin
+            // Squash uncommitted entries after flush_sqN
             for (int i = 0; i < STOREB_SIZE; i++)
                 if (entries[i].valid && !entries[i].committed
-                    && ((entries[i].sqN - flush_sqN) & SQN_MASK) < sqN_t'(ROB_SIZE))
+                    && ((entries[i].sqN - flush_sqN) & SQN_MASK) < sqN_t'(STOREB_SIZE))
                     entries[i].valid <= 1'b0;
+            tail  <= new_tail;
+            count <= count - squash_count;
+            // Suppress drain outputs during flush
+            for (int p = 0; p < 2; p++)
+                mem_req[p] <= '{default: '0};
+        end
 
-        end else begin
-            // ── Commit: mark entries as safe to drain ────
-            for (int i = 0; i < COMMIT_WIDTH; i++) begin
-                for (int j = 0; j < STOREB_SIZE; j++) begin
-                    if (entries[j].valid
+        else begin
+            // ── Commit ───────────────────────────────
+            for (int i = 0; i < COMMIT_WIDTH; i++)
+                for (int j = 0; j < STOREB_SIZE; j++)
+                    if (entries[j].valid && comm_valid[i]
                         && entries[j].sqN == commit_sqN[i])
                         entries[j].committed <= 1'b1;
+
+            // ── WB ───────────────────────────────────
+            if (wb.valid) begin
+                entries[wb_idx].addr            <= wb.addr;
+                entries[wb_idx].data            <= wb.data;
+                entries[wb_idx].data_size       <= wb.data_size;
+                entries[wb_idx].addr_data_valid <= 1'b1;
+            end
+
+            // ── Drain ────────────────────────────────
+            // Port 0 always drains from head.
+            // Port 1 drains head+1 only if port 0 also drained.
+            // mem_stall holds mem_req stable when CDC is busy.
+            for (int p = 0; p < 2; p++) begin
+                if (mem_stall[p]) begin
+                    mem_req[p] <= mem_req[p]; // hold stable
+                end else if (drain_valid[p]) begin
+                    mem_req[p].valid     <= 1'b1;
+                    mem_req[p].wr_addr   <= entries[drain_idx[p]].addr;
+                    mem_req[p].data      <= entries[drain_idx[p]].data;
+                    mem_req[p].data_size <= entries[drain_idx[p]].data_size;
+                    entries[drain_idx[p]].valid <= 1'b0;
+                end else begin
+                    mem_req[p] <= '{default: '0};
                 end
             end
 
-            // ── WB: write addr + data ─────────────────────
-            if (wb.valid) begin
-                entries[wb_idx].addr           	<= wb.addr;
-                entries[wb_idx].data           	<= wb.data;
-                entries[wb_idx].data_size      	<= wb.data_size;
-                entries[wb_idx].addr_data_valid	<= 1'b1;
+            // ── Head/count advance ───────────────────
+            // Advance head by the number of ports that drained.
+            // drain_valid[1] implies drain_valid[0] by construction.
+            begin
+                logic [PTR_W:0] drained;
+                drained = {PTR_W'(0), drain_valid[0]}
+                        + {PTR_W'(0), drain_valid[1]};
+                head  <= head  + drained[PTR_W-1:0];
+                count <= count - drained;
             end
 
-			// ── Drain ────────────────────────────────────────
-			for (int p = 0; p < 2; p++) begin
-				if (mem_stall[p]) begin
-					// Handshake in progress — hold mem_req stable, don't free
-					mem_req[p] <= mem_req[p];
-				end else if (drain_valid[p]) begin
-					// Present request and free entry — mem_stall will rise
-					// next cycle to hold us off until CDC completes
-					mem_req[p].valid     <= 1'b1;
-					mem_req[p].wr_addr   <= entries[drain_idx[p]].addr;
-					mem_req[p].data      <= entries[drain_idx[p]].data;
-					mem_req[p].data_size <= entries[drain_idx[p]].data_size;
-					entries[drain_idx[p]].valid <= 1'b0;
-				end else begin
-					mem_req[p] <= '{default: '0};
-				end
-			end
-			
-            // ── Alloc: claim a slot ───────────────────────
+            // ── Alloc ────────────────────────────────
             if (alloc.valid) begin
-                entries[alloc_idx].valid          	<= 1'b1;
-                entries[alloc_idx].committed      	<= 1'b0;
-                entries[alloc_idx].addr_data_valid	<= 1'b0;
-                entries[alloc_idx].sqN            	<= alloc.sqN;
-                entries[alloc_idx].data_size      	<= '0;
-                entries[alloc_idx].addr           	<= '0;
-                entries[alloc_idx].data           	<= '0;
+                entries[tail].valid          <= 1'b1;
+                entries[tail].committed      <= 1'b0;
+                entries[tail].addr_data_valid <= 1'b0;
+                entries[tail].sqN            <= alloc.sqN;
+                entries[tail].data_size      <= '0;
+                entries[tail].addr           <= '0;
+                entries[tail].data           <= '0;
+                tail  <= tail  + 1'b1;
+                count <= count + 1'b1;
             end
         end
     end

@@ -86,8 +86,8 @@ module data_memory (
 	
     // Stall = pending and not yet acked
     for (genvar i = 0; i < 2; i++) begin
-        assign wr_stall[i] = wr_pending[i] && !wr_ack_sync[i];
-        assign rd_stall[i] = rd_pending[i] && !rd_ack_sync[i];
+        assign wr_stall[i] = wr_pending[i] | (wr_ack_sync[i] & !wr_pending[i]);
+        assign rd_stall[i] = rd_pending[i] | (rd_ack_sync[i] & !rd_pending[i]);
     end
 
 

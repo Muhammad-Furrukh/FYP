@@ -1,0 +1,54 @@
+
+test_mul_2stall_ooo_issue.elf:     file format elf32-littleriscv
+
+
+Disassembly of section .text:
+
+00000000 <_start>:
+   0:	00300513          	li	a0,3
+   4:	00400593          	li	a1,4
+   8:	02b500b3          	mul	ra,a0,a1
+   c:	02a08133          	mul	sp,ra,a0
+  10:	06400193          	li	gp,100
+  14:	0c800213          	li	tp,200
+  18:	06400e13          	li	t3,100
+  1c:	03c19063          	bne	gp,t3,3c <fail>
+  20:	0c800e13          	li	t3,200
+  24:	01c21c63          	bne	tp,t3,3c <fail>
+
+00000028 <pass>:
+  28:	00001eb7          	lui	t4,0x1
+  2c:	deadcf37          	lui	t5,0xdeadc
+  30:	eeff0f13          	addi	t5,t5,-273 # deadbeef <end+0xdeadbea3>
+  34:	01eea023          	sw	t5,0(t4) # 1000 <end+0xfb4>
+  38:	0140006f          	j	4c <end>
+
+0000003c <fail>:
+  3c:	00002eb7          	lui	t4,0x2
+  40:	baadcf37          	lui	t5,0xbaadc
+  44:	0def0f13          	addi	t5,t5,222 # baadc0de <end+0xbaadc092>
+  48:	01eea023          	sw	t5,0(t4) # 2000 <end+0x1fb4>
+
+0000004c <end>:
+  4c:	0000006f          	j	4c <end>
+
+Disassembly of section .riscv.attributes:
+
+00000000 <.riscv.attributes>:
+   0:	2741                	.insn	2, 0x2741
+   2:	0000                	.insn	2, 0x0000
+   4:	7200                	.insn	2, 0x7200
+   6:	7369                	.insn	2, 0x7369
+   8:	01007663          	bgeu	zero,a6,14 <_start+0x14>
+   c:	001d                	.insn	2, 0x001d
+   e:	0000                	.insn	2, 0x0000
+  10:	7205                	.insn	2, 0x7205
+  12:	3376                	.insn	2, 0x3376
+  14:	6932                	.insn	2, 0x6932
+  16:	7032                	.insn	2, 0x7032
+  18:	5f31                	.insn	2, 0x5f31
+  1a:	326d                	.insn	2, 0x326d
+  1c:	3070                	.insn	2, 0x3070
+  1e:	7a5f 6d6d 6c75      	.insn	6, 0x6c756d6d7a5f
+  24:	7031                	.insn	2, 0x7031
+  26:	0030                	.insn	2, 0x0030
