@@ -277,16 +277,18 @@ module tb_core;
                 @(posedge clk);
                 forever begin
                     @(posedge clk);
-                    if (dut.lsu.u_dmem.wr_req_held[0].valid &&
-                        dut.lsu.u_dmem.wr_req_held[0].wr_addr == 32'h00001000) begin
-                        $display("PASS: data=%h", dut.lsu.u_dmem.wr_req_held[0].data);
-                        $finish;
-                    end
-                    if (dut.lsu.u_dmem.wr_req_held[0].valid &&
-                        dut.lsu.u_dmem.wr_req_held[0].wr_addr == 32'h00002000) begin
-                        dump_rob();
-                        $error("FAIL: data=%h", dut.lsu.u_dmem.wr_req_held[0].data);
-                        $finish;
+                    for(int i = 0; i < 2; i++) begin
+                        if (dut.lsu.u_dmem.wr_req_held[i].valid &&
+                            dut.lsu.u_dmem.wr_req_held[i].wr_addr == 32'h00001000) begin
+                            $display("PASS: data=%h", dut.lsu.u_dmem.wr_req_held[i].data);
+                            $finish;
+                        end
+                        if (dut.lsu.u_dmem.wr_req_held[i].valid &&
+                            dut.lsu.u_dmem.wr_req_held[i].wr_addr == 32'h00002000) begin
+                            dump_rob();
+                            $error("FAIL: data=%h", dut.lsu.u_dmem.wr_req_held[i].data);
+                            $finish;
+                        end
                     end
                 end
             end

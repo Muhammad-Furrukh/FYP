@@ -217,7 +217,7 @@
 						// Instr k writes to rd, check if i reads it
 						if (IN_instr[i].rs1 != 5'd0 && IN_instr[k].rd == IN_instr[i].rs1)
 							intra_ready_rs1[i] = 1'b0;
-						if (IN_instr[i].rs1 != 5'd0 && IN_instr[k].rd == IN_instr[i].rs2)
+						if (IN_instr[i].rs2 != 5'd0 && IN_instr[k].rd == IN_instr[i].rs2)
 							intra_ready_rs2[i] = 1'b0;
 					end
 				end
