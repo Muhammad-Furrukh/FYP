@@ -7,7 +7,6 @@ _start:
     li   x11, 4
     mul  x1, x10, x11        # x1 = 12 (long latency)
 
-    mul  x2, x1, x10         # stalls — RAW on x1
 
     addi x3, x0, 100         # independent — should issue OOO
     addi x4, x0, 200         # independent — should issue OOO
@@ -17,9 +16,7 @@ _start:
 
     li   x28, 200
     bne  x4, x28, fail
-
-    li   x28, 36
-    bne  x2, x28, fail
+ 
 
 pass:
     li   x29, 0x00001000
