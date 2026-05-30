@@ -109,24 +109,6 @@ module store_buffer (
         end
     end
 
-
-    // ════════════════════════════════════════════════════
-    // 5. Memory requests
-    // ════════════════════════════════════════════════════
-
-    always_comb begin
-        for (int p = 0; p < 2; p++) begin
-            mem_req[p]       = '{default: '0};
-            if (drain_valid[p] && !mem_stall[p]) begin
-                mem_req[p].valid     = 1'b1;
-                mem_req[p].wr_addr   = entries[drain_idx[p]].addr;
-                mem_req[p].data      = entries[drain_idx[p]].data;
-                mem_req[p].data_size = entries[drain_idx[p]].data_size;
-            end
-        end
-    end
-
-
     // ════════════════════════════════════════════════════
     // 6. Busy — not enough free slots
     // ════════════════════════════════════════════════════
@@ -155,6 +137,9 @@ module store_buffer (
         if (rst) begin
             for (int i = 0; i < STOREB_SIZE; i++)
                 entries[i] <= '{default: '0};
+                
+			for (int p = 0; p < 2; p++) 
+				mem_req[p]        <= '{default: '0};
 
         end else if (flush) begin
             for (int i = 0; i < STOREB_SIZE; i++)
@@ -180,12 +165,24 @@ module store_buffer (
                 entries[wb_idx].addr_data_valid	<= 1'b1;
             end
 
-            // ── Drain: free entries sent to memory ────────
-            for (int p = 0; p < 2; p++) begin
-                if (drain_valid[p] && !mem_stall[p])
-                    entries[drain_idx[p]].valid <= 1'b0;
-            end
-
+			// ── Drain ────────────────────────────────────────
+			for (int p = 0; p < 2; p++) begin
+				if (mem_stall[p]) begin
+					// Handshake in progress — hold mem_req stable, don't free
+					mem_req[p] <= mem_req[p];
+				end else if (drain_valid[p]) begin
+					// Present request and free entry — mem_stall will rise
+					// next cycle to hold us off until CDC completes
+					mem_req[p].valid     <= 1'b1;
+					mem_req[p].wr_addr   <= entries[drain_idx[p]].addr;
+					mem_req[p].data      <= entries[drain_idx[p]].data;
+					mem_req[p].data_size <= entries[drain_idx[p]].data_size;
+					entries[drain_idx[p]].valid <= 1'b0;
+				end else begin
+					mem_req[p] <= '{default: '0};
+				end
+			end
+			
             // ── Alloc: claim a slot ───────────────────────
             if (alloc.valid) begin
                 entries[alloc_idx].valid          	<= 1'b1;

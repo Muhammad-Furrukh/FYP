@@ -76,12 +76,16 @@ module execute
     end
 
     // Final output assignment
-    for (genvar i = 0; i < NUM_INT_FU; i++) begin : gen_output_assign_int
-        assign CDB_line[i] = (flush)? '0: registered_CDB_output[i];
-    end
+    for (genvar i = 0; i < NUM_INT_FU; i++) begin
+		assign CDB_line[i] = (flush && ((flush_sqN - registered_AGU_output[i].sqN) & SQN_MASK) > ROB_SIZE) 
+		                     ? '0 
+		                     : registered_CDB_output[i];
+	end
 
     for (genvar i = 0; i < NUM_AGU_FU; i++) begin : gen_output_assign_agu
-        assign agu_out[i] = (flush)? '0: registered_AGU_output[i];
+        assign agu_out[i] = (flush && ((flush_sqN - registered_AGU_output[i].sqN) & SQN_MASK) > ROB_SIZE)
+                    ? '0
+                    : registered_AGU_output[i];
     end
 
 endmodule

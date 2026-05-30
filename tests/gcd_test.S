@@ -10,18 +10,19 @@
 .globl _start
 
 _start:
+
     # Initialize test values
     li      a0, 48          # a0 = 48
     li      a1, 18          # a1 = 18
     
     # Expected GCD = 6
-    li      t0, 6           # t0 = expected result
+    li      t1, 6           # t0 = expected result
     
     # Call gcd(a0, a1)
     jal     ra, gcd
     
     # Check result
-    beq     a0, t0, test_pass
+    beq     a0, t1, test_pass
     
 test_fail:
     # Write FAIL to address 0x2000

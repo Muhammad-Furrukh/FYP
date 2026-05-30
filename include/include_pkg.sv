@@ -26,7 +26,7 @@
 	parameter int unsigned NUM_LD_BUFFER_WR_PORTS = 1;
 	parameter int unsigned NUM_INT_FU        = NUM_ALU_FU + NUM_MUL_DIV_FU;
 	parameter int unsigned NUM_CDB_LINES     = NUM_ALU_FU + NUM_MUL_DIV_FU + 
-		                                    NUM_LD_BUFFER_WR_PORTS;
+		                                    		NUM_LD_BUFFER_WR_PORTS;
 	parameter int unsigned SQN_W             = $clog2(ROB_SIZE) + 1;
 	parameter [SQN_W:0] SQN_MASK = (1 << SQN_W) - 1;
 

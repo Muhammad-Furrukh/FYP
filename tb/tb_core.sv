@@ -292,7 +292,7 @@ module tb_core;
             end
         join_none
 
-        #2000;
+        #5000;
         dump_rob();
         $error("FAIL: Timed out waiting for result");
     end

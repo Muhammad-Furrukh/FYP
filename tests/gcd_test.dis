@@ -7,9 +7,9 @@ Disassembly of section .text:
 00000000 <_start>:
    0:	03000513          	li	a0,48
    4:	01200593          	li	a1,18
-   8:	00600293          	li	t0,6
+   8:	00600313          	li	t1,6
    c:	020000ef          	jal	2c <gcd>
-  10:	00550863          	beq	a0,t0,20 <test_pass>
+  10:	00650863          	beq	a0,t1,20 <test_pass>
 
 00000014 <test_fail>:
   14:	00002337          	lui	t1,0x2

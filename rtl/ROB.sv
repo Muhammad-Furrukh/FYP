@@ -68,7 +68,7 @@ always_comb begin
         end
         // Wind tail back by exactly the number of squashed slots.
         // This is safe because tail is a modular ROB index.
-        new_tail = tail - squash_count[$clog2(ROB_SIZE)-1:0];
+        new_tail = tail - squash_count[$clog2(ROB_SIZE)-1:0] - 1;
     end
 end
 
