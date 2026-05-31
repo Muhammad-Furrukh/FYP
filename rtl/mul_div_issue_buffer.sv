@@ -63,12 +63,12 @@ module mul_div_issue_buffer #(
             data1[i] = queue[i].data1;
             data2[i] = queue[i].data2;
             for (int j = 0; j < ISSUE_WIDTH; j++) begin
-                if (CDB_valid[j] && (CDB_tag[j] == queue[i].rs1_tag)) begin
+                if (!queue[i].ready_1  && CDB_valid[j] && (CDB_tag[j] == queue[i].rs1_tag)) begin
                     r1[i]    = 1'b1;
                     data1[i] = CDB_result[j];
                 end
 
-                if (CDB_valid[j] && (CDB_tag[j] == queue[i].rs2_tag)) begin
+                if (!queue[i].ready_2 && CDB_valid[j] && (CDB_tag[j] == queue[i].rs2_tag)) begin
                     r2[i]    = 1'b1;
                     data2[i] = CDB_result[j];
                 end
@@ -109,11 +109,6 @@ module mul_div_issue_buffer #(
                 if (i >= next_tail) next_queue[i] = '0;
             end   
         end
-
-        else if (IN_busy) begin
-            // Stall
-        end
-
         else begin
             // 2. CDB UPDATE (Wakeup)
             for (int i = 0; i < DEPTH; i++) begin
@@ -124,7 +119,7 @@ module mul_div_issue_buffer #(
             end
 
             // 3. ISSUE LOGIC (Shift Queue)
-            if (issue_found) begin
+            if (issue_found && !IN_busy) begin
                 next_issue_instr.valid    = 1'b1;
                 next_issue_instr.sqN      = next_queue[issue_idx].sqN;
                 next_issue_instr.operand1 = data1[issue_idx];               

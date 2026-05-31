@@ -1,3 +1,4 @@
+
 add_test.elf:     file format elf32-littleriscv
 
 
@@ -14,29 +15,38 @@ Disassembly of section .text:
   1c:	00238433          	add	s0,t2,sp
   20:	001404b3          	add	s1,s0,ra
   24:	00f00e13          	li	t3,15
-  28:	03c49863          	bne	s1,t3,58 <fail>
+  28:	05c49a63          	bne	s1,t3,7c <fail>
   2c:	06400513          	li	a0,100
   30:	0c800513          	li	a0,200
   34:	12c00513          	li	a0,300
   38:	00050513          	mv	a0,a0
   3c:	12c00e13          	li	t3,300
-  40:	0040006f          	j	44 <pass>
+  40:	03c51e63          	bne	a0,t3,7c <fail>
+  44:	02a00593          	li	a1,42
+  48:	00000613          	li	a2,0
+  4c:	00058633          	add	a2,a1,zero
+  50:	06300593          	li	a1,99
+  54:	02a00e13          	li	t3,42
+  58:	03c61263          	bne	a2,t3,7c <fail>
+  5c:	06300e13          	li	t3,99
+  60:	01c59e63          	bne	a1,t3,7c <fail>
+  64:	0040006f          	j	68 <pass>
 
-00000044 <pass>:
-  44:	00001eb7          	lui	t4,0x1
-  48:	deadcf37          	lui	t5,0xdeadc
-  4c:	eeff0f13          	addi	t5,t5,-273 # deadbeef <end+0xdeadbe87>
-  50:	01eea023          	sw	t5,0(t4) # 1000 <end+0xf98>
-  54:	0140006f          	j	68 <end>
+00000068 <pass>:
+  68:	00001eb7          	lui	t4,0x1
+  6c:	deadcf37          	lui	t5,0xdeadc
+  70:	eeff0f13          	addi	t5,t5,-273 # deadbeef <end+0xdeadbe63>
+  74:	01eea023          	sw	t5,0(t4) # 1000 <end+0xf74>
+  78:	0140006f          	j	8c <end>
 
-00000058 <fail>:
-  58:	00002eb7          	lui	t4,0x2
-  5c:	baadcf37          	lui	t5,0xbaadc
-  60:	0def0f13          	addi	t5,t5,222 # baadc0de <end+0xbaadc076>
-  64:	01eea023          	sw	t5,0(t4) # 2000 <end+0x1f98>
+0000007c <fail>:
+  7c:	00002eb7          	lui	t4,0x2
+  80:	baadcf37          	lui	t5,0xbaadc
+  84:	0def0f13          	addi	t5,t5,222 # baadc0de <end+0xbaadc052>
+  88:	01eea023          	sw	t5,0(t4) # 2000 <end+0x1f74>
 
-00000068 <end>:
-  68:	0000006f          	j	68 <end>
+0000008c <end>:
+  8c:	0000006f          	j	8c <end>
 
 Disassembly of section .riscv.attributes:
 

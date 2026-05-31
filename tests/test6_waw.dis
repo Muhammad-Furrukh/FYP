@@ -1,0 +1,62 @@
+
+test6_waw.elf:     file format elf32-littleriscv
+
+
+Disassembly of section .text:
+
+00000000 <_start>:
+   0:	00a00093          	li	ra,10
+   4:	00508113          	addi	sp,ra,5
+   8:	06300093          	li	ra,99
+   c:	00f00193          	li	gp,15
+  10:	04311663          	bne	sp,gp,5c <fail>
+  14:	00700213          	li	tp,7
+  18:	024202b3          	mul	t0,tp,tp
+  1c:	06400213          	li	tp,100
+  20:	03100313          	li	t1,49
+  24:	02629c63          	bne	t0,t1,5c <fail>
+  28:	00300393          	li	t2,3
+  2c:	00238413          	addi	s0,t2,2
+  30:	00438493          	addi	s1,t2,4
+  34:	03200393          	li	t2,50
+  38:	00500513          	li	a0,5
+  3c:	02a41063          	bne	s0,a0,5c <fail>
+  40:	00700513          	li	a0,7
+  44:	00a49c63          	bne	s1,a0,5c <fail>
+
+00000048 <pass>:
+  48:	00001eb7          	lui	t4,0x1
+  4c:	deadcf37          	lui	t5,0xdeadc
+  50:	eeff0f13          	addi	t5,t5,-273 # deadbeef <done+0xdeadbe83>
+  54:	01eea023          	sw	t5,0(t4) # 1000 <done+0xf94>
+  58:	0140006f          	j	6c <done>
+
+0000005c <fail>:
+  5c:	00002eb7          	lui	t4,0x2
+  60:	baadcf37          	lui	t5,0xbaadc
+  64:	0def0f13          	addi	t5,t5,222 # baadc0de <done+0xbaadc072>
+  68:	01eea023          	sw	t5,0(t4) # 2000 <done+0x1f94>
+
+0000006c <done>:
+  6c:	0000006f          	j	6c <done>
+
+Disassembly of section .riscv.attributes:
+
+00000000 <.riscv.attributes>:
+   0:	2741                	.insn	2, 0x2741
+   2:	0000                	.insn	2, 0x0000
+   4:	7200                	.insn	2, 0x7200
+   6:	7369                	.insn	2, 0x7369
+   8:	01007663          	bgeu	zero,a6,14 <_start+0x14>
+   c:	001d                	.insn	2, 0x001d
+   e:	0000                	.insn	2, 0x0000
+  10:	7205                	.insn	2, 0x7205
+  12:	3376                	.insn	2, 0x3376
+  14:	6932                	.insn	2, 0x6932
+  16:	7032                	.insn	2, 0x7032
+  18:	5f31                	.insn	2, 0x5f31
+  1a:	326d                	.insn	2, 0x326d
+  1c:	3070                	.insn	2, 0x3070
+  1e:	7a5f 6d6d 6c75      	.insn	6, 0x6c756d6d7a5f
+  24:	7031                	.insn	2, 0x7031
+  26:	0030                	.insn	2, 0x0030

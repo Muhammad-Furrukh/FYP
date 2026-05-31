@@ -27,14 +27,14 @@ module prefetch
         .rst(rst),
         .IN_pc(next_pc),
         .OUT_pc(current_pc),
-        .wr_en(!IN_busy)
+        .wr_en(!IN_busy | jump2)
     );
 
     IMEM IMEM
     (
         .clk(clk),
         .rst(rst),
-        .IN_busy(IN_busy),
+        .IN_busy(IN_busy && !jump2),
         .addr(fetch_base[IMEM_ADDR_WIDTH -1:0]),
         .data(OUT_instr)
     );

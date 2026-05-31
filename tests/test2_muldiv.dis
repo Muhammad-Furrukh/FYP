@@ -1,0 +1,71 @@
+
+test2_muldiv.elf:     file format elf32-littleriscv
+
+
+Disassembly of section .text:
+
+00000000 <_start>:
+   0:	00d00093          	li	ra,13
+   4:	00700113          	li	sp,7
+   8:	022081b3          	mul	gp,ra,sp
+   c:	05b00e13          	li	t3,91
+  10:	07c19863          	bne	gp,t3,80 <fail>
+  14:	06400093          	li	ra,100
+  18:	00700113          	li	sp,7
+  1c:	0220c1b3          	div	gp,ra,sp
+  20:	00e00e13          	li	t3,14
+  24:	05c19e63          	bne	gp,t3,80 <fail>
+  28:	0220e233          	rem	tp,ra,sp
+  2c:	00200e13          	li	t3,2
+  30:	05c21863          	bne	tp,t3,80 <fail>
+  34:	800000b7          	lui	ra,0x80000
+  38:	fff08093          	addi	ra,ra,-1 # 7fffffff <end+0x7fffff6f>
+  3c:	00200113          	li	sp,2
+  40:	022091b3          	mulh	gp,ra,sp
+  44:	00000e13          	li	t3,0
+  48:	03c19c63          	bne	gp,t3,80 <fail>
+  4c:	ff300093          	li	ra,-13
+  50:	00300113          	li	sp,3
+  54:	0220c1b3          	div	gp,ra,sp
+  58:	ffc00e13          	li	t3,-4
+  5c:	03c19263          	bne	gp,t3,80 <fail>
+  60:	0220e233          	rem	tp,ra,sp
+  64:	fff00e13          	li	t3,-1
+  68:	01c21c63          	bne	tp,t3,80 <fail>
+
+0000006c <pass>:
+  6c:	00001eb7          	lui	t4,0x1
+  70:	deadcf37          	lui	t5,0xdeadc
+  74:	eeff0f13          	addi	t5,t5,-273 # deadbeef <end+0xdeadbe5f>
+  78:	01eea023          	sw	t5,0(t4) # 1000 <end+0xf70>
+  7c:	0140006f          	j	90 <end>
+
+00000080 <fail>:
+  80:	00002eb7          	lui	t4,0x2
+  84:	baadcf37          	lui	t5,0xbaadc
+  88:	0def0f13          	addi	t5,t5,222 # baadc0de <end+0xbaadc04e>
+  8c:	01eea023          	sw	t5,0(t4) # 2000 <end+0x1f70>
+
+00000090 <end>:
+  90:	0000006f          	j	90 <end>
+
+Disassembly of section .riscv.attributes:
+
+00000000 <.riscv.attributes>:
+   0:	2741                	.insn	2, 0x2741
+   2:	0000                	.insn	2, 0x0000
+   4:	7200                	.insn	2, 0x7200
+   6:	7369                	.insn	2, 0x7369
+   8:	01007663          	bgeu	zero,a6,14 <_start+0x14>
+   c:	001d                	.insn	2, 0x001d
+   e:	0000                	.insn	2, 0x0000
+  10:	7205                	.insn	2, 0x7205
+  12:	3376                	.insn	2, 0x3376
+  14:	6932                	.insn	2, 0x6932
+  16:	7032                	.insn	2, 0x7032
+  18:	5f31                	.insn	2, 0x5f31
+  1a:	326d                	.insn	2, 0x326d
+  1c:	3070                	.insn	2, 0x3070
+  1e:	7a5f 6d6d 6c75      	.insn	6, 0x6c756d6d7a5f
+  24:	7031                	.insn	2, 0x7031
+  26:	0030                	.insn	2, 0x0030

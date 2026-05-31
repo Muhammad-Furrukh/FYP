@@ -94,9 +94,9 @@ module core
             rename_rob[i].archTag  =  rename_rob_rd[i];
             rename_rob[i].rd_tag   =  rename_instr[i].rd_tag;
             rename_rob[i].is_store =  rename_instr[i].f_unit == LSU &&
-                                     (rename_instr[i].oper == LSU_SB ||
-                                      rename_instr[i].oper == LSU_SH ||
-                                      rename_instr[i].oper == LSU_SW);
+						             (rename_instr[i].oper == LSU_SB ||
+						              rename_instr[i].oper == LSU_SH ||
+						              rename_instr[i].oper == LSU_SW);
         end
     end
 
@@ -261,6 +261,7 @@ module core
         .dispatch_instr(lsu_dispatch_instr),
         .agu_out(agu_out),
         .commit_sqN(commit_sqN),
+        .comm_valid(comm_valid),
         .flush(flush),
         .flush_sqN(flush_sqN),
         .OUT_busy(lsu_busy),

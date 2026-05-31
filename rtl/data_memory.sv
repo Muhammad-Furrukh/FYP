@@ -54,38 +54,40 @@ module data_memory (
     // Ack signals synchronized back to fast domain
     logic wr_ack_sync [2];
     logic rd_ack_sync [2];
+	
+	always_ff @(posedge clk_cpu or posedge rst_cpu) begin
+		if (rst_cpu) begin
+		    for (int i = 0; i < 2; i++) begin
+		        wr_pending[i]  <= 1'b0;
+		        rd_pending[i]  <= 1'b0;
+		        wr_req_held[i] <= '{default: '0};
+		        rd_req_held[i] <= '{default: '0};
+		    end
+		end else begin
+		    for (int i = 0; i < 2; i++) begin
+		        // Writes
+		        if (wr_ack_sync[i])
+		            wr_pending[i] <= 1'b0;
+		        else if (wr_req[i].valid && !wr_pending[i]) begin
+		            wr_req_held[i] <= wr_req[i];
+		            wr_pending[i]  <= 1'b1;
+		        end
 
-    always_ff @(posedge clk_cpu or posedge rst_cpu) begin
-        if (rst_cpu) begin
-            for (int i = 0; i < 2; i++) begin
-                wr_pending[i]  <= 1'b0;
-                rd_pending[i]  <= 1'b0;
-                wr_req_held[i] <= '{default: '0};
-                rd_req_held[i] <= '{default: '0};
-            end
-        end else begin
-            for (int i = 0; i < 2; i++) begin
-                // Latch new request when not already pending
-                if (wr_req[i].valid && !wr_pending[i]) begin
-                    wr_req_held[i] <= wr_req[i];
-                    wr_pending[i]  <= 1'b1;
-                end
-                // Clear pending when ack arrives
-                if (wr_ack_sync[i]) wr_pending[i] <= 1'b0;
-
-                if (rd_req[i].valid && !rd_pending[i]) begin
-                    rd_req_held[i] <= rd_req[i];
-                    rd_pending[i]  <= 1'b1;
-                end
-                if (rd_ack_sync[i]) rd_pending[i] <= 1'b0;
-            end
-        end
-    end
-
+		        // Reads
+		        if (rd_ack_sync[i])
+		            rd_pending[i] <= 1'b0;
+		        else if (rd_req[i].valid && !rd_pending[i]) begin
+		            rd_req_held[i] <= rd_req[i];
+		            rd_pending[i]  <= 1'b1;
+		        end
+		    end
+		end
+	end
+	
     // Stall = pending and not yet acked
     for (genvar i = 0; i < 2; i++) begin
-        assign wr_stall[i] = wr_pending[i] && !wr_ack_sync[i];
-        assign rd_stall[i] = rd_pending[i] && !rd_ack_sync[i];
+        assign wr_stall[i] = wr_pending[i] | (wr_ack_sync[i] & !wr_pending[i]);
+        assign rd_stall[i] = rd_pending[i] | (rd_ack_sync[i] & !rd_pending[i]);
     end
 
 

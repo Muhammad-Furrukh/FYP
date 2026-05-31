@@ -15,21 +15,21 @@ Disassembly of section .text:
   1c:	00238433          	add	s0,t2,sp
   20:	001404b3          	add	s1,s0,ra
   24:	00f00e13          	li	t3,15
-  28:	23c49663          	bne	s1,t3,254 <fail>
+  28:	1fc49463          	bne	s1,t3,210 <fail>
   2c:	06400513          	li	a0,100
   30:	0c800513          	li	a0,200
   34:	12c00513          	li	a0,300
   38:	00050513          	mv	a0,a0
   3c:	12c00e13          	li	t3,300
-  40:	21c51a63          	bne	a0,t3,254 <fail>
+  40:	1dc51863          	bne	a0,t3,210 <fail>
   44:	02a00593          	li	a1,42
   48:	00000613          	li	a2,0
   4c:	00058633          	add	a2,a1,zero
   50:	06300593          	li	a1,99
   54:	02a00e13          	li	t3,42
-  58:	1fc61e63          	bne	a2,t3,254 <fail>
+  58:	1bc61c63          	bne	a2,t3,210 <fail>
   5c:	06300e13          	li	t3,99
-  60:	1fc59a63          	bne	a1,t3,254 <fail>
+  60:	1bc59863          	bne	a1,t3,210 <fail>
   64:	00a00093          	li	ra,10
   68:	01400113          	li	sp,20
   6c:	01e00193          	li	gp,30
@@ -38,69 +38,69 @@ Disassembly of section .text:
   78:	00418333          	add	t1,gp,tp
   7c:	006283b3          	add	t2,t0,t1
   80:	06400e13          	li	t3,100
-  84:	1dc39863          	bne	t2,t3,254 <fail>
+  84:	19c39663          	bne	t2,t3,210 <fail>
   88:	00d00093          	li	ra,13
   8c:	00700113          	li	sp,7
   90:	022081b3          	mul	gp,ra,sp
   94:	05b00e13          	li	t3,91
-  98:	1bc19e63          	bne	gp,t3,254 <fail>
+  98:	17c19c63          	bne	gp,t3,210 <fail>
   9c:	06400093          	li	ra,100
   a0:	00700113          	li	sp,7
   a4:	0220c1b3          	div	gp,ra,sp
   a8:	00e00e13          	li	t3,14
-  ac:	1bc19463          	bne	gp,t3,254 <fail>
+  ac:	17c19263          	bne	gp,t3,210 <fail>
   b0:	0220e233          	rem	tp,ra,sp
   b4:	00200e13          	li	t3,2
-  b8:	19c21e63          	bne	tp,t3,254 <fail>
+  b8:	15c21c63          	bne	tp,t3,210 <fail>
   bc:	800000b7          	lui	ra,0x80000
-  c0:	fff08093          	addi	ra,ra,-1 # 7fffffff <end+0x7ffffd9b>
+  c0:	fff08093          	addi	ra,ra,-1 # 7fffffff <end+0x7ffffddf>
   c4:	00200113          	li	sp,2
   c8:	022091b3          	mulh	gp,ra,sp
   cc:	00000e13          	li	t3,0
-  d0:	19c19263          	bne	gp,t3,254 <fail>
+  d0:	15c19063          	bne	gp,t3,210 <fail>
   d4:	ff300093          	li	ra,-13
   d8:	00300113          	li	sp,3
   dc:	0220c1b3          	div	gp,ra,sp
   e0:	ffc00e13          	li	t3,-4
-  e4:	17c19863          	bne	gp,t3,254 <fail>
+  e4:	13c19663          	bne	gp,t3,210 <fail>
   e8:	0220e233          	rem	tp,ra,sp
   ec:	fff00e13          	li	t3,-1
-  f0:	17c21263          	bne	tp,t3,254 <fail>
+  f0:	13c21063          	bne	tp,t3,210 <fail>
   f4:	00003a37          	lui	s4,0x3
   f8:	abcd10b7          	lui	ra,0xabcd1
-  fc:	23408093          	addi	ra,ra,564 # abcd1234 <end+0xabcd0fd0>
- 100:	001a2023          	sw	ra,0(s4) # 3000 <end+0x2d9c>
+  fc:	23408093          	addi	ra,ra,564 # abcd1234 <end+0xabcd1014>
+ 100:	001a2023          	sw	ra,0(s4) # 3000 <end+0x2de0>
  104:	000a2103          	lw	sp,0(s4)
  108:	abcd1e37          	lui	t3,0xabcd1
- 10c:	234e0e13          	addi	t3,t3,564 # abcd1234 <end+0xabcd0fd0>
- 110:	15c11263          	bne	sp,t3,254 <fail>
+ 10c:	234e0e13          	addi	t3,t3,564 # abcd1234 <end+0xabcd1014>
+ 110:	11c11063          	bne	sp,t3,210 <fail>
  114:	111110b7          	lui	ra,0x11111
- 118:	11108093          	addi	ra,ra,273 # 11111111 <end+0x11110ead>
+ 118:	11108093          	addi	ra,ra,273 # 11111111 <end+0x11110ef1>
  11c:	001a2223          	sw	ra,4(s4)
  120:	222220b7          	lui	ra,0x22222
- 124:	22208093          	addi	ra,ra,546 # 22222222 <end+0x22221fbe>
+ 124:	22208093          	addi	ra,ra,546 # 22222222 <end+0x22222002>
  128:	001a2223          	sw	ra,4(s4)
  12c:	004a2103          	lw	sp,4(s4)
  130:	22222e37          	lui	t3,0x22222
- 134:	222e0e13          	addi	t3,t3,546 # 22222222 <end+0x22221fbe>
- 138:	11c11e63          	bne	sp,t3,254 <fail>
+ 134:	222e0e13          	addi	t3,t3,546 # 22222222 <end+0x22222002>
+ 138:	0dc11c63          	bne	sp,t3,210 <fail>
  13c:	dead00b7          	lui	ra,0xdead0
  140:	001a2423          	sw	ra,8(s4)
  144:	008a2183          	lw	gp,8(s4)
  148:	dead0e37          	lui	t3,0xdead0
- 14c:	11c19463          	bne	gp,t3,254 <fail>
+ 14c:	0dc19263          	bne	gp,t3,210 <fail>
  150:	0ff00093          	li	ra,255
  154:	001a0623          	sb	ra,12(s4)
  158:	00ca4103          	lbu	sp,12(s4)
  15c:	0ff00e13          	li	t3,255
- 160:	0fc11a63          	bne	sp,t3,254 <fail>
+ 160:	0bc11863          	bne	sp,t3,210 <fail>
  164:	000010b7          	lui	ra,0x1
- 168:	23408093          	addi	ra,ra,564 # 1234 <end+0xfd0>
+ 168:	23408093          	addi	ra,ra,564 # 1234 <end+0x1014>
  16c:	001a1723          	sh	ra,14(s4)
  170:	00ea5103          	lhu	sp,14(s4)
  174:	00001e37          	lui	t3,0x1
- 178:	234e0e13          	addi	t3,t3,564 # 1234 <end+0xfd0>
- 17c:	0dc11c63          	bne	sp,t3,254 <fail>
+ 178:	234e0e13          	addi	t3,t3,564 # 1234 <end+0x1014>
+ 17c:	09c11a63          	bne	sp,t3,210 <fail>
  180:	00500093          	li	ra,5
  184:	00500113          	li	sp,5
  188:	00000193          	li	gp,0
@@ -108,15 +108,15 @@ Disassembly of section .text:
  190:	06300193          	li	gp,99
  194:	00118193          	addi	gp,gp,1
  198:	00100e13          	li	t3,1
- 19c:	0bc19c63          	bne	gp,t3,254 <fail>
+ 19c:	07c19a63          	bne	gp,t3,210 <fail>
  1a0:	00a00093          	li	ra,10
  1a4:	01400113          	li	sp,20
  1a8:	00000213          	li	tp,0
  1ac:	0020c463          	blt	ra,sp,1b4 <_start+0x1b4>
  1b0:	06300213          	li	tp,99
- 1b4:	00208233          	add	tp,ra,sp
+ 1b4:	01e20213          	addi	tp,tp,30 # 1e <_start+0x1e>
  1b8:	01e00e13          	li	t3,30
- 1bc:	09c21c63          	bne	tp,t3,254 <fail>
+ 1bc:	05c21a63          	bne	tp,t3,210 <fail>
  1c0:	01400093          	li	ra,20
  1c4:	00a00113          	li	sp,10
  1c8:	00000293          	li	t0,0
@@ -125,46 +125,29 @@ Disassembly of section .text:
  1d4:	0080006f          	j	1dc <_start+0x1dc>
  1d8:	06300293          	li	t0,99
  1dc:	00700e13          	li	t3,7
- 1e0:	07c29a63          	bne	t0,t3,254 <fail>
+ 1e0:	03c29863          	bne	t0,t3,210 <fail>
  1e4:	00000093          	li	ra,0
  1e8:	00800113          	li	sp,8
  1ec:	00108093          	addi	ra,ra,1
  1f0:	fe20cee3          	blt	ra,sp,1ec <_start+0x1ec>
  1f4:	00800e13          	li	t3,8
- 1f8:	05c09e63          	bne	ra,t3,254 <fail>
- 1fc:	00100093          	li	ra,1
- 200:	00200113          	li	sp,2
- 204:	00300193          	li	gp,3
- 208:	00400213          	li	tp,4
- 20c:	00500293          	li	t0,5
- 210:	00600313          	li	t1,6
- 214:	00700393          	li	t2,7
- 218:	00800413          	li	s0,8
- 21c:	022084b3          	mul	s1,ra,sp
- 220:	02418533          	mul	a0,gp,tp
- 224:	026285b3          	mul	a1,t0,t1
- 228:	02838633          	mul	a2,t2,s0
- 22c:	00a486b3          	add	a3,s1,a0
- 230:	00c58733          	add	a4,a1,a2
- 234:	00e687b3          	add	a5,a3,a4
- 238:	06400e13          	li	t3,100
- 23c:	01c79c63          	bne	a5,t3,254 <fail>
+ 1f8:	01c09c63          	bne	ra,t3,210 <fail>
 
-00000240 <pass>:
- 240:	00001eb7          	lui	t4,0x1
- 244:	deadcf37          	lui	t5,0xdeadc
- 248:	eeff0f13          	addi	t5,t5,-273 # deadbeef <end+0xdeadbc8b>
- 24c:	01eea023          	sw	t5,0(t4) # 1000 <end+0xd9c>
- 250:	0140006f          	j	264 <end>
+000001fc <pass>:
+ 1fc:	00001eb7          	lui	t4,0x1
+ 200:	deadcf37          	lui	t5,0xdeadc
+ 204:	eeff0f13          	addi	t5,t5,-273 # deadbeef <end+0xdeadbccf>
+ 208:	01eea023          	sw	t5,0(t4) # 1000 <end+0xde0>
+ 20c:	0140006f          	j	220 <end>
 
-00000254 <fail>:
- 254:	00002eb7          	lui	t4,0x2
- 258:	baadcf37          	lui	t5,0xbaadc
- 25c:	0def0f13          	addi	t5,t5,222 # baadc0de <end+0xbaadbe7a>
- 260:	01eea023          	sw	t5,0(t4) # 2000 <end+0x1d9c>
+00000210 <fail>:
+ 210:	00002eb7          	lui	t4,0x2
+ 214:	baadcf37          	lui	t5,0xbaadc
+ 218:	0def0f13          	addi	t5,t5,222 # baadc0de <end+0xbaadbebe>
+ 21c:	01eea023          	sw	t5,0(t4) # 2000 <end+0x1de0>
 
-00000264 <end>:
- 264:	0000006f          	j	264 <end>
+00000220 <end>:
+ 220:	0000006f          	j	220 <end>
 
 Disassembly of section .riscv.attributes:
 

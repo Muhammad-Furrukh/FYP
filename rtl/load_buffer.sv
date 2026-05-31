@@ -21,6 +21,7 @@ module load_buffer (
 
     typedef struct packed {
         logic            valid;
+        logic            issued;        // memory request already in flight
         sqN_t            sqN;
         tag_t            rd_tag;
         logic [1:0]      data_size;
@@ -65,15 +66,6 @@ module load_buffer (
 
     // ════════════════════════════════════════════════════
     // 3. Byte-lane helpers
-    //
-    //    byte_lanes(addr, data_size) returns a 4-bit mask
-    //    of which byte lanes within a 32-bit word the
-    //    access touches.
-    //
-    //    extract_bytes(word, addr, data_size) right-shifts
-    //    the store word so the relevant bytes land in
-    //    bits [XLEN-1:0] aligned to bit 0, ready for
-    //    sign/zero extension.
     // ════════════════════════════════════════════════════
 
     function automatic logic [3:0] byte_lanes(
@@ -81,9 +73,9 @@ module load_buffer (
         input logic [1:0]      data_size
     );
         case (data_size)
-            2'b00:   byte_lanes = 4'b0001 << addr[1:0];          // byte
-            2'b01:   byte_lanes = 4'b0011 << addr[1:0];          // halfword
-            default: byte_lanes = 4'b1111;                       // word
+            2'b00:   byte_lanes = 4'b0001 << addr[1:0];
+            2'b01:   byte_lanes = 4'b0011 << addr[1:0];
+            default: byte_lanes = 4'b1111;
         endcase
     endfunction
 
@@ -93,34 +85,14 @@ module load_buffer (
         input logic [XLEN-1:0] st_addr,
         input logic [1:0]      ld_size
     );
-        // Byte offset of the load's LSB within the store word
         logic [1:0] byte_off;
         byte_off = ld_addr[1:0] - st_addr[1:0];
         extract_bytes = store_word >> (byte_off * 8);
-        // Upper bits beyond ld_size are don't-cares;
-        // extend_data will mask/sign-extend them.
     endfunction
 
 
     // ════════════════════════════════════════════════════
     // 4. STB alias / forwarding / stall
-    //
-    //    For each load entry, only when addr_valid = 1:
-    //
-    //      a) Scan every older STB entry.
-    //         If ANY older entry has addr_data_valid = 0
-    //         → stall (we cannot yet rule out aliasing).
-    //
-    //      b) Among older entries with addr_data_valid = 1,
-    //         check whether the store's byte lanes fully
-    //         cover the load's byte lanes (address match).
-    //         Track the YOUNGEST such covering store.
-    //
-    //      c) If no stall and a covering store was found
-    //         → forward (fwd_hit + fwd_data).
-    //
-    //      d) If no stall and no covering store
-    //         → fall through to memory arbitration.
     // ════════════════════════════════════════════════════
 
     logic [XLEN-1:0] fwd_data [LOADB_SIZE];
@@ -135,43 +107,33 @@ module load_buffer (
         logic             found_match;
         sqN_t             youngest_sqN;
         logic [PTR_W-1:0] youngest_j;
-        
-        found_match  	= '0;
-        youngest_sqN 	= '0;
-        youngest_j    	= '0;
-        ld_lanes		  	= '0;
-        st_lanes			= '0;
-        is_older			= '0;
-        addr_covers		= '0;
-        
+
+        found_match  = '0;
+        youngest_sqN = '0;
+        youngest_j   = '0;
+        ld_lanes     = '0;
+        st_lanes     = '0;
+        is_older     = '0;
+        addr_covers  = '0;
+
         for (int i = 0; i < LOADB_SIZE; i++) begin
             fwd_hit[i]  = 1'b0;
             fwd_data[i] = '0;
             stall[i]    = 1'b0;
 
-            // ── Gate: load address must be known ─────────
             if (entries[i].valid && entries[i].addr_valid) begin
-
-                ld_lanes     = byte_lanes(entries[i].addr,
-                                          entries[i].data_size);
+                ld_lanes = byte_lanes(entries[i].addr, entries[i].data_size);
 
                 for (int j = 0; j < STOREB_SIZE; j++) begin
                     if (stb_fwd[j].valid || stb_fwd[j].committed) begin
-
-                        // Older = (load.sqN - store.sqN) wraps into [1, ROB_SIZE)
                         is_older = ((entries[i].sqN - stb_fwd[j].sqN) & SQN_MASK)
                                        < sqN_t'(ROB_SIZE)
                                 && (stb_fwd[j].sqN != entries[i].sqN);
 
                         if (is_older) begin
                             if (!stb_fwd[j].addr_data_valid) begin
-                                // ── (a) Older store with unknown result → stall
                                 stall[i] = 1'b1;
                             end else begin
-                                // ── (b) Older store with known addr+data
-                                //        Check byte-lane coverage:
-                                //        store lanes must cover all load lanes
-                                //        (word-aligned base must also match)
                                 st_lanes    = byte_lanes(stb_fwd[j].addr,
                                                          stb_fwd[j].data_size);
                                 addr_covers = (stb_fwd[j].addr[XLEN-1:2]
@@ -179,7 +141,6 @@ module load_buffer (
                                            && ((st_lanes & ld_lanes) == ld_lanes);
 
                                 if (addr_covers) begin
-                                    // Track youngest covering store
                                     if (!found_match ||
                                         ((stb_fwd[j].sqN - youngest_sqN) & SQN_MASK)
                                             < sqN_t'(ROB_SIZE))
@@ -194,8 +155,6 @@ module load_buffer (
                     end
                 end
 
-                // ── (c) Forward from youngest covering store ──
-                // Only act if nothing triggered a stall
                 if (!stall[i] && found_match) begin
                     fwd_hit[i]  = 1'b1;
                     fwd_data[i] = extract_bytes(
@@ -204,7 +163,6 @@ module load_buffer (
                                       stb_fwd[youngest_j].addr,
                                       entries[i].data_size);
                 end
-                // ── (d) !stall && !found_match → memory ───────
             end
         end
     end
@@ -212,12 +170,12 @@ module load_buffer (
 
     // ════════════════════════════════════════════════════
     // 5. Memory request arbitration
-    //    Issue up to 2 entries that:
-    //      - addr_valid
-    //      - not stalled
-    //      - no fwd_hit
-    //      - data not already valid
-    //    Prefix-sum: port p gets the p-th issuable entry
+    //
+    //    FIX: added !entries[i].issued to can_issue so a
+    //    load that already has a CDC request in flight does
+    //    not re-fire while waiting for mem_resp. Without
+    //    this, if mem_stall briefly deasserts the load
+    //    hammers the CDC with duplicate reads.
     // ════════════════════════════════════════════════════
 
     logic [PTR_W-1:0] req_idx   [2];
@@ -230,6 +188,7 @@ module load_buffer (
             logic can_issue;
             can_issue   = entries[i].valid
                        && entries[i].addr_valid
+                       && !entries[i].issued       // not already in flight
                        && !stall[i]
                        && !fwd_hit[i]
                        && !entries[i].data_valid;
@@ -243,6 +202,7 @@ module load_buffer (
             logic can_issue;
             can_issue = entries[i].valid
                      && entries[i].addr_valid
+                     && !entries[i].issued         // not already in flight
                      && !stall[i]
                      && !fwd_hit[i]
                      && !entries[i].data_valid;
@@ -256,7 +216,6 @@ module load_buffer (
             end
         end
 
-        // Drive outputs
         for (int p = 0; p < 2; p++) begin
             mem_req[p] = '{default: '0};
             if (req_valid[p] && !mem_stall[p]) begin
@@ -338,16 +297,16 @@ module load_buffer (
     // 9. Sequential
     //
     //    Priority (highest → lowest):
-    //      rst          — full reset
-    //      flush        — squash speculative entries
-    //      cdb_drain    — free broadcast entry
-    //      mem_resp     — write back memory data
-    //      fwd_hit      — write forwarded STB data
-    //                     (addr_valid is guaranteed here,
-    //                      so extend immediately — no raw
-    //                      latch / re-extend path needed)
-    //      addr_wb      — write back AGU address
-    //      alloc        — claim new slot
+    //      rst       — full reset
+    //      flush     — squash entries strictly after flush_sqN
+    //                  FIX: use flush_sqN+1 as base so flush_sqN
+    //                  itself is NOT squashed (off-by-one fix)
+    //      cdb_drain — free broadcast entry
+    //      mem_resp  — write back memory data, clear issued
+    //      fwd_hit   — write forwarded STB data
+    //      issued    — mark entry as in-flight on req fire
+    //      addr_wb   — write back AGU address
+    //      alloc     — claim new slot
     // ════════════════════════════════════════════════════
 
     always_ff @(posedge clk or posedge rst) begin
@@ -356,10 +315,14 @@ module load_buffer (
                 entries[i] <= '{default: '0};
 
         end else if (flush) begin
+            // FIX: flush_sqN+1 as base — entries strictly after
+            // flush_sqN are squashed; flush_sqN itself survives.
             for (int i = 0; i < LOADB_SIZE; i++)
                 if (entries[i].valid &&
-                    ((entries[i].sqN - flush_sqN) & SQN_MASK) < sqN_t'(ROB_SIZE))
-                    entries[i].valid <= 1'b0;
+                    ((entries[i].sqN - flush_sqN) & SQN_MASK) < sqN_t'(LOADB_SIZE)) begin
+                    entries[i].valid  <= 1'b0;
+                    entries[i].issued <= 1'b0;
+                end
 
         end else begin
 
@@ -368,6 +331,9 @@ module load_buffer (
                 entries[broadcast_idx].valid <= 1'b0;
 
             // ── Memory response → data_valid ─────────────
+            // Also clears issued so that if the entry somehow
+            // survives (shouldn't, but defensive), it won't
+            // re-fire to memory.
             for (int p = 0; p < 2; p++) begin
                 if (mem_resp[p].valid) begin
                     for (int i = 0; i < LOADB_SIZE; i++) begin
@@ -378,16 +344,13 @@ module load_buffer (
                                                         entries[i].data_size,
                                                         entries[i].is_unsigned);
                             entries[i].data_valid <= 1'b1;
+                            entries[i].issued     <= 1'b0;
                         end
                     end
                 end
             end
 
             // ── STB forwarding → data_valid ───────────────
-            // addr_valid is guaranteed before fwd_hit can assert
-            // (section 4 gates on it), so data_size/is_unsigned
-            // are already correct — extend immediately, no
-            // deferred re-extend path required.
             for (int i = 0; i < LOADB_SIZE; i++) begin
                 if (fwd_hit[i] && !entries[i].data_valid) begin
                     entries[i].data       <= extend_data(
@@ -398,20 +361,27 @@ module load_buffer (
                 end
             end
 
+            // ── Mark issued when request fires ───────────
+            // FIX: set issued=1 when a port fires so the entry
+            // does not re-assert req_valid on subsequent cycles
+            // while waiting for mem_resp to return.
+            for (int p = 0; p < 2; p++) begin
+                if (req_valid[p] && !mem_stall[p])
+                    entries[req_idx[p]].issued <= 1'b1;
+            end
+
             // ── AGU addr writeback ────────────────────────
             if (addr_wb.valid) begin
                 entries[ta_wb_idx].addr        <= addr_wb.addr;
                 entries[ta_wb_idx].addr_valid  <= 1'b1;
                 entries[ta_wb_idx].data_size   <= addr_wb.data_size;
                 entries[ta_wb_idx].is_unsigned <= addr_wb.is_unsigned;
-                // data_valid cannot be set yet at this point:
-                // fwd_hit requires addr_valid which only becomes
-                // true next cycle, so no re-extend case exists.
             end
 
             // ── Alloc ─────────────────────────────────────
             if (alloc.valid) begin
                 entries[alloc_idx].valid       <= 1'b1;
+                entries[alloc_idx].issued      <= 1'b0;
                 entries[alloc_idx].sqN         <= alloc.sqN;
                 entries[alloc_idx].rd_tag      <= alloc.rd_tag;
                 entries[alloc_idx].data_size   <= '0;

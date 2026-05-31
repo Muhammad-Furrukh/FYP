@@ -276,6 +276,11 @@ module MUL_DIV (
             end else begin
                 case (div_state)
                     DIV_IDLE: begin
+                        div_cdb_valid <= 1'b0;
+                        div_cdb_sqN   <= '0;
+                        div_cdb_tag   <= '0;
+                        div_cdb_result <= 32'd0;
+
                         if (IN_instr.valid && 
                             IN_instr.oper.mul_div_oper inside {DIV, DIVU, REM, REMU}) begin
                             logic [31:0] op1, op2;
@@ -376,7 +381,7 @@ module MUL_DIV (
                            (div_by_zero || (div_count == 6'd32));
         
         // Stall MUL if both want CDB simultaneously
-        mul_stall = mul_result_ready && div_result_ready;
+        mul_stall = (mul_result_ready && div_result_ready) | (div_state == DIV_EXEC);
     end
 
     // ════════════════════════════════════════════════════

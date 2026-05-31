@@ -6,6 +6,7 @@ module lsu (
 
     input  agu_out_t            agu_out         [NUM_AGU_FU], // Since NUM_AGU_FU = 1, we must add 1.
     input  sqN_t                commit_sqN      [COMMIT_WIDTH],
+    input  logic                comm_valid      [COMMIT_WIDTH],
     input  lsu_dispatch_instr_t dispatch_instr  [NUM_AGU_FU],
     input  logic                flush,
     input  sqN_t                flush_sqN,
@@ -118,6 +119,7 @@ module lsu (
         .alloc      (stb_alloc),
         .wb         (stb_wb),
         .commit_sqN (commit_sqN),
+        .comm_valid (comm_valid),
         .flush      (flush),
         .flush_sqN  (flush_sqN),
         .mem_stall  (stb_stall),
@@ -179,6 +181,6 @@ module lsu (
         .rd_stall (ldb_stall)
     );
 
-    assign OUT_busy = str_busy | ld_busy; // Incomplete.
+    assign OUT_busy = str_busy | ld_busy;
 
 endmodule

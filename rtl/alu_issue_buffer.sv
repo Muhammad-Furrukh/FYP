@@ -76,12 +76,12 @@ module alu_issue_buffer #(
             data1[i] = queue[i].data1;
             data2[i] = queue[i].data2;
             for (int j = 0; j < ISSUE_WIDTH; j++) begin
-                if (CDB_valid[j] && (CDB_tag[j] == queue[i].rs1_tag)) begin
+                if (!queue[i].ready_1  && CDB_valid[j] && (CDB_tag[j] == queue[i].rs1_tag)) begin
                     r1[i]    = 1'b1;
                     data1[i] = CDB_result[j];
                 end
 
-                if (CDB_valid[j] && (CDB_tag[j] == queue[i].rs2_tag)) begin
+                if (!queue[i].ready_2 && CDB_valid[j] && (CDB_tag[j] == queue[i].rs2_tag)) begin
                     r2[i]    = 1'b1;
                     data2[i] = CDB_result[j];
                 end
