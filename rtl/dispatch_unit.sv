@@ -323,7 +323,9 @@ module dispatch_unit
                 if (can_dispatch[i]) dispatched[i] <= 1'b1;
 
             if (packet_done) begin
+              
                 for (int i = 0; i < RENAME_WIDTH; i++) begin
+                   
                     packet[i].valid     <= IN_instr[i].valid;
                     packet[i].sqN       <= IN_instr[i].sqN;
                     packet[i].pc        <= IN_instr[i].pc;
@@ -332,7 +334,7 @@ module dispatch_unit
                     packet[i].rs1_tag   <= IN_instr[i].rs1_tag;
                     packet[i].rs1_ready <= (input_rs1_ready[i])? 1'b1 : IN_instr[i].rs1_ready;
                     packet[i].rs2_tag   <= IN_instr[i].rs2_tag;
-                    packet[i].rs2_ready <= (input_rs2_ready[i])? 1'b1 : IN_instr[i].rs2_ready;
+                    packet[i].rs2_ready <=  (input_rs2_ready[i] || IN_instr[i].rs2_ready) ? 1'b1 : 1'b0;
                     packet[i].rd_tag    <= IN_instr[i].rd_tag;
                     packet[i].imm       <= IN_instr[i].imm;
                     packet[i].is_imm    <= IN_instr[i].is_imm;
@@ -343,7 +345,7 @@ module dispatch_unit
                     dispatched[i] <= 1'b0;
                 end
             end
-
+            
             else begin
                 for (int i = 0; i < RENAME_WIDTH; i++) begin
                     if (!can_dispatch[i]) begin
@@ -353,6 +355,20 @@ module dispatch_unit
                 end
             end
         end
-    end
+    end 
+            // dispatch_unit.sv mein
+        always_ff @(posedge clk) begin
+            for (int i = 0; i < RENAME_WIDTH; i++) begin
+                if (can_dispatch[i])
+                    $display("[%0t] DISPATCH: slot=%0d sqN=%0h dispatched", 
+                        $time, i, packet[i].sqN);
+            end
+        end
 
+always_ff @(posedge clk) begin
+    for (int i = 0; i < RENAME_WIDTH; i++) begin
+        $display("[%0t] packet[%0d] sqN=%0h rs2_tag=%0h rs2_ready=%0b",
+            $time, i, packet[i].sqN, packet[i].rs2_tag, packet[i].rs2_ready);
+    end
+end
 endmodule

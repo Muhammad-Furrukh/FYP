@@ -20,4 +20,4 @@ module PC
 
     assign OUT_pc = pc_reg;
 
-endmodule
+endmodule 

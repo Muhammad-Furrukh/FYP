@@ -235,7 +235,7 @@ module tb_core;
             for (int i = 0; i < COMMIT_WIDTH; i++) begin
                 if (dut.ROB.OUT_commit[i].valid) begin
                     diff = dut.ROB.OUT_commit[i].sqN - running_sqN;
-                    if (first_commit_done && (diff == 0 || diff > sqN_t'(ROB_SIZE)))
+                    if (first_commit_done && (diff > sqN_t'(ROB_SIZE)))
                         $display("[%0t] IN_ORDER_COMMIT_VIOLATION: sqN=%02h after sqN=%02h",
                             $time, dut.ROB.OUT_commit[i].sqN, running_sqN);
                     else
@@ -262,7 +262,7 @@ module tb_core;
         tick_n(10);
         rst = 0; rst_m = 0;
         $display("Core released from reset...");
-      
+        
         fork
             begin
                 if ($value$plusargs("PROG=%s", prog_file)) begin

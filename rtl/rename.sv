@@ -235,34 +235,28 @@
 		// ── 6b. Renamed instructions (registered) ────────────
 		// Cleared on rst/flush. Held on stall. Written otherwise.
 		always_ff @(posedge clk or posedge rst) begin
-		    if (rst || flush) begin
-		        for (int i = 0; i < DECODE_WIDTH; i++) begin
-		            OUT_instr[i] <= '0;
-		            OUT_rd[i]    <= '0;
-		        end
+    if (rst || flush) begin
+        for (int i = 0; i < DECODE_WIDTH; i++) begin
+            OUT_instr[i] <= '0;
+            OUT_rd[i]    <= '0;
+        end
 
-		    end else if (!stall) begin
-		        for (int i = 0; i < DECODE_WIDTH; i++) begin
-			    OUT_instr[i].valid     <= IN_instr[i].valid;
-			    OUT_instr[i].sqN       <= IN_instr[i].sqN;
-			    OUT_instr[i].pc        <= IN_instr[i].pc;
-			    OUT_instr[i].f_unit    <= IN_instr[i].f_unit;
-			    OUT_instr[i].oper      <= IN_instr[i].oper;
-			    OUT_instr[i].rs1_tag   <= local_rat[i][IN_instr[i].rs1];
-				OUT_instr[i].rs1_ready <= rs1_ready[i];
-			    OUT_instr[i].rs2_tag   <= local_rat[i][IN_instr[i].rs2];
-				OUT_instr[i].rs2_ready <= rs2_ready[i];
-			    OUT_instr[i].rd_tag    <= chosen[i];
-			    OUT_instr[i].imm       <= IN_instr[i].imm;
-			    OUT_instr[i].is_imm    <= IN_instr[i].is_imm;
-			    OUT_instr[i].jump_type <= IN_instr[i].jump_type;
-			    OUT_instr[i].br_type   <= IN_instr[i].br_type;
-			    OUT_instr[i].u_type    <= IN_instr[i].u_type;
-			    OUT_rd[i]              <= IN_instr[i].rd;
-		        end
-		    end
-		    // stall: outputs hold implicitly
-		end
+    end else begin
+        // CDB wakeup — stall mein bhi update karo
+        for (int i = 0; i < DECODE_WIDTH; i++) begin
+            for (int j = 0; j < ISSUE_WIDTH; j++) begin
+                if (CDB_valid[j] && (OUT_instr[i].rs1_tag == CDB_tag[j]))
+                    OUT_instr[i].rs1_ready <= 1'b1;
+                if (CDB_valid[j] && (OUT_instr[i].rs2_tag == CDB_tag[j]))
+                    OUT_instr[i].rs2_ready <= 1'b1;
+            end
+        end
+
+        if (!stall) begin
+           
+        end
+    end
+end
 
 		// ── 6c. Branch checkpoints (registered) ──────────────
 		// Snapshot is taken combinationally from local_rat[i] and
