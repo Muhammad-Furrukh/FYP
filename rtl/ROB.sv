@@ -116,7 +116,7 @@ always_ff @(posedge clk or posedge rst) begin
                     OUT_commit[i].sqN     <= rob[head + i].sqN;
                     OUT_commit[i].comTag  <= rob[head + i].tag;
                     OUT_commit[i].archTag <= rob[head + i].rd;
-                    OUT_commit[i].valid   <= 1;
+                    OUT_commit[i].valid   <= 1; 
                 end else begin
                     OUT_commit[i].valid   <= 0;
                 end

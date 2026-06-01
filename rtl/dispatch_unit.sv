@@ -30,6 +30,7 @@ module dispatch_unit
     logic input_rs2_ready  [RENAME_WIDTH];
     logic output_rs1_ready [RENAME_WIDTH];
     logic output_rs2_ready [RENAME_WIDTH];
+
     always_comb begin
         input_rs1_ready  = '{default: '0};
         input_rs2_ready  = '{default: '0};
@@ -60,6 +61,32 @@ module dispatch_unit
             for (int j = 0; j < ISSUE_WIDTH; j++) begin
                 if (CDB_valid[j] && (packet[i].rs2_tag == CDB_tag[j])) begin
                     output_rs2_ready[i] = 1'b1;
+                end
+            end
+        end
+    end
+
+    logic input_rs1_ready_sticky [RENAME_WIDTH];
+    logic input_rs2_ready_sticky [RENAME_WIDTH];
+
+    always_ff @(posedge clk or posedge rst) begin
+        if (rst || flush) begin
+            for (int i = 0; i < RENAME_WIDTH; i++) begin
+                input_rs1_ready_sticky[i] <= 1'b0;
+                input_rs2_ready_sticky[i] <= 1'b0;
+            end
+        end else begin
+            if (packet_done) begin
+                // Clear sticky bits when we finally latch new IN_instr
+                for (int i = 0; i < RENAME_WIDTH; i++) begin
+                    input_rs1_ready_sticky[i] <= 1'b0;
+                    input_rs2_ready_sticky[i] <= 1'b0;
+                end
+            end else begin
+                // Accumulate CDB hits against IN_instr tags during stall
+                for (int i = 0; i < RENAME_WIDTH; i++) begin
+                    if (input_rs1_ready[i]) input_rs1_ready_sticky[i] <= 1'b1;
+                    if (input_rs2_ready[i]) input_rs2_ready_sticky[i] <= 1'b1;
                 end
             end
         end
@@ -330,9 +357,13 @@ module dispatch_unit
                     packet[i].f_unit    <= IN_instr[i].f_unit;
                     packet[i].oper      <= IN_instr[i].oper;
                     packet[i].rs1_tag   <= IN_instr[i].rs1_tag;
-                    packet[i].rs1_ready <= (input_rs1_ready[i])? 1'b1 : IN_instr[i].rs1_ready;
+                    packet[i].rs1_ready <= (input_rs1_ready[i] || input_rs1_ready_sticky[i]) ? 
+                                            1'b1 : IN_instr[i].rs1_ready;
+
                     packet[i].rs2_tag   <= IN_instr[i].rs2_tag;
-                    packet[i].rs2_ready <= (input_rs2_ready[i])? 1'b1 : IN_instr[i].rs2_ready;
+                    packet[i].rs2_ready <= (input_rs2_ready[i] || input_rs2_ready_sticky[i]) ? 
+                                            1'b1 : IN_instr[i].rs2_ready;
+                                            
                     packet[i].rd_tag    <= IN_instr[i].rd_tag;
                     packet[i].imm       <= IN_instr[i].imm;
                     packet[i].is_imm    <= IN_instr[i].is_imm;

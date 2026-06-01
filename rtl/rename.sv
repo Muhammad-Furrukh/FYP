@@ -194,6 +194,7 @@
 		logic intra_ready_rs2 [DECODE_WIDTH];
 		logic rs1_ready 	  [DECODE_WIDTH];
 		logic rs2_ready 	  [DECODE_WIDTH];
+		
 		always_comb begin
 			cdb_ready_rs1   = '{default: 1'b0};
 			cdb_ready_rs2   = '{default: 1'b0};
