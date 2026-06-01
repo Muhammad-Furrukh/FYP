@@ -15,7 +15,7 @@
 	parameter int unsigned REG_ADDR_WIDTH    = 6;
 	parameter int unsigned DMEM_ADDR_WIDTH   = 10;
 	parameter int unsigned IMEM_ADDR_WIDTH   = 10;
-	parameter int unsigned ROB_SIZE          = 8;
+	parameter int unsigned ROB_SIZE          = 64;
 	parameter int unsigned FETCHB_SIZE       = 16;
 	parameter int unsigned ISSUEB_SIZE       = 8;
 	parameter int unsigned STOREB_SIZE       = 16;
