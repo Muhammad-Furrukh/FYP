@@ -9,6 +9,16 @@ SIM_DIR       = sim_verilator
 PKG_FILE  = $(INC_DIR)/include_pkg.sv
 RTL_FILES = $(filter-out $(PKG_FILE), \
               $(shell find $(RTL_DIR) -name "*.sv" -o -name "*.v"))
+              
+MODELSIM_DIR  = $(HOME)/intelFPGA/18.1/modelsim_ase
+VLIB          = LD_LIBRARY_PATH=$(MODELSIM_DIR)/lib:$(MODELSIM_DIR)/linux $(MODELSIM_DIR)/linux/vlib
+VMAP          = LD_LIBRARY_PATH=$(MODELSIM_DIR)/lib:$(MODELSIM_DIR)/linux $(MODELSIM_DIR)/linux/vmap
+VLOG          = LD_LIBRARY_PATH=$(MODELSIM_DIR)/lib:$(MODELSIM_DIR)/linux $(MODELSIM_DIR)/linux/vlog
+VSIM          = LD_LIBRARY_PATH=$(MODELSIM_DIR)/lib:$(MODELSIM_DIR)/linux $(MODELSIM_DIR)/linux/vsim
+
+WORK_LIB      = work
+
+VLOG_FLAGS    = -sv +incdir+$(RTL_DIR) +incdir+$(INC_DIR) +incdir+$(TB_DIR)
 
 # ════════════════════════════════════════════════════
 # Common Verilator flags (for unit tests)
@@ -27,7 +37,16 @@ UNIT_VFLAGS += --trace-structs
         test_branch_checkpoint test_core test_all
 
 all: test_core
+test_core_modelsim: work
+	$(VLOG) $(VLOG_FLAGS) \
+		$(PKG_FILE) \
+		$(RTL_FILES) \
+		$(TB_DIR)/tb_core.sv
 
+	$(VSIM) -c tb_core -do "run -all; quit"
+work:
+	$(VLIB) $(WORK_LIB)
+	$(VMAP) $(WORK_LIB) $(WORK_LIB)
 # ════════════════════════════════════════════════════
 # MUL_DIV unit test
 # ════════════════════════════════════════════════════
