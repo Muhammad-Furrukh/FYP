@@ -104,6 +104,28 @@ module tb_icache_instr_mem;
     fetch_packet_t data_0x80;
     fetch_packet_t data_0x100;
 
+    // -------------------------------------------------------------------------
+    // fetch_verify
+    //
+    // FIX (Bug 1 + Bug 3): corrected pipeline latency and post-miss flush.
+    //
+    // Pipeline timing (from icache.sv):
+    //   Edge A : fetch_ready && fetch_valid → addr latched into addr_r  (Stage 0)
+    //   Edge A+1: index/tag extracted, arrays read → data_read_r valid  (Stage 1)
+    //   Edge A+2: hit_r and data_out_r computed                         (Stage 2)
+    //
+    // Therefore the TB must advance THREE edges after the accepting edge,
+    // not two, before sampling fetch_data / fetch_hit.
+    //
+    // Additionally, after a cache miss the state machine goes through
+    // MISS_REQ → MISS_WAIT → IDLE and the pipeline registers are stale.
+    // We must wait for fetch_ready to go high again (cache back in IDLE
+    // and pipeline drained) before presenting the next address, which the
+    // while(!fetch_ready) loop already handles — but we must also let the
+    // DUT pipeline re-settle for one full idle cycle after IDLE is re-entered
+    // before asserting the next fetch_valid.  The extra tick_cpu() at the
+    // end of the task provides that bubble.
+    // -------------------------------------------------------------------------
     task automatic fetch_verify(
         input pc_t           addr,
         input fetch_packet_t expected_data,
@@ -125,10 +147,17 @@ module tb_icache_instr_mem;
             tick_cpu();
         end
 
-        // Request accepted into stage 0 (addr_r)
-        // Data will be valid 2 cycles later (stage 1 → stage 2)
-        tick_cpu();  // Stage 1: array read happens
-        tick_cpu();  // Stage 2: hit detection, data valid now
+        // Edge A: address is accepted and latched into addr_r (Stage 0).
+        // We need two more full clock periods to reach valid output:
+        //   tick 1 → Stage 1 (array read)
+        //   tick 2 → Stage 2 (hit detect, data_out_r stable)
+        //   tick 3 → outputs are stable AFTER the Stage-2 register clocks;
+        //             sample on the #1 after this posedge.
+        //
+        // FIX: was tick_cpu() × 2; must be tick_cpu() × 3.
+        tick_cpu();  // Stage 1: array read registers
+        tick_cpu();  // Stage 2: hit/data registers clock
+        tick_cpu();  // Outputs now stable; sample here (after #1 delay in tick_cpu)
 
         got_data = fetch_data;
         got_hit  = fetch_hit;
@@ -147,6 +176,10 @@ module tb_icache_instr_mem;
             $display("        FAIL: Hit=%b, Expected=%b", got_hit, expect_hit);
         end
 
+        // FIX (Bug 3): give the cache one idle cycle to fully drain its pipeline
+        // registers before the next fetch_verify call presents a new address.
+        // Without this bubble the immediately following request sees stale
+        // addr_valid_r / data_valid_r state left over from this transaction.
         tick_cpu();
     endtask
 
@@ -201,7 +234,6 @@ module tb_icache_instr_mem;
         // Try loading from file, fall back to manual pre-load
         file_loaded = 1'b0;
         if ($value$plusargs("PROG=%s", prog_file)) begin
-            // Try to open the file to check if it exists
             fd = $fopen(prog_file, "r");
             if (fd) begin
                 $fclose(fd);
@@ -237,7 +269,7 @@ module tb_icache_instr_mem;
         $display("\n--- Test 2: Hit at 0x00 ---");
         fetch_verify(.addr(32'h0000_0000), .expected_data(data_0x00),
                      .expect_hit(1'b1), .test_name("Hit at 0x00"));
-        /*
+
         //======================================================================
         // TEST 3: Different index
         //======================================================================
@@ -287,7 +319,6 @@ module tb_icache_instr_mem;
         $display("\n--- Test 10: 0x40 still cached ---");
         fetch_verify(.addr(32'h0000_0040), .expected_data(data_0x40),
                      .expect_hit(1'b1), .test_name("0x40 still cached"));
-        */
 
         //======================================================================
         $display("\n==============================================");
