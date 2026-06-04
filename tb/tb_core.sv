@@ -112,6 +112,95 @@ module tb_core;
         $display("");
     endtask
 
+    // ════════════════════════════════════════════════════════
+    // ARCHITECTURAL REGISTER FILE SNAPSHOT ON COMMIT
+    // Reads physical registers via committed tags from rename.
+    // ════════════════════════════════════════════════════════
+
+    // RISC-V ABI names for display
+    function automatic string reg_name(int i);
+        case (i)
+            0:  return "zero";
+            1:  return "ra";
+            2:  return "sp";
+            3:  return "gp";
+            4:  return "tp";
+            5:  return "t0";
+            6:  return "t1";
+            7:  return "t2";
+            8:  return "s0";
+            9:  return "s1";
+            10: return "a0";
+            11: return "a1";
+            12: return "a2";
+            13: return "a3";
+            14: return "a4";
+            15: return "a5";
+            16: return "a6";
+            17: return "a7";
+            18: return "s2";
+            19: return "s3";
+            20: return "s4";
+            21: return "s5";
+            22: return "s6";
+            23: return "s7";
+            24: return "s8";
+            25: return "s9";
+            26: return "s10";
+            27: return "s11";
+            28: return "t3";
+            29: return "t4";
+            30: return "t5";
+            31: return "t6";
+            default: return "??";
+        endcase
+    endfunction
+
+    task automatic dump_arch_rf();
+        $display("  ── Architectural RF snapshot ──────────────────");
+        $display("  %-6s  %-4s  %-10s", "arch", "ptag", "value");
+        for (int r = 0; r < 32; r++) begin
+            automatic tag_t  ptag;
+            automatic logic [XLEN-1:0] val;
+            // committed tag for arch reg r lives in rename's
+            // committed map — adjust hierarchy to match your rename module
+            ptag = dut.rename.rename_table[r].commTag;
+            val  = dut.register_file.registers[ptag];
+            $display("  x%-2d(%-4s) p%-2d  0x%08h",
+                    r, reg_name(r), ptag, val);
+        end
+        $display("  ───────────────────────────────────────────────");
+    endtask
+
+    always @(posedge clk) begin
+        if (!rst && !dut.flush) begin
+            automatic logic any_commit = 0;
+            for (int i = 0; i < COMMIT_WIDTH; i++)
+                if (dut.ROB.OUT_commit[i].valid) any_commit = 1;
+
+            if (any_commit) begin
+                $display("[%0t] ARCH_RF_SNAPSHOT", $time);
+                // Print which arch regs were updated this cycle
+                for (int i = 0; i < COMMIT_WIDTH; i++) begin
+                    if (dut.ROB.OUT_commit[i].valid &&
+                        dut.ROB.OUT_commit[i].archTag != 0) begin
+                        automatic tag_t  ptag;
+                        automatic logic [XLEN-1:0] val;
+                        ptag = dut.ROB.OUT_commit[i].comTag;
+                        val  = dut.register_file.registers[ptag];
+                        $display("  COMMIT x%-2d(%-4s) <- p%-2d = 0x%08h  (sqN=%02h)",
+                                dut.ROB.OUT_commit[i].archTag,
+                                reg_name(int'(dut.ROB.OUT_commit[i].archTag)),
+                                ptag, val,
+                                dut.ROB.OUT_commit[i].sqN);
+                    end
+                end
+                // Full RF dump — comment out if too verbose
+                dump_arch_rf();
+            end
+        end
+    end
+
     // ── Flush monitor ─────────────────────────────
     always @(posedge clk) begin
         if (dut.ROB.flush && !rst) begin

@@ -1,0 +1,11 @@
+// 64-bit values, one per line
+// Address 0x00: lower = DEADBEEF, upper = CAFEBABE
+CAFEBABEDEADBEEF
+// Address 0x08
+0000000200000001
+// Address 0x40
+AABBCCDD11223344
+// Address 0x80
+FFFFFFFF00000000
+// Address 0x100
+55555555AAAAAAAA

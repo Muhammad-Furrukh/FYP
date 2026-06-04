@@ -31,6 +31,9 @@
 	parameter [SQN_W:0] SQN_MASK = (1 << SQN_W) - 1;
 
 
+    parameter int unsigned CACHE_LINE_BYTES  = FETCH_WIDTH * (XLEN/8);
+    parameter int unsigned CACHE_NUM_LINES   = 256;
+
 	//------------------------------------------------------------------
 	// Simple typedefs
 	//------------------------------------------------------------------
@@ -39,7 +42,9 @@
 	typedef logic [REG_ADDR_WIDTH - 1:0]    tag_t;
 	typedef logic [XLEN - 1:0]              imm_t;
 	typedef logic [XLEN - 1:0]              prefetch_instr_t;
-
+	// Add this typedef for 64-bit fetch packets
+	typedef logic [FETCH_WIDTH*XLEN-1:0] fetch_packet_t;
+	
 	//------------------------------------------------------------------
 	// Enums
 	//------------------------------------------------------------------

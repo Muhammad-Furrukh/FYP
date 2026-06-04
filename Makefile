@@ -106,6 +106,7 @@ test_core_modelsim: work hex
 		$(RTL_FILES) \
 		$(TB_DIR)/tb_core.sv
 	$(VSIM) $(VSIM_FLAGS) tb_core +PROG=$(PROG)
+
 # ════════════════════════════════════════════════════
 # Verilator — Full Core
 # ════════════════════════════════════════════════════
@@ -170,6 +171,20 @@ test_lsu:
 		$(UNIT_DIR)/tb_lsu.sv \
 		-o tb_lsu_sim
 	./$(LSU_DIR)/tb_lsu_sim
+
+ICACHE_DIR = $(SIM_DIR)/Vicache_instr_mem
+test_icache:
+	mkdir -p $(SIM_DIR)
+	$(VERILATOR) $(UNIT_VFLAGS) \
+		--top-module tb_icache_instr_mem \
+		--Mdir $(ICACHE_DIR) \
+		$(PKG_FILE) \
+		rtl/icache.sv \
+		rtl/instr_memory.sv \
+		rtl/sync_2ff.sv \
+		$(UNIT_DIR)/tb_icache_instr_mem.sv \
+		-o tb_icache_instr_mem_sim
+	 ./$(ICACHE_DIR)/tb_icache_instr_mem_sim +PROG=$(PROG)
 
 # ════════════════════════════════════════════════════
 # All tests
