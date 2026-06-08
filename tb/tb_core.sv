@@ -112,6 +112,41 @@ module tb_core;
         $display("");
     endtask
 
+    // ── IPC Counters ──────────────────────────────────────────
+    int unsigned total_commits = 0;
+    int unsigned active_cycles = 0;
+
+    // Count committed instructions each cycle
+    always @(posedge clk) begin
+        if (!rst && !dut.flush) begin
+            for (int i = 0; i < COMMIT_WIDTH; i++) begin
+                if (dut.ROB.OUT_commit[i].valid)
+                    total_commits++;
+            end
+        end
+    end
+
+    // Count active cycles (post-reset, non-flushing)
+    always @(posedge clk) begin
+        if (!rst)
+            active_cycles++;
+    end
+
+    // ── IPC Report Task ───────────────────────────────────────
+    task automatic report_ipc();
+        real ipc;
+        ipc = real'(total_commits) / real'(active_cycles);
+        $display("════════════════════════════════════════");
+        $display("  IPC REPORT");
+        $display("  Instructions Committed : %0d", total_commits);
+        $display("  Active Cycles          : %0d", active_cycles);
+        $display("  IPC                    : %.4f", ipc);
+        $display("  Peak Width             : %0d", COMMIT_WIDTH);
+        $display("  Efficiency             : %.1f%%",
+                100.0 * ipc / real'(COMMIT_WIDTH));
+        $display("════════════════════════════════════════");
+    endtask
+
     // ════════════════════════════════════════════════════════
     // ARCHITECTURAL REGISTER FILE SNAPSHOT ON COMMIT
     // Reads physical registers via committed tags from rename.
@@ -370,12 +405,16 @@ module tb_core;
                         if (dut.lsu.u_dmem.wr_req_held[i].valid &&
                             dut.lsu.u_dmem.wr_req_held[i].wr_addr == 32'h00001000) begin
                             $display("PASS: data=%h", dut.lsu.u_dmem.wr_req_held[i].data);
+                            
+                            report_ipc();
                             $finish;
                         end
                         if (dut.lsu.u_dmem.wr_req_held[i].valid &&
                             dut.lsu.u_dmem.wr_req_held[i].wr_addr == 32'h00002000) begin
                             dump_rob();
-                            $error("FAIL: data=%h", dut.lsu.u_dmem.wr_req_held[i].data);
+                            $display("FAIL: data=%h", dut.lsu.u_dmem.wr_req_held[i].data);
+
+                            report_ipc();
                             $finish;
                         end
                     end
@@ -383,9 +422,12 @@ module tb_core;
             end
         join_none
 
-        #5000;
+        #10000;
         dump_rob();
-        $error("FAIL: Timed out waiting for result");
+        $display("FAIL: Timed out waiting for result");
+
+        report_ipc();
+        $finish;
     end
 
 

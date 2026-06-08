@@ -157,10 +157,6 @@ module icache (
         end else begin
             hit_r        <= valid_read_r && (tag_read_r == tag_r);
             data_out_r   <= data_read_r;
-            // FIX (Bug 2c): data_valid_r simply tracks whether Stage 1
-            // contained a valid transaction.  The old condition gated on
-            // (state != CACHE_MISS_WAIT || bus_resp_valid) which could
-            // suppress the flag on the fill-completion cycle.
             data_valid_r <= pipe1_valid_r;
         end
     end
@@ -176,8 +172,6 @@ module icache (
                 if (inval_valid) begin
                     next_state = CACHE_INVAL;
                 end
-                // FIX (Bug 2a): use the combinational miss_detected signal
-                // so transition happens one cycle earlier than before.
                 else if (miss_detected) begin
                     next_state = CACHE_MISS_REQ;
                 end
@@ -216,7 +210,6 @@ module icache (
 
     always_ff @(posedge clk) begin
         if (miss_detected) begin
-            // Reconstruct the aligned line address from Stage-1 registers.
             miss_addr_r  <= pc_t'({tag_r, index_r, {OFFSET_BITS{1'b0}}});
             miss_index_r <= index_r;
             miss_tag_r   <= tag_r;
