@@ -1,4 +1,4 @@
-	import include_pkg::*;
+import include_pkg::*;
 
 	module rename
 	(
@@ -62,25 +62,6 @@
 			end
 		end
 
-		// always_comb begin
-		// 	for (int i = 0; i < DECODE_WIDTH; i++) 
-		// 		ftb[i][0] = 1'b0;  // Tag 0 is never free
-			
-		// 	for (int i = 0; i < DECODE_WIDTH; i++) begin
-		// 		logic is_source;
-		// 		is_source = 1'b0;
-		// 		for (int j = 1 < NUM_REG; j++) begin
-		// 			if (IN_instr[i].valid) begin
-		// 				is_source |= (rename_table[IN_instr[i].rs1].specTag == REG_ADDR_WIDTH'(j))
-		// 				          |  (rename_table[IN_instr[i].rs2].specTag == REG_ADDR_WIDTH'(j));
-		// 			end
-		// 			ftb[i][j] = is_source ? 1'b0 : tag_buffer[i].free;
-		// 		end
-		// 	end
-
-		// end
-
-
 		// ════════════════════════════════════════════════════
 		// 3. Tag Allocation — cascaded priority encoders
 		//
@@ -123,30 +104,31 @@
 		// 4. Stall
 		//    Stall if ROB/dispatch is busy, not enough free
 		//    tags, or a checkpoint is needed but slots are full.
+		// 
 		// ════════════════════════════════════════════════════
-
-		logic [$clog2(NUM_REG+1)-1:0]      free_count 	[NUM_REG]; 
-		logic [$clog2(NUM_REG+1)-1:0]      req_count 	[DECODE_WIDTH];
+ 
+		logic [$clog2(NUM_REG+1)-1:0]      free_count  [NUM_REG+1];     
+		logic [$clog2(NUM_REG+1)-1:0]      req_count   [DECODE_WIDTH+1];  
 		logic                              chkpt_need;
 
 		always_comb begin
 		    free_count = '{default: '0};
 		    for (int b = 0; b < NUM_REG; b++)
-		        free_count[b+1] = free_count[b] + ftb[b];
+		        free_count[b+1] = free_count[b] + ftb[b];   
 
 		    req_count  = '{default: '0};
 		    chkpt_need = 1'b0;
 		    for (int i = 0; i < DECODE_WIDTH; i++) begin
-		        req_count[i+1] = req_count[i] + req_valid[i];
+		        req_count[i+1] = req_count[i] + req_valid[i]; 
 		        if (IN_instr[i].valid)
 		            chkpt_need |= (IN_instr[i].br_type  != NOT_BRANCH)
 		                       || (IN_instr[i].jump_type == JALR);
 		    end
 		end
 
-		logic stall;
+		logic stall; 
 		assign stall    = ROB_busy || dispatch_busy
-		                  || (free_count[NUM_REG-1] < req_count[DECODE_WIDTH-1])
+		                  || (free_count[NUM_REG] < req_count[DECODE_WIDTH])  
 		                  || (chkpt_busy && chkpt_need);
 		                  
 		assign OUT_busy = stall;
