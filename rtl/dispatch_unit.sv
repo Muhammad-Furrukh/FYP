@@ -270,9 +270,17 @@ module dispatch_unit
     // ════════════════════════════════════════════════════
 
     always_comb begin
-        OUT_alu_instr     = '{default: '0};
-        OUT_mul_div_instr = '{default: '0};
-        OUT_lsu_instr     = '{default: '0};
+        for (int i = 0; i < NUM_ALU_FU; i++) begin
+            OUT_alu_instr[i]     = '0;
+        end
+        
+        for (int i = 0; i < NUM_MUL_DIV_FU; i++) begin
+            OUT_mul_div_instr[i] = '0;
+        end
+        
+        for (int i = 0; i < NUM_AGU_FU; i++) begin
+            OUT_lsu_instr[i] = '0;
+        end
         
         for (int p = 0; p < NUM_ALU_FU; p++) begin
             if (alu_valid[p]) begin
@@ -294,7 +302,7 @@ module dispatch_unit
                 OUT_alu_instr[p].u_type    = packet[alu_slot[p]].u_type;
             end
             else 
-                OUT_alu_instr[p] = '{default: '0};
+                OUT_alu_instr[p] = '0;
         end
 
         for (int p = 0; p < NUM_MUL_DIV_FU; p++) begin
@@ -311,7 +319,7 @@ module dispatch_unit
                 OUT_mul_div_instr[p].rd_tag    = packet[mul_slot[p]].rd_tag;
             end
             else
-                OUT_mul_div_instr[p] = '{default: '0};
+                OUT_mul_div_instr[p] = '0;
         end
 
         for (int p = 0; p < NUM_AGU_FU; p++) begin
@@ -330,7 +338,7 @@ module dispatch_unit
                 OUT_lsu_instr[p].is_imm    = packet[lsu_slot[p]].is_imm;
             end
             else
-                OUT_lsu_instr[p] = '{default: '0};
+                OUT_lsu_instr[p] = '0;
         end
     end
 
@@ -340,7 +348,7 @@ module dispatch_unit
     always_ff @(posedge clk or posedge rst) begin
         if (rst || flush) begin
             for (int i = 0; i < RENAME_WIDTH; i++) begin
-                packet[i]     <= '{default: '0};
+                packet[i]     <= '0;
                 dispatched[i] <= 1'b0;
             end
         end 

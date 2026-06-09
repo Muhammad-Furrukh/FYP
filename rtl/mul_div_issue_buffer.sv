@@ -159,7 +159,8 @@ module mul_div_issue_buffer #(
     // --- Buffer ---
     always_ff @(posedge clk or posedge rst) begin
         if (rst) begin
-            queue      <= '{default: '0};
+            for (int i = 0; i < DEPTH; i++)
+                queue[i]      <= '0;
             tail       <= '0;
         end 
         

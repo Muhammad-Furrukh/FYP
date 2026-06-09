@@ -254,7 +254,7 @@ module MUL_DIV (
     always_ff @(posedge clk or posedge rst) begin
         if (rst) begin
             div_state      <= DIV_IDLE;
-            div_instr_r    <= '{default: '0};
+            div_instr_r    <= '0;
             div_partial    <= 64'd0;
             div_divisor    <= 32'd0;
             div_count      <= 6'd0;
