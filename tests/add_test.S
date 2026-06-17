@@ -45,7 +45,7 @@ _start:
     bne  x12, x28, fail
     li   x28, 99
     bne  x11, x28, fail
-    
+        
     j pass
     
 pass:

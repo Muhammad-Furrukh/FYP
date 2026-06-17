@@ -28,6 +28,7 @@ logic [$clog2(RENAME_WIDTH)-1:0] alloc_offset [RENAME_WIDTH];
 // which breaks when sqN and ROB index have drifted out of sync.
 logic [($clog2(ROB_SIZE)):0]   squash_count;
 logic [($clog2(ROB_SIZE)-1):0] new_tail;
+logic rd_rdy [RENAME_WIDTH];
 
 // ---------------- COMBINATIONAL ----------------
 always_comb begin
@@ -75,9 +76,12 @@ end
 // ---------------- SEQUENTIAL ----------------
 always_ff @(posedge clk or posedge rst) begin
     if (rst) begin
-        count <= 0;
-        head  <= 0;
-        tail  <= 0;
+        count   <= 0;
+        head    <= 0;
+        tail    <= 0;
+        
+        for (int k = 0; k < NUM_CDB_LINES; k++)
+            rd_rdy[k] <= 0;
         for (int k = 0; k < COMMIT_WIDTH; k++)
             OUT_commit[k] <= '0;
         for (int l = 0; l < ROB_SIZE; l++)
@@ -96,6 +100,14 @@ always_ff @(posedge clk or posedge rst) begin
             end
         end
 
+        for (int k = 0; k < NUM_CDB_LINES; k++) begin
+            rd_rdy[k] <= 0;
+            for (int i = 0; i < RENAME_WIDTH; i++) begin
+                if (write_en[i] && (rename_rob[i].rd_tag == CDB_sqN[k]) && rename_rob[i].rd_tag != 0)
+                    rd_rdy[i] <= 1;
+            end
+        end
+
         if (flush && !empty) begin
             // Invalidate all commit outputs
             for (int a = 0; a < COMMIT_WIDTH; a++)
@@ -103,7 +115,7 @@ always_ff @(posedge clk or posedge rst) begin
 
             tail  <= new_tail;
             count <= count - squash_count;
-
+        
             for (int a = 0; a < ROB_SIZE; a++) begin
                 if (((rob[a].sqN - flush_sqN) & SQN_MASK) < sqN_t'(ROB_SIZE))
                     rob[a].ready <= 0;
@@ -116,7 +128,7 @@ always_ff @(posedge clk or posedge rst) begin
                     OUT_commit[i].sqN     <= rob[head + i].sqN;
                     OUT_commit[i].comTag  <= rob[head + i].tag;
                     OUT_commit[i].archTag <= rob[head + i].rd;
-                    OUT_commit[i].valid   <= 1;
+                    OUT_commit[i].valid   <= 1; 
                 end else begin
                     OUT_commit[i].valid   <= 0;
                 end
@@ -128,7 +140,7 @@ always_ff @(posedge clk or posedge rst) begin
                     rob[tail + alloc_offset[i]].sqN   <= rename_rob[i].sqN;
                     rob[tail + alloc_offset[i]].tag   <= rename_rob[i].rd_tag;
                     rob[tail + alloc_offset[i]].rd    <= rename_rob[i].archTag;
-                    rob[tail + alloc_offset[i]].ready <= rename_rob[i].is_store ? 1 : 0;
+                    rob[tail + alloc_offset[i]].ready <= (rename_rob[i].is_store || rd_rdy[i]) ? 1 : 0;
                 end
             end
 

@@ -13,8 +13,8 @@
 	parameter int unsigned ISSUE_WIDTH       = 4;
 	parameter int unsigned COMMIT_WIDTH      = 2;
 	parameter int unsigned REG_ADDR_WIDTH    = 6;
-	parameter int unsigned DMEM_ADDR_WIDTH   = 10;
-	parameter int unsigned IMEM_ADDR_WIDTH   = 10;
+	parameter int unsigned DMEM_ADDR_WIDTH   = 15;
+	parameter int unsigned IMEM_ADDR_WIDTH   = 15;
 	parameter int unsigned ROB_SIZE          = 64;
 	parameter int unsigned FETCHB_SIZE       = 16;
 	parameter int unsigned ISSUEB_SIZE       = 8;
@@ -31,6 +31,9 @@
 	parameter [SQN_W:0] SQN_MASK = (1 << SQN_W) - 1;
 
 
+    parameter int unsigned CACHE_LINE_BYTES  = FETCH_WIDTH * (XLEN/8);
+    parameter int unsigned CACHE_NUM_LINES   = 256;
+
 	//------------------------------------------------------------------
 	// Simple typedefs
 	//------------------------------------------------------------------
@@ -39,7 +42,9 @@
 	typedef logic [REG_ADDR_WIDTH - 1:0]    tag_t;
 	typedef logic [XLEN - 1:0]              imm_t;
 	typedef logic [XLEN - 1:0]              prefetch_instr_t;
-
+	// Add this typedef for 64-bit fetch packets
+	typedef logic [FETCH_WIDTH*XLEN-1:0] fetch_packet_t;
+	
 	//------------------------------------------------------------------
 	// Enums
 	//------------------------------------------------------------------

@@ -13,3 +13,10 @@
 /~$*
 /docs/.$*
 /demo/
+/docs/.$*work/
+transcript
+vsim.wlf
+modelsim.ini
+sim_verilator/
+tests/*.o
+tests/*.elf
