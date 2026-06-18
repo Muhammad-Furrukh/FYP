@@ -6,13 +6,14 @@ module branch_checkpoint
     input           	logic       	rst,
     input           	logic       	flush,
     input           	sqN_t       	flush_sqN,
-    input 	    		logic 		comm_valid  	[COMMIT_WIDTH],
+    input 	    		logic 		    comm_valid  	[COMMIT_WIDTH],
     input           	sqN_t       	commit_sqN  	[COMMIT_WIDTH],
     input           	sqN_t       	instr_sqN   	[DECODE_WIDTH],
     input           	logic       	chk_valid   	[DECODE_WIDTH],
     input   var     	tag_t       	IN_specTag  	[DECODE_WIDTH][32],
     input   var     	logic       	IN_free     	[DECODE_WIDTH][2**REG_ADDR_WIDTH],
-    input			logic		disp_busy,
+    input			    logic		    disp_busy,
+    input               logic [REG_ADDR_WIDTH-1:0] free_CommTag [COMMIT_WIDTH],
     output          	logic       	check_busy,
     output          	tag_t       	OUT_specTag 	[32],
     output          	logic       	OUT_free    	[2**REG_ADDR_WIDTH]
@@ -56,6 +57,13 @@ module branch_checkpoint
         if (flush && valid[flush_sqN[CHKPT_BITS-1:0]]) begin
             OUT_specTag = specTag[flush_sqN[CHKPT_BITS-1:0]];
             OUT_free    = free_bm[flush_sqN[CHKPT_BITS-1:0]];
+            
+            // Combinatorial Commit Bypass
+            for (int i = 0; i < COMMIT_WIDTH; i++) begin
+                if (comm_valid[i] && free_CommTag[i] != '0) begin
+                    OUT_free[free_CommTag[i]] = 1'b1;
+                end
+            end
         end
     end
 
@@ -86,6 +94,14 @@ module branch_checkpoint
                         specTag[instr_sqN[i][CHKPT_BITS-1:0]] <= IN_specTag[i];
                         free_bm[instr_sqN[i][CHKPT_BITS-1:0]] <= IN_free[i];
                     end
+                end
+            end
+
+            // Update free state for commits
+            for (int i = 0; i < COMMIT_WIDTH; i++) begin
+                for (int j = 0; j < NUM_CHKPT; j++) begin
+                    if ((free_CommTag[i] != '0) && (comm_valid[i]))
+                        free_bm[j][free_CommTag[i]] <= 1'b1;
                 end
             end
         end

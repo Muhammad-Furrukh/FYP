@@ -23,6 +23,7 @@ module dispatch_unit
     // ════════════════════════════════════════════════════
 
     rename_instr_t  packet     [RENAME_WIDTH];
+    logic           packet_done;
     logic           dispatched [RENAME_WIDTH];
 
     // Ready bit logic
@@ -254,8 +255,6 @@ module dispatch_unit
     // ════════════════════════════════════════════════════
     // 6. packet_done / OUT_busy
     // ════════════════════════════════════════════════════
-
-    logic packet_done;
     always_comb begin
         packet_done = 1'b1;
         for (int i = 0; i < RENAME_WIDTH; i++)

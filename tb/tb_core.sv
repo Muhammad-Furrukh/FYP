@@ -126,6 +126,23 @@ module tb_core;
         end
     end
 
+    // ── Taken branch Counter ──────────────────────────────────────────
+    int unsigned taken_branches = 0;
+    logic        taken_flag;
+
+    always @(posedge clk) begin
+        if (!rst && !dut.flush) begin
+            taken_flag = 1'b0;
+            for (int i = 0; i < NUM_ALU_FU; i++) begin
+                if ((!taken_flag) && dut.br_taken[i]) begin
+                    taken_branches++;
+                    taken_flag = 1'b1;
+                end
+
+            end
+        end
+    end
+
     // Count active cycles (post-reset, non-flushing)
     always @(posedge clk) begin
         if (!rst)
@@ -140,6 +157,7 @@ module tb_core;
         $display("  IPC REPORT");
         $display("  Instructions Committed : %0d", total_commits);
         $display("  Active Cycles          : %0d", active_cycles);
+        $display("  Taken Branches         : %0d", taken_branches);
         $display("  IPC                    : %.4f", ipc);
         $display("  Peak Width             : %0d", COMMIT_WIDTH);
         $display("  Efficiency             : %.1f%%",

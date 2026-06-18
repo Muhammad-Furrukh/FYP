@@ -1,0 +1,105 @@
+
+test_prog.elf:     file format elf32-littleriscv
+
+
+Disassembly of section .text:
+
+00000000 <_start>:
+   0:	00100093          	li	ra,1
+   4:	00108113          	addi	sp,ra,1
+   8:	00110193          	addi	gp,sp,1
+   c:	00118213          	addi	tp,gp,1
+  10:	00120293          	addi	t0,tp,1 # 1 <_start+0x1>
+  14:	00428333          	add	t1,t0,tp
+  18:	003303b3          	add	t2,t1,gp
+  1c:	00238433          	add	s0,t2,sp
+  20:	001404b3          	add	s1,s0,ra
+  24:	00f00e13          	li	t3,15
+  28:	0fc49063          	bne	s1,t3,108 <fail>
+  2c:	06400513          	li	a0,100
+  30:	0c800513          	li	a0,200
+  34:	12c00513          	li	a0,300
+  38:	00050513          	mv	a0,a0
+  3c:	12c00e13          	li	t3,300
+  40:	0dc51463          	bne	a0,t3,108 <fail>
+  44:	02a00593          	li	a1,42
+  48:	00000613          	li	a2,0
+  4c:	00058633          	add	a2,a1,zero
+  50:	06300593          	li	a1,99
+  54:	02a00e13          	li	t3,42
+  58:	0bc61863          	bne	a2,t3,108 <fail>
+  5c:	06300e13          	li	t3,99
+  60:	0bc59463          	bne	a1,t3,108 <fail>
+  64:	00a00093          	li	ra,10
+  68:	01400113          	li	sp,20
+  6c:	01e00193          	li	gp,30
+  70:	02800213          	li	tp,40
+  74:	002082b3          	add	t0,ra,sp
+  78:	00418333          	add	t1,gp,tp
+  7c:	006283b3          	add	t2,t0,t1
+  80:	06400e13          	li	t3,100
+  84:	09c39263          	bne	t2,t3,108 <fail>
+  88:	00d00093          	li	ra,13
+  8c:	00700113          	li	sp,7
+  90:	022081b3          	mul	gp,ra,sp
+  94:	05b00e13          	li	t3,91
+  98:	07c19863          	bne	gp,t3,108 <fail>
+  9c:	06400093          	li	ra,100
+  a0:	00700113          	li	sp,7
+  a4:	0220c1b3          	div	gp,ra,sp
+  a8:	00e00e13          	li	t3,14
+  ac:	05c19e63          	bne	gp,t3,108 <fail>
+  b0:	0220e233          	rem	tp,ra,sp
+  b4:	00200e13          	li	t3,2
+  b8:	05c21863          	bne	tp,t3,108 <fail>
+  bc:	800000b7          	lui	ra,0x80000
+  c0:	fff08093          	addi	ra,ra,-1 # 7fffffff <end+0x7ffffee7>
+  c4:	00200113          	li	sp,2
+  c8:	022091b3          	mulh	gp,ra,sp
+  cc:	00000e13          	li	t3,0
+  d0:	03c19c63          	bne	gp,t3,108 <fail>
+  d4:	ff300093          	li	ra,-13
+  d8:	00300113          	li	sp,3
+  dc:	0220c1b3          	div	gp,ra,sp
+  e0:	ffc00e13          	li	t3,-4
+  e4:	03c19263          	bne	gp,t3,108 <fail>
+  e8:	0220e233          	rem	tp,ra,sp
+  ec:	fff00e13          	li	t3,-1
+  f0:	01c21c63          	bne	tp,t3,108 <fail>
+
+000000f4 <pass>:
+  f4:	00001eb7          	lui	t4,0x1
+  f8:	deadcf37          	lui	t5,0xdeadc
+  fc:	eeff0f13          	addi	t5,t5,-273 # deadbeef <end+0xdeadbdd7>
+ 100:	01eea023          	sw	t5,0(t4) # 1000 <end+0xee8>
+ 104:	0140006f          	j	118 <end>
+
+00000108 <fail>:
+ 108:	00002eb7          	lui	t4,0x2
+ 10c:	baadcf37          	lui	t5,0xbaadc
+ 110:	0def0f13          	addi	t5,t5,222 # baadc0de <end+0xbaadbfc6>
+ 114:	01eea023          	sw	t5,0(t4) # 2000 <end+0x1ee8>
+
+00000118 <end>:
+ 118:	0000006f          	j	118 <end>
+
+Disassembly of section .riscv.attributes:
+
+00000000 <.riscv.attributes>:
+   0:	2741                	.insn	2, 0x2741
+   2:	0000                	.insn	2, 0x0000
+   4:	7200                	.insn	2, 0x7200
+   6:	7369                	.insn	2, 0x7369
+   8:	01007663          	bgeu	zero,a6,14 <_start+0x14>
+   c:	001d                	.insn	2, 0x001d
+   e:	0000                	.insn	2, 0x0000
+  10:	7205                	.insn	2, 0x7205
+  12:	3376                	.insn	2, 0x3376
+  14:	6932                	.insn	2, 0x6932
+  16:	7032                	.insn	2, 0x7032
+  18:	5f31                	.insn	2, 0x5f31
+  1a:	326d                	.insn	2, 0x326d
+  1c:	3070                	.insn	2, 0x3070
+  1e:	7a5f 6d6d 6c75      	.insn	6, 0x6c756d6d7a5f
+  24:	7031                	.insn	2, 0x7031
+  26:	0030                	.insn	2, 0x0030

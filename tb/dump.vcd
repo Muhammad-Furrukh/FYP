@@ -1,0 +1,139 @@
+$date
+	Thu Jun 18 00:43:59 2026
+$end
+$version
+	QuestaSim Version 2021.2_1
+$end
+$timescale
+	1ns
+$end
+
+$scope module tb_core $end
+
+$scope task tick $end
+$upscope $end
+
+$scope task tick_n $end
+$upscope $end
+
+$scope task dump_rob $end
+$upscope $end
+
+$scope module dut $end
+
+$scope module prefetch $end
+
+$scope module IMEM $end
+$upscope $end
+
+$scope module aligner $end
+$upscope $end
+$upscope $end
+
+$scope module fetch $end
+
+$scope module JTA1 $end
+$upscope $end
+
+$scope module FB $end
+$upscope $end
+$upscope $end
+
+$scope module decode $end
+
+$scope module Decoder $end
+
+$scope module IG $end
+$upscope $end
+$upscope $end
+$upscope $end
+
+$scope module rename $end
+
+$scope function onehot_to_bin $end
+$upscope $end
+$upscope $end
+
+$scope module dispatch $end
+
+$scope module DU $end
+$upscope $end
+
+$scope module BC $end
+$upscope $end
+$upscope $end
+
+$scope module issue $end
+
+$scope begin gen_agu_buffer[0] $end
+
+$scope module lsu_issue_buffer_i $end
+
+$scope module pe $end
+$upscope $end
+$upscope $end
+$upscope $end
+
+$scope begin gen_mul_div_buffer[0] $end
+
+$scope module mul_div_issue_buffer_i $end
+
+$scope module pe $end
+$upscope $end
+$upscope $end
+$upscope $end
+
+$scope begin gen_alu_buffer[1] $end
+
+$scope module alu_issue_buffer_i $end
+
+$scope module pe $end
+$upscope $end
+$upscope $end
+$upscope $end
+
+$scope begin gen_alu_buffer[0] $end
+
+$scope module alu_issue_buffer_i $end
+
+$scope module pe $end
+$upscope $end
+$upscope $end
+$upscope $end
+
+$scope module ta_gen2 $end
+$upscope $end
+$upscope $end
+
+$scope module flush_controller $end
+$upscope $end
+
+$scope module execute $end
+
+$scope begin gen_mul_div_fu[0] $end
+
+$scope module MUL_DIV_i $end
+$upscope $end
+$upscope $end
+$upscope $end
+
+$scope module lsu $end
+
+$scope module u_stb $end
+$upscope $end
+
+$scope module u_ldb $end
+$upscope $end
+
+$scope module u_dmem $end
+$upscope $end
+$upscope $end
+
+$scope module ROB $end
+$upscope $end
+$upscope $end
+$upscope $end
+$enddefinitions $end
+#0
+$dumpvars
+$end

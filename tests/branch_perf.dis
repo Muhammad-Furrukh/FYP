@@ -1,0 +1,62 @@
+
+branch_perf.elf:     file format elf32-littleriscv
+
+
+Disassembly of section .text:
+
+00000000 <_start>:
+   0:	00000293          	li	t0,0
+   4:	00500313          	li	t1,5
+   8:	004000ef          	jal	c <outer_loop>
+
+0000000c <outer_loop>:
+   c:	00000393          	li	t2,0
+  10:	00d00e93          	li	t4,13
+
+00000014 <inner_loop>:
+  14:	00138393          	addi	t2,t2,1
+  18:	00600e13          	li	t3,6
+  1c:	01c38e63          	beq	t2,t3,38 <taken_branch>
+  20:	00c00e13          	li	t3,12
+  24:	01c38a63          	beq	t2,t3,38 <taken_branch>
+
+00000028 <continue>:
+  28:	ffd3c6e3          	blt	t2,t4,14 <inner_loop>
+  2c:	fff30313          	addi	t1,t1,-1
+  30:	fc031ee3          	bnez	t1,c <outer_loop>
+  34:	00c0006f          	j	40 <done>
+
+00000038 <taken_branch>:
+  38:	00128293          	addi	t0,t0,1
+  3c:	fedff06f          	j	28 <continue>
+
+00000040 <done>:
+  40:	00001eb7          	lui	t4,0x1
+  44:	deadcf37          	lui	t5,0xdeadc
+  48:	eeff0f13          	addi	t5,t5,-273 # deadbeef <end+0xdeadbe9b>
+  4c:	01eea023          	sw	t5,0(t4) # 1000 <end+0xfac>
+  50:	0040006f          	j	54 <end>
+
+00000054 <end>:
+  54:	0000006f          	j	54 <end>
+
+Disassembly of section .riscv.attributes:
+
+00000000 <.riscv.attributes>:
+   0:	2741                	.insn	2, 0x2741
+   2:	0000                	.insn	2, 0x0000
+   4:	7200                	.insn	2, 0x7200
+   6:	7369                	.insn	2, 0x7369
+   8:	01007663          	bgeu	zero,a6,14 <inner_loop>
+   c:	001d                	.insn	2, 0x001d
+   e:	0000                	.insn	2, 0x0000
+  10:	7205                	.insn	2, 0x7205
+  12:	3376                	.insn	2, 0x3376
+  14:	6932                	.insn	2, 0x6932
+  16:	7032                	.insn	2, 0x7032
+  18:	5f31                	.insn	2, 0x5f31
+  1a:	326d                	.insn	2, 0x326d
+  1c:	3070                	.insn	2, 0x3070
+  1e:	7a5f 6d6d 6c75      	.insn	6, 0x6c756d6d7a5f
+  24:	7031                	.insn	2, 0x7031
+  26:	0030                	.insn	2, 0x0030

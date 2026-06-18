@@ -5,6 +5,7 @@ module decode
     input                           rst,
     input                           IN_busy,
     input                           flush,
+    input           sqN_t           flush_sqN,
     input   var     fetch_instr_t   IN_instr     [FETCH_WIDTH],
     output          decode_instr_t  OUT_instr    [DECODE_WIDTH]
 );
@@ -41,6 +42,8 @@ module decode
     always_ff @(posedge clk or posedge rst) begin
         if (rst)
             next_sqN <= '0;
+        else if (flush)
+            next_sqN <= flush_sqN + 1;
         else
             next_sqN <= next_sqN + valid_count;
     end

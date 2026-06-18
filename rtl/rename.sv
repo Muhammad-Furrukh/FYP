@@ -2,25 +2,26 @@ import include_pkg::*;
 
 	module rename
 	(
-		input       logic             clk,
-		input       logic             rst,
-		input       logic             ROB_busy,
-		input       logic             dispatch_busy,
-		input       logic             flush,
-		input       logic             chkpt_busy,
-		input  var  tag_t             IN_specTag     [32],
-		input  var  logic             IN_free        [2**REG_ADDR_WIDTH],
-		input  var  commit_packet_t   commit_packet  [COMMIT_WIDTH],
-		input  var  decode_instr_t    IN_instr       [DECODE_WIDTH],
-		input  var  tag_t             CDB_tag        [NUM_CDB_LINES],
-		input  var  logic             CDB_valid      [NUM_CDB_LINES],
-		output      rename_instr_t    OUT_instr      [DECODE_WIDTH], 
-		output      logic             chkpt          [DECODE_WIDTH],
-		output      sqN_t             chkpt_sqN      [DECODE_WIDTH],
-		output      tag_t             chkpt_specTag  [DECODE_WIDTH][32],
-		output      logic             chkpt_free     [DECODE_WIDTH][2**REG_ADDR_WIDTH],
-		output      logic             OUT_busy,
-		output      logic  [4:0]      OUT_rd         [DECODE_WIDTH]
+		input       logic             			clk,
+		input       logic             			rst,
+		input       logic             			ROB_busy,
+		input       logic             			dispatch_busy,
+		input       logic             			flush,
+		input       logic             			chkpt_busy,
+		input  var  tag_t             			IN_specTag     [32],
+		input  var  logic             			IN_free        [2**REG_ADDR_WIDTH],
+		input  var  commit_packet_t   			commit_packet  [COMMIT_WIDTH],
+		input  var  decode_instr_t    			IN_instr       [DECODE_WIDTH],
+		input  var  tag_t             			CDB_tag        [NUM_CDB_LINES],
+		input  var  logic             			CDB_valid      [NUM_CDB_LINES],
+		output      rename_instr_t    			OUT_instr      [DECODE_WIDTH], 
+		output      logic             			chkpt          [DECODE_WIDTH],
+		output      sqN_t             			chkpt_sqN      [DECODE_WIDTH],
+		output      tag_t             			chkpt_specTag  [DECODE_WIDTH][32],
+		output      logic             			chkpt_free     [DECODE_WIDTH][2**REG_ADDR_WIDTH],
+		output      logic             			OUT_busy,
+		output      logic  [4:0]      			OUT_rd         [DECODE_WIDTH],
+		output      logic  [REG_ADDR_WIDTH-1:0] free_CommTag   [COMMIT_WIDTH]
 	);
 
 		// ════════════════════════════════════════════════════
@@ -126,12 +127,16 @@ import include_pkg::*;
 		    end
 		end
 
-		logic stall; 
-		assign stall    = ROB_busy || dispatch_busy
-		                  || (free_count[NUM_REG] < req_count[DECODE_WIDTH])  
-		                  || (chkpt_busy && chkpt_need);
-		                  
-		assign OUT_busy = stall;
+		logic downstream_stall;
+        logic resource_stall;
+
+        assign downstream_stall = ROB_busy || dispatch_busy;
+        
+        assign resource_stall   = (free_count[NUM_REG] < req_count[DECODE_WIDTH])  
+                               || (chkpt_busy && chkpt_need);
+                          
+        // Tell Decode/Fetch to hold if downstream is blocked OR we lack registers
+        assign OUT_busy = downstream_stall || resource_stall;
 
 
 		// ════════════════════════════════════════════════════
@@ -224,28 +229,39 @@ import include_pkg::*;
 		            OUT_rd[i]    <= '0;
 		        end
 
-		    end else if (!stall) begin
-		        for (int i = 0; i < DECODE_WIDTH; i++) begin
-			    OUT_instr[i].valid     <= IN_instr[i].valid;
-			    OUT_instr[i].sqN       <= IN_instr[i].sqN;
-			    OUT_instr[i].pc        <= IN_instr[i].pc;
-			    OUT_instr[i].f_unit    <= IN_instr[i].f_unit;
-			    OUT_instr[i].oper      <= IN_instr[i].oper;
-			    OUT_instr[i].rs1_tag   <= local_rat[i][IN_instr[i].rs1];
-				OUT_instr[i].rs1_ready <= rs1_ready[i];
-			    OUT_instr[i].rs2_tag   <= local_rat[i][IN_instr[i].rs2];
-				OUT_instr[i].rs2_ready <= rs2_ready[i];
-			    OUT_instr[i].rd_tag    <= chosen[i];
-			    OUT_instr[i].imm       <= IN_instr[i].imm;
-			    OUT_instr[i].is_imm    <= IN_instr[i].is_imm;
-			    OUT_instr[i].jump_type <= IN_instr[i].jump_type;
-			    OUT_instr[i].br_type   <= IN_instr[i].br_type;
-			    OUT_instr[i].u_type    <= IN_instr[i].u_type;
-			    OUT_rd[i]              <= IN_instr[i].rd;
-		        end
-		    end
-		    // stall: outputs hold implicitly
-		end
+		    end 
+			else if (!downstream_stall) begin
+                // Downstream is consuming, so we MUST update our outputs
+                if (!resource_stall) begin
+                    // Normal operation: we have registers, pass renamed instr
+                    for (int i = 0; i < DECODE_WIDTH; i++) begin
+                        OUT_instr[i].valid     <= IN_instr[i].valid;
+                        OUT_instr[i].sqN       <= IN_instr[i].sqN;
+                        OUT_instr[i].pc        <= IN_instr[i].pc;
+                        OUT_instr[i].f_unit    <= IN_instr[i].f_unit;
+                        OUT_instr[i].oper      <= IN_instr[i].oper;
+                        OUT_instr[i].rs1_tag   <= local_rat[i][IN_instr[i].rs1];
+                        OUT_instr[i].rs1_ready <= rs1_ready[i];
+                        OUT_instr[i].rs2_tag   <= local_rat[i][IN_instr[i].rs2];
+                        OUT_instr[i].rs2_ready <= rs2_ready[i];
+                        OUT_instr[i].rd_tag    <= chosen[i];
+                        OUT_instr[i].imm       <= IN_instr[i].imm;
+                        OUT_instr[i].is_imm    <= IN_instr[i].is_imm;
+                        OUT_instr[i].jump_type <= IN_instr[i].jump_type;
+                        OUT_instr[i].br_type   <= IN_instr[i].br_type;
+                        OUT_instr[i].u_type    <= IN_instr[i].u_type;
+                        OUT_rd[i]              <= IN_instr[i].rd;
+                    end
+                end 
+				else begin
+                    // Out of registers! Send bubbles so downstream doesn't read duplicates
+                    for (int i = 0; i < DECODE_WIDTH; i++) begin
+                        OUT_instr[i].valid <= 1'b0;
+                    end
+                end
+            end
+            // Implicit else: downstream_stall == 1, outputs hold safely.
+        end
 
 		// ── 6c. Branch checkpoints (registered) ──────────────
 		// Snapshot is taken combinationally from local_rat[i] and
@@ -264,7 +280,7 @@ import include_pkg::*;
 		                chkpt_free[i][b] <= '0;
 		        end
 
-		    end else if (!stall) begin
+		    end else if (!OUT_busy) begin
 		        for (int i = 0; i < DECODE_WIDTH; i++) begin
 		            chkpt[i]     <= IN_instr[i].valid
 		                         && (IN_instr[i].br_type  != NOT_BRANCH
@@ -296,7 +312,6 @@ import include_pkg::*;
 		//    it is independent of the rename pipeline.
 		// ════════════════════════════════════════════════════
 
-		logic [REG_ADDR_WIDTH-1:0] free_CommTag [COMMIT_WIDTH];
 		for (genvar i = 0; i < COMMIT_WIDTH; i++) begin : gen_freeCom
 		    assign free_CommTag[i] = rename_table[commit_packet[i].archTag].commTag;
 		end
@@ -336,7 +351,7 @@ import include_pkg::*;
 		        end
 
 		        // Allocate: only when not stalled
-		        if (!stall) begin
+		        if (!OUT_busy) begin
 		            for (int i = 0; i < DECODE_WIDTH; i++)
 		                if (req_valid[i]) begin
 		                    tag_buffer[chosen[i]].ready <= 1'b0;
@@ -369,7 +384,7 @@ import include_pkg::*;
 
 		    end else begin
 		        // Advance specTag to end-of-group RAT (only when not stalled)
-		        if (!stall)
+		        if (!OUT_busy)
 		            for (int r = 0; r < 32; r++)
 		                rename_table[r].specTag <= local_rat[DECODE_WIDTH][r];
 

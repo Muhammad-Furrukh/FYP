@@ -48,6 +48,7 @@ module core
     );
 
     decode_instr_t decode_instr [DECODE_WIDTH];
+    sqN_t          flush_sqN;
 
     decode decode
     (
@@ -55,6 +56,7 @@ module core
         .rst(rst),
         .IN_busy(rename_busy),
         .flush(flush),
+        .flush_sqN(flush_sqN),
         .IN_instr(fetch_instr),
         .OUT_instr(decode_instr)
     );
@@ -75,6 +77,7 @@ module core
     logic           [XLEN - 1:0] CDB_result          [NUM_CDB_LINES];
     sqN_t                        CDB_sqN             [NUM_CDB_LINES];  
     logic                        dispatch_unit_busy; 
+    logic   [REG_ADDR_WIDTH-1:0] free_CommTag        [COMMIT_WIDTH];
 
     always_comb begin
         for (int i = 0; i < NUM_CDB_LINES; i ++) begin
@@ -119,14 +122,14 @@ module core
         .chkpt_sqN(chkpt_sqN),
         .chkpt_specTag(store_specTag),
         .chkpt_free(store_free),
-        .OUT_rd(rename_rob_rd)
+        .OUT_rd(rename_rob_rd),
+        .free_CommTag(free_CommTag)
     );
 
     logic                    alu_buffer_busy        [NUM_ALU_FU];
     logic                    mul_div_buffer_busy    [NUM_MUL_DIV_FU];
     logic                    lsu_buffer_busy        [NUM_AGU_FU];
     logic                    lsu_busy;
-    sqN_t                    flush_sqN;
     logic		             comm_valid		        [COMMIT_WIDTH];	
     sqN_t                    commit_sqN             [COMMIT_WIDTH];
     alu_dispatch_instr_t     alu_dispatch_instr     [NUM_ALU_FU];
@@ -169,6 +172,7 @@ module core
         .checkpoint(chkpt),
         .IN_specTag(store_specTag),
         .IN_free(store_free),
+        .free_CommTag(free_CommTag),
         .OUT_specTag(restore_specTag),
         .OUT_free(restore_free),
         .d_unit_busy(dispatch_unit_busy),

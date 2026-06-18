@@ -19,15 +19,17 @@ logic write_en [RENAME_WIDTH];
 logic commit   [COMMIT_WIDTH];
 logic full;
 logic empty;
-logic [RENAME_WIDTH-1:0] num_write;
-logic [COMMIT_WIDTH-1:0] num_commit;
+
+// FIX 5: use enough bits to actually hold the value RENAME/COMMIT_WIDTH
+logic [$clog2(RENAME_WIDTH+1)-1:0] num_write;
+logic [$clog2(COMMIT_WIDTH+1)-1:0] num_commit;
+
 logic [$clog2(RENAME_WIDTH)-1:0] alloc_offset [RENAME_WIDTH];
 
-// Number of valid entries strictly after flush_sqN, computed by scanning
-// ROB slots between head and tail. This avoids doing sqN-to-index arithmetic
-// which breaks when sqN and ROB index have drifted out of sync.
 logic [($clog2(ROB_SIZE)):0]   squash_count;
 logic [($clog2(ROB_SIZE)-1):0] new_tail;
+
+// FIX 1: rd_rdy is per rename-slot, not per CDB line
 logic rd_rdy [RENAME_WIDTH];
 
 // ---------------- COMBINATIONAL ----------------
@@ -35,9 +37,12 @@ always_comb begin
     for (int i = 0; i < RENAME_WIDTH; i++)
         write_en[i] = rename_rob[i].valid && (count < (ROB_SIZE - i));
 
+    // FIX 4: cast j to avoid signed/unsigned comparison with count
     commit[0] = (count > 0) && rob[head].ready;
     for (int j = 1; j < COMMIT_WIDTH; j++)
-        commit[j] = (count > j) && rob[head+j].ready && commit[j-1];
+        commit[j] = (count > ($bits(count))'(j))
+                    && rob[(head + ($clog2(ROB_SIZE))'(j))].ready
+                    && commit[j-1];
 
     alloc_offset[0] = '0;
     for (int i = 0; i < RENAME_WIDTH-1; i++)
@@ -45,30 +50,21 @@ always_comb begin
 
     num_write = 0;
     for (int i = 0; i < RENAME_WIDTH; i++)
-        num_write += write_en[i];
+        num_write += ($clog2(RENAME_WIDTH+1))'(write_en[i]);
 
     num_commit = 0;
     for (int i = 0; i < COMMIT_WIDTH; i++)
-        num_commit += commit[i];
+        num_commit += ($clog2(COMMIT_WIDTH+1))'(commit[i]);
 
-    // Walk the ROB from head to tail counting entries
-    // whose sqN is strictly after flush_sqN. A slot scan avoids the
-    // assumption that sqN distance == ROB index distance, which fails
-    // whenever the sqN counter and ROB index have drifted (e.g. after
-    // earlier flushes, non-power-of-2 ROB sizes, or sqN wrap-around).
     squash_count = '0;
     new_tail     = tail;
     if (!empty) begin
         for (int i = 0; i < ROB_SIZE; i++) begin
             if (i < int'(count)) begin
-                // (sqN - (flush_sqN+1)) < ROB_SIZE means sqN is in the
-                // window [flush_sqN+1 .. flush_sqN+ROB_SIZE], i.e. future.
-                if (((rob[head + ($clog2(ROB_SIZE))'(i)].sqN - flush_sqN) & SQN_MASK) < sqN_t'(ROB_SIZE))
+                if (((rob[head + ($clog2(ROB_SIZE))'(i)].sqN - flush_sqN - 1) & SQN_MASK) < sqN_t'(ROB_SIZE))
                     squash_count = squash_count + 1'b1;
             end
         end
-        // Wind tail back by exactly the number of squashed slots.
-        // This is safe because tail is a modular ROB index.
         new_tail = tail - squash_count[$clog2(ROB_SIZE)-1:0];
     end
 end
@@ -79,8 +75,8 @@ always_ff @(posedge clk or posedge rst) begin
         count   <= 0;
         head    <= 0;
         tail    <= 0;
-        
-        for (int k = 0; k < NUM_CDB_LINES; k++)
+
+        for (int k = 0; k < RENAME_WIDTH; k++)
             rd_rdy[k] <= 0;
         for (int k = 0; k < COMMIT_WIDTH; k++)
             OUT_commit[k] <= '0;
@@ -89,10 +85,8 @@ always_ff @(posedge clk or posedge rst) begin
     end
     else begin
 
-        // CDB writeback runs unconditionally on every
-        // non-reset cycle — including flush cycles. Without this,
-        // any instruction that completes on the same cycle as a flush
-        // silently loses its ready bit and stalls all subsequent commits.
+        // CDB writeback — unconditional, runs even on flush cycles.
+        // Placed first so the flush override below can stomp it cleanly.
         for (int j = 0; j < ROB_SIZE; j++) begin
             for (int k = 0; k < NUM_CDB_LINES; k++) begin
                 if (CDB_valid[k] && (rob[j].sqN == CDB_sqN[k]))
@@ -100,24 +94,27 @@ always_ff @(posedge clk or posedge rst) begin
             end
         end
 
-        for (int k = 0; k < NUM_CDB_LINES; k++) begin
-            rd_rdy[k] <= 0;
-            for (int i = 0; i < RENAME_WIDTH; i++) begin
+        // FIX 1: outer loop over rename slots (i), inner over CDB lines (k)
+        for (int i = 0; i < RENAME_WIDTH; i++) begin
+            rd_rdy[i] <= 0;
+            for (int k = 0; k < NUM_CDB_LINES; k++) begin
                 if (write_en[i] && (rename_rob[i].rd_tag == CDB_sqN[k]) && rename_rob[i].rd_tag != 0)
                     rd_rdy[i] <= 1;
             end
         end
 
         if (flush && !empty) begin
-            // Invalidate all commit outputs
             for (int a = 0; a < COMMIT_WIDTH; a++)
                 OUT_commit[a].valid <= 0;
 
             tail  <= new_tail;
             count <= count - squash_count;
-        
+
+            // FIX 3: flush ready-clear is written AFTER the CDB writeback loop
+            // above, so in SV last-assignment semantics this correctly overrides
+            // any ready=1 set by the CDB for entries that are being squashed.
             for (int a = 0; a < ROB_SIZE; a++) begin
-                if (((rob[a].sqN - flush_sqN) & SQN_MASK) < sqN_t'(ROB_SIZE))
+                if (((rob[a].sqN - flush_sqN - 1) & SQN_MASK) < sqN_t'(ROB_SIZE))
                     rob[a].ready <= 0;
             end
         end
@@ -128,7 +125,7 @@ always_ff @(posedge clk or posedge rst) begin
                     OUT_commit[i].sqN     <= rob[head + i].sqN;
                     OUT_commit[i].comTag  <= rob[head + i].tag;
                     OUT_commit[i].archTag <= rob[head + i].rd;
-                    OUT_commit[i].valid   <= 1; 
+                    OUT_commit[i].valid   <= 1;
                 end else begin
                     OUT_commit[i].valid   <= 0;
                 end
