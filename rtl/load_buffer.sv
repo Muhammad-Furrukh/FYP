@@ -315,14 +315,14 @@ module load_buffer (
                 entries[i] <= '{default: '0};
 
         end else if (flush) begin
-            // FIX: flush_sqN+1 as base — entries strictly after
-            // flush_sqN are squashed; flush_sqN itself survives.
-            for (int i = 0; i < LOADB_SIZE; i++)
+            for (int i = 0; i < LOADB_SIZE; i++) begin
+                entries[i].data_valid <= 1'b0; // clear data_valid to prevent stale data from broadcasting after flush
                 if (entries[i].valid &&
                     ((entries[i].sqN - flush_sqN) & SQN_MASK) < sqN_t'(LOADB_SIZE)) begin
                     entries[i].valid  <= 1'b0;
                     entries[i].issued <= 1'b0;
                 end
+            end
 
         end else begin
 

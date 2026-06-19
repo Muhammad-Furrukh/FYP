@@ -108,6 +108,104 @@ _start:
     li   x28, -1
     bne  x4, x28, fail
  
+# ================================================================
+# TEST 6: Load/Store Ordering
+# Stores must be visible to subsequent loads at the same address.
+# ================================================================
+    li   x20, 0x00003000     # base address for memory tests
+
+    li   x1, 0xABCD1234
+    sw   x1, 0(x20)
+    lw   x2, 0(x20)          # must see 0xABCD1234
+    li   x28, 0xABCD1234
+    bne  x2, x28, fail
+
+    # Back-to-back store then load — same address
+    li   x1, 0x11111111
+    sw   x1, 4(x20)
+    li   x1, 0x22222222
+    sw   x1, 4(x20)          # second store must win
+    lw   x2, 4(x20)
+    li   x28, 0x22222222
+    bne  x2, x28, fail
+
+    # Store-to-load forwarding: store then immediate load
+    li   x1, 0xDEAD0000
+    sw   x1, 8(x20)
+    lw   x3, 8(x20)          # should forward from store buffer
+    li   x28, 0xDEAD0000
+    bne  x3, x28, fail
+
+    # Byte and halfword stores
+    li   x1, 0x000000FF
+    sb   x1, 12(x20)
+    lbu  x2, 12(x20)
+    li   x28, 0xFF
+    bne  x2, x28, fail
+
+    li   x1, 0x00001234
+    sh   x1, 14(x20)
+    lhu  x2, 14(x20)
+    li   x28, 0x1234
+    bne  x2, x28, fail
+
+# ================================================================
+# TEST 7: Branch Misprediction + Flush
+# Force a mispredicted branch: speculatively execute wrong path,
+# then flush and verify correct path result is used.
+# ================================================================
+
+    # Case 1: branch predicted not-taken, actually taken
+    li   x1, 5
+    li   x2, 5
+    li   x3, 0               # will be set to 1 on correct path
+    beq  x1, x2, .Ltaken1    # should be taken
+    li   x3, 99              # wrong path — must be flushed
+
+	.Ltaken1:
+		addi x3, x3, 1           # correct path: x3 = 1
+	
+	li   x28, 1
+	bne  x3, x28, fail
+
+    # Case 2: nested dependent computation after flush
+	li   x1, 10
+	li   x2, 20
+	li   x4, 0
+	blt  x1, x2, .Ltaken2
+	li   x4, 99              # wrong path — flushed
+	
+	.Ltaken2:
+		addi x4, x4, 30      # correct path: x4 = 0 + 30 = 30 and if flush wrong: x4 = 99 + 30 = 129
+	
+	li   x28, 30
+	bne  x4, x28, fail
+
+
+    # Case 3: not-taken branch (fall through)
+    li   x1, 20
+    li   x2, 10
+    li   x5, 0
+    blt  x1, x2, .Ltaken3    # not taken: x1 > x2
+    li   x5, 7               # fall-through — should execute
+    j    .Lafter3
+	
+	.Ltaken3:
+		li   x5, 99              # wrong path — must not execute
+		
+	.Lafter3:
+		li   x28, 7
+		bne  x5, x28, fail
+
+    # Case 4: loop — exercises repeated flush + refill of ROB
+    li   x1, 0
+    li   x2, 8
+	
+	.Lloop:
+		addi x1, x1, 1
+		blt  x1, x2, .Lloop     # loops 7 times
+		li   x28, 8
+		bne  x1, x28, fail
 
 # ================================================================
 # ALL TESTS PASSED
