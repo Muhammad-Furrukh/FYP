@@ -910,16 +910,552 @@ module tb_lsu;
 		join
 	endtask
 
+    // ═══════════════════════════════════════════════════════════════════════════
+    // BYTE-GRANULAR FORWARDING TESTS  (T17 – T25)
+    //
+    // Drop this block into tb_lsu in place of the T17 task and the commented-out
+    // call in `initial`.  The new sub-word dispatch/AGU helpers go in section 2
+    // alongside the existing ones.
+    //
+    // Address range: 0x3000 – 0x30FF  (no overlap with T1-T16)
+    //
+    // All expected values were derived analytically:
+    //   byte_select(word, off) = word[off*8 +: 8]
+    //   byte_off_in_store      = (lane_b - st_addr[1:0]) mod 4
+    //   merge: start from memory word, overlay forwarded lanes
+    // ═══════════════════════════════════════════════════════════════════════════
+
 
     // ════════════════════════════════════════════════════
-    // Run all tests
+    // NEW DISPATCH / AGU HELPERS  (add to section 2)
     // ════════════════════════════════════════════════════
+
+    // ── Sub-word store dispatch ───────────────────────────────────────────────
+
+    task dispatch_store_half(sqN_t sqn, tag_t rs1_tag, imm_t imm);
+        dispatch_instr[0].valid   = 1;
+        dispatch_instr[0].sqN     = sqn;
+        dispatch_instr[0].oper    = lsu_oper_t'(LSU_SH);
+        dispatch_instr[0].rs1_tag = rs1_tag;
+        dispatch_instr[0].rs2_tag = '0;
+        dispatch_instr[0].rd_tag  = '0;
+        dispatch_instr[0].imm     = imm;
+        dispatch_instr[0].is_imm  = 1;
+        tick();
+        dispatch_instr[0].valid   = 0;
+    endtask
+
+    task dispatch_store_byte(sqN_t sqn, tag_t rs1_tag, imm_t imm);
+        dispatch_instr[0].valid   = 1;
+        dispatch_instr[0].sqN     = sqn;
+        dispatch_instr[0].oper    = lsu_oper_t'(LSU_SB);
+        dispatch_instr[0].rs1_tag = rs1_tag;
+        dispatch_instr[0].rs2_tag = '0;
+        dispatch_instr[0].rd_tag  = '0;
+        dispatch_instr[0].imm     = imm;
+        dispatch_instr[0].is_imm  = 1;
+        tick();
+        dispatch_instr[0].valid   = 0;
+    endtask
+
+    // ── Sub-word load dispatch ────────────────────────────────────────────────
+
+    task dispatch_load_half(sqN_t sqn, tag_t rs1_tag, tag_t rd_tag, imm_t imm);
+        // LSU_LH — signed halfword load
+        dispatch_instr[0].valid   = 1;
+        dispatch_instr[0].sqN     = sqn;
+        dispatch_instr[0].oper    = lsu_oper_t'(LSU_LH);
+        dispatch_instr[0].rs1_tag = rs1_tag;
+        dispatch_instr[0].rs2_tag = '0;
+        dispatch_instr[0].rd_tag  = rd_tag;
+        dispatch_instr[0].imm     = imm;
+        dispatch_instr[0].is_imm  = 1;
+        tick();
+        dispatch_instr[0].valid   = 0;
+    endtask
+
+    task dispatch_load_byte(sqN_t sqn, tag_t rs1_tag, tag_t rd_tag, imm_t imm);
+        // LSU_LB — signed byte load
+        dispatch_instr[0].valid   = 1;
+        dispatch_instr[0].sqN     = sqn;
+        dispatch_instr[0].oper    = lsu_oper_t'(LSU_LB);
+        dispatch_instr[0].rs1_tag = rs1_tag;
+        dispatch_instr[0].rs2_tag = '0;
+        dispatch_instr[0].rd_tag  = rd_tag;
+        dispatch_instr[0].imm     = imm;
+        dispatch_instr[0].is_imm  = 1;
+        tick();
+        dispatch_instr[0].valid   = 0;
+    endtask
+
+    // ── Sub-word AGU writebacks ───────────────────────────────────────────────
+
+    task agu_store_half_wb(sqN_t sqn, logic [31:0] addr, logic [31:0] data);
+        // data[15:0] holds the halfword value; upper bits ignored by STB
+        agu_out[0].valid       = 1;
+        agu_out[0].sqN         = sqn;
+        agu_out[0].target_addr = addr;
+        agu_out[0].store_data  = data;
+        agu_out[0].req_type    = STORE;
+        agu_out[0].data_size   = HALF;
+        agu_out[0].is_unsigned = 0;
+        tick();
+        agu_out[0].valid = 0;
+    endtask
+
+    task agu_store_byte_wb(sqN_t sqn, logic [31:0] addr, logic [31:0] data);
+        // data[7:0] holds the byte value
+        agu_out[0].valid       = 1;
+        agu_out[0].sqN         = sqn;
+        agu_out[0].target_addr = addr;
+        agu_out[0].store_data  = data;
+        agu_out[0].req_type    = STORE;
+        agu_out[0].data_size   = BYTE;
+        agu_out[0].is_unsigned = 0;
+        tick();
+        agu_out[0].valid = 0;
+    endtask
+
+    task agu_load_half_wb(sqN_t sqn, logic [31:0] addr);
+        agu_out[0].valid       = 1;
+        agu_out[0].sqN         = sqn;
+        agu_out[0].target_addr = addr;
+        agu_out[0].store_data  = '0;
+        agu_out[0].req_type    = LOAD;
+        agu_out[0].data_size   = HALF;
+        agu_out[0].is_unsigned = 0;
+        tick();
+        agu_out[0].valid = 0;
+    endtask
+
+    task agu_load_byte_wb(sqN_t sqn, logic [31:0] addr);
+        agu_out[0].valid       = 1;
+        agu_out[0].sqN         = sqn;
+        agu_out[0].target_addr = addr;
+        agu_out[0].store_data  = '0;
+        agu_out[0].req_type    = LOAD;
+        agu_out[0].data_size   = BYTE;
+        agu_out[0].is_unsigned = 0;
+        tick();
+        agu_out[0].valid = 0;
+    endtask
+
+
+    // ════════════════════════════════════════════════════
+    // T17: Lower-half merge
+    //
+    //  Memory at 0x3000 seeded with 0x11223344 via a
+    //  committed SW.  An uncommitted SH to 0x3000 writes
+    //  0xBEEF into lanes 0-1 (addr[1:0]=0).  A subsequent
+    //  LW reads 0x3000 — lanes 0,1 forward from STB, lanes
+    //  2,3 come from memory.
+    //
+    //  Byte-lane trace:
+    //    SH st_lanes = 0011  (addr[1:0]=0, HALF)
+    //    LW ld_lanes = 1111
+    //    fwd_mask    = 0011  → bytes [1:0] from STB
+    //    fwd[0] = byte_select(0x0000BEEF, 0) = 0xEF
+    //    fwd[1] = byte_select(0x0000BEEF, 1) = 0xBE
+    //    mem[2] = 0x33, mem[3] = 0x11  (from 0x11223344)
+    //
+    //  merged = {0x11, 0x22, 0xBE, 0xEF}[31:0] = 0x1122BEEF
+    // ════════════════════════════════════════════════════
+    task test_partial_fwd_lower_half_merge();
+        $display("\n[T17] Partial forward: SH lower half merged with memory upper");
+        do_reset();
+
+        // Step 1: seed memory with a known word
+        dispatch_store(.sqn(7'd1), .rs1_tag(6'd1), .imm(32'h3000));
+        agu_store_wb  (.sqn(7'd1), .addr(32'h3000), .data(32'h11223344));
+        commit(7'd1);
+        wait_stb_drain(40);
+
+        // Step 2: speculative SH to 0x3000 — stays in STB, not committed
+        dispatch_store_half(.sqn(7'd2), .rs1_tag(6'd1), .imm(32'h3000));
+        agu_store_half_wb  (.sqn(7'd2), .addr(32'h3000), .data(32'h0000BEEF));
+
+        // Step 3: LW from same address
+        //   all_covered=0 → mem_req must fire for upper lanes
+        //   on mem_resp, lower 2 bytes overridden by STB
+        tick();
+        fork
+            begin
+                dispatch_load(.sqn(7'd3), .rs1_tag(6'd1),
+                            .rd_tag(6'd30), .imm(32'h3000));
+                agu_load_wb  (.sqn(7'd3), .addr(32'h3000));
+                tick();
+            end
+            
+            wait_cdb(.port(0), .exp_tag(6'd30), .exp_data(32'h1122BEEF),
+                    .timeout(40), .name("T17: lower-half STB merged with mem upper"));
+        join
+    endtask
+
+
+    // ════════════════════════════════════════════════════
+    // T18: Upper-half merge
+    //
+    //  Memory at 0x3004 seeded with 0xAABBCCDD.
+    //  Uncommitted SH to 0x3006 (addr[1:0]=2) writes 0xCAFE
+    //  into lanes 2-3.  LW from 0x3004 reads all 4 lanes.
+    //
+    //  Byte-lane trace:
+    //    SH st_lanes = 1100  (addr[1:0]=2, HALF)
+    //    LW ld_lanes = 1111
+    //    fwd_mask    = 1100  → bytes [3:2] from STB
+    //    fwd[2] = byte_select(0x0000CAFE, (2-2)=0) = 0xFE  → 0xCA_FE in lane2
+    //    fwd[3] = byte_select(0x0000CAFE, (3-2)=1) = 0xCA  → 0xCA in lane3
+    //    mem[0] = 0xDD, mem[1] = 0xCC
+    //
+    //  merged = {0xCA, 0xFE, 0xCC, 0xDD}[31:0] = 0xCAFECCDD
+    // ════════════════════════════════════════════════════
+    task test_partial_fwd_upper_half_merge();
+        $display("\n[T18] Partial forward: SH upper half merged with memory lower");
+        do_reset();
+
+        dispatch_store(.sqn(7'd1), .rs1_tag(6'd1), .imm(32'h3004));
+        agu_store_wb  (.sqn(7'd1), .addr(32'h3004), .data(32'hAABBCCDD));
+        commit(7'd1);
+        wait_stb_drain(40);
+
+        // SH to addr+2: lane 2 = 0xFE, lane 3 = 0xCA
+        dispatch_store_half(.sqn(7'd2), .rs1_tag(6'd1), .imm(32'h3006));
+        agu_store_half_wb  (.sqn(7'd2), .addr(32'h3006), .data(32'h0000CAFE));
+        tick();
+
+        fork
+            begin
+                dispatch_load(.sqn(7'd3), .rs1_tag(6'd1),
+                            .rd_tag(6'd31), .imm(32'h3004));
+                agu_load_wb  (.sqn(7'd3), .addr(32'h3004));
+                tick();
+            end
+            wait_cdb(.port(0), .exp_tag(6'd31), .exp_data(32'hCAFECCDD),
+                    .timeout(40), .name("T18: upper-half STB merged with mem lower"));
+        join
+    endtask
+
+
+    // ════════════════════════════════════════════════════
+    // T19: Single-byte merge at lane 1
+    //
+    //  Memory at 0x3008 seeded with 0x55667788.
+    //  Uncommitted SB to 0x3009 (addr[1:0]=1) writes 0xAB
+    //  into lane 1 only.  LW from 0x3008 covers all 4 lanes.
+    //
+    //  Byte-lane trace:
+    //    SB st_lanes = 0010  (addr[1:0]=1, BYTE)
+    //    LW ld_lanes = 1111
+    //    fwd_mask    = 0010  → only byte 1 from STB
+    //    fwd[1] = byte_select(0x000000AB, (1-1)=0) = 0xAB
+    //    mem[0]=0x88, mem[2]=0x66, mem[3]=0x55
+    //
+    //  merged = {0x55, 0x66, 0xAB, 0x88} = 0x5566AB88
+    // ════════════════════════════════════════════════════
+    task test_partial_fwd_single_byte_merge();
+        $display("\n[T19] Partial forward: single SB at lane 1 merged with memory");
+        do_reset();
+
+        dispatch_store(.sqn(7'd1), .rs1_tag(6'd1), .imm(32'h3008));
+        agu_store_wb  (.sqn(7'd1), .addr(32'h3008), .data(32'h55667788));
+        commit(7'd1);
+        wait_stb_drain(40);
+
+        dispatch_store_byte(.sqn(7'd2), .rs1_tag(6'd1), .imm(32'h3009));
+        agu_store_byte_wb  (.sqn(7'd2), .addr(32'h3009), .data(32'h000000AB));
+        tick();
+
+        fork
+            begin
+                dispatch_load(.sqn(7'd3), .rs1_tag(6'd1),
+                            .rd_tag(6'd32), .imm(32'h3008));
+                agu_load_wb  (.sqn(7'd3), .addr(32'h3008));
+                tick();
+            end
+            wait_cdb(.port(0), .exp_tag(6'd32), .exp_data(32'h5566AB88),
+                    .timeout(40), .name("T19: single-byte STB lane 1 merged with memory"));
+        join
+    endtask
+
+
+    // ════════════════════════════════════════════════════
+    // T20: Two stores cover all lanes — no memory request
+    //
+    //  No memory seed needed (all lanes come from STB).
+    //  Store1 (older, sqN=1): SH to 0x300C → lanes 0,1
+    //    data = 0x00001234  → lane0=0x34, lane1=0x12
+    //  Store2 (younger, sqN=2): SH to 0x300E → lanes 2,3
+    //    data = 0x00005678  → lane2=0x78, lane3=0x56
+    //  LW from 0x300C (sqN=3): all_covered=1
+    //
+    //  Byte-lane trace:
+    //    Store1 st_lanes=0011, Store2 st_lanes=1100
+    //    ld_lanes=1111 → all covered → no mem_req
+    //    per-lane youngest: each lane has exactly one covering store
+    //    lane0: Store1, off=(0-0)=0 → 0x34
+    //    lane1: Store1, off=(1-0)=1 → 0x12
+    //    lane2: Store2, off=(2-2)=0 → 0x78
+    //    lane3: Store2, off=(3-2)=1 → 0x56
+    //
+    //  result = 0x56781234
+    // ════════════════════════════════════════════════════
+    task test_two_stores_cover_all_lanes();
+        $display("\n[T20] Two STB stores cover all LW lanes — no memory request fired");
+        do_reset();
+
+        // Store1 (older) — lower halfword
+        dispatch_store_half(.sqn(7'd1), .rs1_tag(6'd1), .imm(32'h300C));
+        agu_store_half_wb  (.sqn(7'd1), .addr(32'h300C), .data(32'h00001234));
+
+        // Store2 (younger) — upper halfword
+        dispatch_store_half(.sqn(7'd2), .rs1_tag(6'd1), .imm(32'h300E));
+        agu_store_half_wb  (.sqn(7'd2), .addr(32'h300E), .data(32'h00005678));
+        tick();
+
+        fork
+            begin
+                dispatch_load(.sqn(7'd3), .rs1_tag(6'd1),
+                            .rd_tag(6'd33), .imm(32'h300C));
+                agu_load_wb  (.sqn(7'd3), .addr(32'h300C));
+                tick();
+            end
+            wait_cdb(.port(0), .exp_tag(6'd33), .exp_data(32'h56781234),
+                    .timeout(20), .name("T20: two SH fully cover LW — no mem, result correct"));
+        join
+    endtask
+
+
+    // ════════════════════════════════════════════════════
+    // T21: Younger store wins per-lane for overlapping stores
+    //
+    //  Two SH stores to 0x3010 (same address, same lanes).
+    //  Store1 (sqN=1, older):  data=0x00001111
+    //  Store2 (sqN=2, younger): data=0x00002222
+    //  LH from 0x3010 — per-lane logic must pick Store2.
+    //
+    //  Both cover lanes 0,1.  For each lane, the younger
+    //  store (sqN=2) has smaller (sqN - lane_sqN) distance,
+    //  so it wins.  all_covered=1, no memory request.
+    //
+    //  sign_extend_16(0x2222) = 0x00002222 (positive)
+    // ════════════════════════════════════════════════════
+    task test_younger_store_wins_per_lane();
+        $display("\n[T21] Per-lane youngest-store selection: younger SH wins over older SH");
+        do_reset();
+
+        dispatch_store_half(.sqn(7'd1), .rs1_tag(6'd1), .imm(32'h3010));
+        agu_store_half_wb  (.sqn(7'd1), .addr(32'h3010), .data(32'h00001111));
+
+        dispatch_store_half(.sqn(7'd2), .rs1_tag(6'd1), .imm(32'h3010));
+        agu_store_half_wb  (.sqn(7'd2), .addr(32'h3010), .data(32'h00002222));
+        tick();
+
+        fork
+            begin
+                dispatch_load_half(.sqn(7'd3), .rs1_tag(6'd1),
+                                .rd_tag(6'd34), .imm(32'h3010));
+                agu_load_half_wb  (.sqn(7'd3), .addr(32'h3010));
+                tick();
+            end
+            wait_cdb(.port(0), .exp_tag(6'd34), .exp_data(32'h00002222),
+                    .timeout(20), .name("T21: younger SH (0x2222) wins over older (0x1111)"));
+        join
+    endtask
+
+
+    // ════════════════════════════════════════════════════
+    // T22: Stall when any lane has an unresolved store,
+    //      even if other lanes are resolved
+    //
+    //  Store1 (sqN=1): SH to 0x3014, addr NOT yet written
+    //    → addr_data_valid=0, but it's older than the load
+    //    → its lanes (0,1) stall the load
+    //  Store2 (sqN=2): SB to 0x3014, fully resolved
+    //    → lane 0 is covered and valid
+    //  Load (sqN=3): LW from 0x3014
+    //    → Store1 still overlaps lane 0 without addr_data_valid
+    //    → stall must assert for lane 0 even though Store2
+    //       also covers it — an unresolved older alias wins
+    //
+    //  After Store1 AGU writeback, stall clears and forwarding
+    //  produces: lane0 from Store2 (younger for lane 0 once
+    //  Store1 resolves — but Store1 is older, so Store1 wins
+    //  for lane 0... actually the loop picks younger).
+    //
+    //  Wait — let's re-trace with sqN ordering:
+    //    Store1 sqN=1 (older), Store2 sqN=2 (younger), Load sqN=3
+    //    Lane 0: Store1 is older with addr_data_valid=0 → stall
+    //    Once Store1 resolves: Store2 is younger for lane 0
+    //      → lane0 = Store2 data
+    //    Lanes 2,3: no covering store → go to memory
+    //    Lane 1: Store1 covers (SH@0x3014: lanes 0,1)
+    //            Store2 covers (SB@0x3014: lane 0 only, NOT lane 1)
+    //            → lane1 from Store1 once resolved
+    //
+    //  Store1 data = 0x0000AABB → lane0=0xBB, lane1=0xAA
+    //  Store2 data = 0x000000CC → lane0=0xCC (younger, wins lane 0)
+    //  Memory at 0x3014 = 0x11223344 → lane2=0x33, lane3=0x11
+    //
+    //  Merged result = {0x11, 0x22, 0xAA, 0xCC} = 0x1122AACC
+    // ════════════════════════════════════════════════════
+    task test_stall_any_unresolved_lane();
+        $display("\n[T22] Stall: unresolved older store on any lane stalls the whole load");
+        do_reset();
+
+        // Seed memory
+        dispatch_store(.sqn(7'd1), .rs1_tag(6'd1), .imm(32'h3014));
+        agu_store_wb  (.sqn(7'd1), .addr(32'h3014), .data(32'h11223344));
+        commit(7'd1);
+        wait_stb_drain(40);
+
+        // Store2 (sqN=2): SH, dispatch but do NOT give AGU wb yet
+        dispatch_store_half(.sqn(7'd2), .rs1_tag(6'd1), .imm(32'h3014));
+        // intentionally no agu_store_half_wb here — addr_data_valid stays 0
+
+        // Store3 (sqN=3): SB, fully resolved
+        dispatch_store_byte(.sqn(7'd3), .rs1_tag(6'd1), .imm(32'h3014));
+        agu_store_byte_wb  (.sqn(7'd3), .addr(32'h3014), .data(32'h000000CC));
+
+        // Load (sqN=4): LW — Store2 has addr_data_valid=0, must stall
+        dispatch_load(.sqn(7'd4), .rs1_tag(6'd1),
+                    .rd_tag(6'd35), .imm(32'h3014));
+        agu_load_wb  (.sqn(7'd4), .addr(32'h3014));
+
+        chk("T22: load stalls while older SH has no addr_data_valid",
+            dut.u_ldb.stall[0], 1'b1);
+        chk("T22: no mem_req while stalled",
+            dut.u_ldb.mem_req[0].valid, 1'b0);
+
+        // Now resolve Store2 AGU
+        fork
+            agu_store_half_wb(.sqn(7'd2), .addr(32'h3014), .data(32'h0000AABB));
+            // Store2(older for lane1): lane1=0xAA; Store3(younger for lane0): lane0=0xCC
+            // lanes 2,3 from memory (0x11223344 → 0x33, 0x11)
+            // merged = {0x11, 0x22, 0xAA, 0xCC} = 0x1122AACC
+            wait_cdb(.port(0), .exp_tag(6'd35), .exp_data(32'h1122AACC),
+                    .timeout(30), .name("T22: correct merge after stall resolves"));
+        join
+    endtask
+
+
+    // ════════════════════════════════════════════════════
+    // T23: Exact byte forwarding — SB at lane 1, LB at lane 1
+    //
+    //  Store: SB to 0x3019 (addr[1:0]=1 → lane 1)
+    //    data word = 0x000000AB  (byte value in [7:0])
+    //  Load:  LB from 0x3019 (lane 1)
+    //    st_lanes = ld_lanes = 0010 → all_covered=1
+    //    byte_off_in_store = (1 - 1) = 0
+    //    byte_select(0x000000AB, 0) = 0xAB
+    //    sign_extend_8(0xAB) = 0xFFFFFFAB  (0xAB=171, negative signed)
+    //
+    //  No memory request — exact lane match.
+    // ════════════════════════════════════════════════════
+    task test_exact_byte_fwd_lane1();
+        $display("\n[T23] Exact byte forward: SB at lane 1, LB at lane 1");
+        do_reset();
+
+        dispatch_store_byte(.sqn(7'd1), .rs1_tag(6'd1), .imm(32'h3019));
+        agu_store_byte_wb  (.sqn(7'd1), .addr(32'h3019), .data(32'h000000AB));
+        tick();
+
+        fork
+            begin
+                dispatch_load_byte(.sqn(7'd2), .rs1_tag(6'd1),
+                                .rd_tag(6'd36), .imm(32'h3019));
+                agu_load_byte_wb  (.sqn(7'd2), .addr(32'h3019));
+                tick();
+            end
+            // sign_extend_8(0xAB) = 0xFFFFFFAB
+            wait_cdb(.port(0), .exp_tag(6'd36), .exp_data(32'hFFFFFFAB),
+                    .timeout(20), .name("T23: SB lane1 -> LB lane1 = 0xFFFFFFAB"));
+        join
+    endtask
+
+
+    // ════════════════════════════════════════════════════
+    // T24: byte_off_in_store at maximum offset
+    //
+    //  Tests the hardest case for byte extraction: the store
+    //  is at the highest byte offset (addr[1:0]=3) and the
+    //  load reads that same byte.
+    //
+    //  Store: SB to 0x301B (addr[1:0]=3 → lane 3)
+    //    data word = 0x000000CD
+    //    byte_select(0x000000CD, (3-3)=0) = 0xCD
+    //  Load: LB from 0x301B
+    //    sign_extend_8(0xCD) = 0xFFFFFFCD  (negative)
+    // ════════════════════════════════════════════════════
+    task test_byte_off_max_offset();
+        $display("\n[T24] byte_off_in_store at max: SB@lane3 forwarded to LB@lane3");
+        do_reset();
+
+        dispatch_store_byte(.sqn(7'd1), .rs1_tag(6'd1), .imm(32'h301B));
+        agu_store_byte_wb  (.sqn(7'd1), .addr(32'h301B), .data(32'h000000CD));
+        tick();
+
+        fork
+            begin
+                dispatch_load_byte(.sqn(7'd2), .rs1_tag(6'd1),
+                                .rd_tag(6'd37), .imm(32'h301B));
+                agu_load_byte_wb  (.sqn(7'd2), .addr(32'h301B));
+                tick();
+            end
+            wait_cdb(.port(0), .exp_tag(6'd37), .exp_data(32'hFFFFFFCD),
+                    .timeout(20), .name("T24: SB@0x301B(0xCD) -> LB@0x301B = 0xFFFFFFCD"));
+        join
+    endtask
+
+
+    // ════════════════════════════════════════════════════
+    // T25: Cross-offset byte extraction from halfword store
+    //
+    //  SH at addr[1:0]=2 stores 0xBEEF:
+    //    The halfword occupies lanes 2,3 of the word.
+    //    In the store data register, [7:0]=0xEF (lane2),
+    //    [15:8]=0xBE (lane3).
+    //
+    //  LB at addr[1:0]=3 reads lane 3 only:
+    //    lane 3 is covered by the SH
+    //    byte_off_in_store = (3 - 2) = 1
+    //    byte_select(0x0000BEEF, 1) = 0xBE
+    //    sign_extend_8(0xBE) = 0xFFFFFFBE  (negative)
+    //
+    //  This is the canonical test for the bug that was fixed:
+    //  the original code computed  ld_addr[1:0] + b - st_addr[1:0]
+    //  which for b=3, ld[1:0]=3, st[1:0]=2 gives (3+3-2)=4 mod4=0,
+    //  returning byte 0 (0xEF) instead of the correct byte 1 (0xBE).
+    //  The fixed code computes  b - st_addr[1:0] = 3-2 = 1  → 0xBE.
+    // ════════════════════════════════════════════════════
+    task test_cross_offset_byte_from_halfword();
+        $display("\n[T25] Cross-offset: LB@lane3 from SH@lane2-3 — byte_off_in_store=1");
+        do_reset();
+
+        // SH to 0x301E (addr[1:0]=2): stores 0xBEEF into lanes 2,3
+        dispatch_store_half(.sqn(7'd1), .rs1_tag(6'd1), .imm(32'h301E));
+        agu_store_half_wb  (.sqn(7'd1), .addr(32'h301E), .data(32'h0000BEEF));
+        tick();
+
+        // LB from 0x301F (addr[1:0]=3): needs lane 3 only
+        fork
+            begin
+                dispatch_load_byte(.sqn(7'd2), .rs1_tag(6'd1),
+                                .rd_tag(6'd38), .imm(32'h301F));
+                agu_load_byte_wb  (.sqn(7'd2), .addr(32'h301F));
+                tick();
+            end
+            // Correct (fixed):  byte_off=1 → 0xBE → sign_ext = 0xFFFFFFBE
+            // Buggy (original): byte_off=0 → 0xEF → sign_ext = 0xFFFFFFEF
+            wait_cdb(.port(0), .exp_tag(6'd38), .exp_data(32'hFFFFFFBE),
+                    .timeout(20), .name("T25: SH@0x301E(0xBEEF) -> LB@0x301F = 0xFFFFFFBE"));
+        join
+    endtask
+
     initial begin
         $dumpfile("./sim_verilator/tb_lsu.fst");
         $dumpvars(0, tb_lsu);
 
         // Original tests
-        
         test_store_basic();
         test_load_from_memory();
         test_stb_forward();
@@ -929,7 +1465,7 @@ module tb_lsu;
         test_forward_from_committed();
         test_partial_overlap_no_forward();
 
-        // New edge case tests
+        // Edge-case tests (T9-T16)
         test_consecutive_stores_same_addr();
         test_simultaneous_stores_diff_addr();
         test_load_during_cdc_handshake();
@@ -938,8 +1474,17 @@ module tb_lsu;
         test_sqn_wraparound_flush();
         test_multi_store_drain_order();
         test_stb_full_busy();
-        
-        //test_program_sequence();
+
+        // Byte-granular forwarding tests (T17-T25)
+        test_partial_fwd_lower_half_merge();       // T17
+        test_partial_fwd_upper_half_merge();       // T18
+        test_partial_fwd_single_byte_merge();      // T19
+        test_two_stores_cover_all_lanes();         // T20
+        test_younger_store_wins_per_lane();        // T21
+        test_stall_any_unresolved_lane();          // T22
+        test_exact_byte_fwd_lane1();               // T23
+        test_byte_off_max_offset();                // T24
+        test_cross_offset_byte_from_halfword();    // T25
 
         $display("\n════════════════════════════════");
         $display("  %0d PASS  %0d FAIL", pass_count, fail_count);

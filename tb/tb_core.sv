@@ -1,13 +1,12 @@
 import include_pkg::*;
+
 module tb_core;
     logic clk, clk_m, rst, rst_m;
     core dut (.*);
 
-    // ── Clocks ────────────────────────────────────
     always #5  clk   = ~clk;
     always #20 clk_m = ~clk_m;
 
-    // ── Global timeout ────────────────────────────
     initial begin
         #2000000;
         $display("TIMEOUT: Simulation did not complete");
@@ -15,7 +14,6 @@ module tb_core;
         $finish;
     end
 
-    // ── Helpers ───────────────────────────────────
     task automatic tick();
         @(posedge clk); #1;
     endtask
@@ -23,7 +21,6 @@ module tb_core;
         repeat(n) tick();
     endtask
 
-    // ── ROB dump ──────────────────────────────────
     task automatic dump_rob();
         automatic int head_i  = int'(dut.ROB.head);
         automatic int tail_i  = int'(dut.ROB.tail);
@@ -143,13 +140,11 @@ module tb_core;
         end
     end
 
-    // Count active cycles (post-reset, non-flushing)
     always @(posedge clk) begin
         if (!rst)
             active_cycles++;
     end
 
-    // ── IPC Report Task ───────────────────────────────────────
     task automatic report_ipc();
         real ipc;
         ipc = real'(total_commits) / real'(active_cycles);
@@ -165,12 +160,6 @@ module tb_core;
         $display("════════════════════════════════════════");
     endtask
 
-    // ════════════════════════════════════════════════════════
-    // ARCHITECTURAL REGISTER FILE SNAPSHOT ON COMMIT
-    // Reads physical registers via committed tags from rename.
-    // ════════════════════════════════════════════════════════
-
-    // RISC-V ABI names for display
     function automatic string reg_name(int i);
         case (i)
             0:  return "zero";
@@ -215,8 +204,6 @@ module tb_core;
         for (int r = 0; r < 32; r++) begin
             automatic tag_t  ptag;
             automatic logic [XLEN-1:0] val;
-            // committed tag for arch reg r lives in rename's
-            // committed map — adjust hierarchy to match your rename module
             ptag = dut.rename.rename_table[r].commTag;
             val  = dut.register_file.registers[ptag];
             $display("  x%-2d(%-4s) p%-2d  0x%08h",
@@ -248,7 +235,7 @@ module tb_core;
                                 dut.ROB.OUT_commit[i].sqN);
                     end
                 end
-                // Full RF dump — comment out if too verbose
+
                 dump_arch_rf();
             end
         end
@@ -391,7 +378,6 @@ module tb_core;
         end
     end
          
-         // ── Main test sequence ─────────────────────────
     initial begin
         string prog_file;
 
@@ -430,7 +416,7 @@ module tb_core;
                         if (dut.lsu.u_dmem.wr_req_held[i].valid &&
                             dut.lsu.u_dmem.wr_req_held[i].wr_addr == 32'h00002000) begin
                             dump_rob();
-                            $display("FAIL: data=%h", dut.lsu.u_dmem.wr_req_held[i].data);
+                            $error("FAIL: data=%h", dut.lsu.u_dmem.wr_req_held[i].data);
 
                             report_ipc();
                             $finish;
@@ -442,7 +428,7 @@ module tb_core;
 
         #10000;
         dump_rob();
-        $display("FAIL: Timed out waiting for result");
+        $error("FAIL: Timed out waiting for result");
 
         report_ipc();
         $finish;

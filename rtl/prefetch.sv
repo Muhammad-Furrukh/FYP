@@ -56,7 +56,7 @@ module prefetch
         endcase
 
         fetch_base = actual_pc & ( ~( XLEN'(7) ) ); // Align to 8-byte boundary
-        next_pc = actual_pc + (instr_consumed << 2);
+        next_pc = actual_pc + (instr_consumed << FETCH_WIDTH);
     end
 
     always_ff @(posedge clk or posedge rst) begin

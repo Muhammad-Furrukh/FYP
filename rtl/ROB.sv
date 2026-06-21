@@ -94,7 +94,6 @@ always_ff @(posedge clk or posedge rst) begin
             end
         end
 
-        // FIX 1: outer loop over rename slots (i), inner over CDB lines (k)
         for (int i = 0; i < RENAME_WIDTH; i++) begin
             rd_rdy[i] <= 0;
             for (int k = 0; k < NUM_CDB_LINES; k++) begin
@@ -110,9 +109,6 @@ always_ff @(posedge clk or posedge rst) begin
             tail  <= new_tail;
             count <= count - squash_count;
 
-            // FIX 3: flush ready-clear is written AFTER the CDB writeback loop
-            // above, so in SV last-assignment semantics this correctly overrides
-            // any ready=1 set by the CDB for entries that are being squashed.
             for (int a = 0; a < ROB_SIZE; a++) begin
                 if (((rob[a].sqN - flush_sqN - 1) & SQN_MASK) < sqN_t'(ROB_SIZE))
                     rob[a].ready <= 0;
